@@ -182,18 +182,25 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .meds-config__fields {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
+  width: 100%;
+  min-width: 0;
 }
 
 .meds-config__field {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
+  width: 100%;
+  min-width: 0;
 }
 
 .meds-config__label {
@@ -203,6 +210,10 @@
 }
 
 .meds-config__input {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   padding: var(--space-3);
   border-radius: var(--radius-md);
   border: 1px solid var(--border);
@@ -210,6 +221,12 @@
   color: var(--text-primary);
   font-family: var(--font-family);
   font-size: var(--text-base);
+}
+
+.meds-config__input[type='time'] {
+  -webkit-appearance: none;
+  appearance: none;
+  min-width: 0;
 }
 
 .meds-config__input:focus {
@@ -256,12 +273,16 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
+  width: 100%;
+  min-width: 0;
 }
 
 .meds-config__time {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
+  width: 100%;
+  min-width: 0;
 }
 
 .meds-config__delete {

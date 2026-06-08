@@ -323,64 +323,6 @@ function createRecipesDashboardWidget(recipesData) {
   `;
 }
 
-function createCustomizationPanel(widgets, isOpen) {
-  if (!isOpen) return '';
-
-  return `
-    <div class="dashboard__customize-sheet-root">
-      <button
-        type="button"
-        class="dashboard__customize-backdrop"
-        data-dashboard-customize-dismiss
-        aria-label="Fermer la personnalisation des aperçus"
-      ></button>
-      <aside
-        class="dashboard__customize-panel card"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="dashboard-customize-heading"
-      >
-        <div class="dashboard__customize-handle" aria-hidden="true"></div>
-        <div class="dashboard__customize-head">
-          <h2 class="dashboard__customize-title" id="dashboard-customize-heading">Aperçus</h2>
-          <button
-            type="button"
-            class="dashboard__customize-close"
-            data-dashboard-customize-dismiss
-            aria-label="Fermer"
-          >
-            <span aria-hidden="true">✕</span>
-          </button>
-        </div>
-        <div class="dashboard__customize-scroll">
-          <ul class="dashboard__customize-list">
-            ${widgets
-              .map(
-                (widget) => `
-              <li class="dashboard__customize-item">
-                <label class="dashboard__customize-check">
-                  <input
-                    type="checkbox"
-                    data-dashboard-toggle-widget="true"
-                    data-dashboard-widget-id="${widget.id}"
-                    ${widget.visible ? 'checked' : ''}
-                  />
-                  <span class="dashboard__customize-check-label">${widget.icon} ${escapeHtml(widget.label)}</span>
-                </label>
-              </li>
-            `
-              )
-              .join('')}
-          </ul>
-        </div>
-        <div class="dashboard__customize-footer">
-          <button type="button" class="btn dashboard__link" data-dashboard-customize-reset>Réinitialiser</button>
-        </div>
-      </aside>
-    </div>
-  `;
-}
-
 function createDashboardView(date = new Date(), widgetsData, options = {}) {
   const time = formatInputTime(date);
   const formattedDate = formatCurrentDate(date);
@@ -414,7 +356,7 @@ function createDashboardView(date = new Date(), widgetsData, options = {}) {
           <p class="dashboard__welcome">Bienvenue, il est <strong data-dashboard-time>${time}</strong></p>
           <p class="dashboard__date" data-dashboard-date>${formattedDate}</p>
         </div>
-        <div class="dashboard__customize-control" data-dashboard-customize-control>
+        <div class="dashboard__customize-control">
           <div data-app-mobile-theme-host class="dashboard__theme-host"></div>
           <button
             type="button"
@@ -425,7 +367,6 @@ function createDashboardView(date = new Date(), widgetsData, options = {}) {
           >
             <span aria-hidden="true">⚙️</span>
           </button>
-          ${createCustomizationPanel(widgets, isCustomizationOpen)}
         </div>
       </header>
 

@@ -1,5 +1,6 @@
 import './style.css';
 import { createDashboardView, formatCurrentDate, formatCurrentTime } from './view.js';
+import { escapeHtml } from '../../core/format.js';
 import { navigate } from '../../core/router.js';
 import { load, save } from '../../core/storage.js';
 import { getDisabledModuleIdsSet } from '../../shell/nav-modules.js';
@@ -16,10 +17,8 @@ import nowModule from '../now/index.js';
 let rootContainer = null;
 let refreshTimer = null;
 let onClick = null;
-let onChange = null;
 let onPomodoroStateChange = null;
 let dashboardConfig = [];
-let isCustomizationOpen = false;
 let onSyncComplete = null;
 
 const DASHBOARD_WIDGET_MODULE_BY_ID = {
@@ -301,6 +300,138 @@ function collectWidgetsData(now = new Date()) {
  * (rafraîchissement 30 s inclus), car le innerHTML du dashboard le détruit.
  * @param {{ content?: string }} nowData — issu de collectWidgetsData().now (un seul appel getDashboardWidget).
  */
+function hasCustomizeSheet() {
+  return Boolean(document.querySelector('.dashboard-customize-sheet'));
+}
+
+function buildWidgetList() {
+  const widgets = filterWidgetsByEnabledModules(dashboardConfig);
+  return widgets
+    .map(
+      (widget) => `
+    <li class="dashboard-customize-item">
+      <label class="dashboard-customize-check">
+        <input
+          type="checkbox"
+          data-dashboard-widget-toggle
+          data-dashboard-widget-id="${widget.id}"
+          ${widget.visible ? 'checked' : ''}
+        />
+        <span class="dashboard-customize-check-label">${widget.icon} ${escapeHtml(widget.label)}</span>
+      </label>
+    </li>`
+    )
+    .join('');
+}
+
+function bindCustomizeSheetListeners(sheet) {
+  sheet.querySelectorAll('[data-dashboard-customize-close]').forEach((el) => {
+    el.addEventListener('click', closeCustomizeSheet);
+  });
+
+  sheet.querySelector('[data-dashboard-reset]')?.addEventListener('click', resetWidgets);
+
+  sheet.querySelectorAll('[data-dashboard-widget-toggle]').forEach((el) => {
+    el.addEventListener('change', handleWidgetToggle);
+  });
+}
+
+function openCustomizeSheet() {
+  document.querySelector('.dashboard-customize-sheet')?.remove();
+
+  const sheet = document.createElement('div');
+  sheet.className = 'dashboard-customize-sheet';
+  sheet.innerHTML = `
+    <div class="dashboard-customize-backdrop" data-dashboard-customize-close></div>
+    <div class="dashboard-customize-panel" role="dialog" aria-modal="true" aria-labelledby="dashboard-customize-heading">
+      <div class="dashboard-customize-handle">
+        <div class="dashboard-customize-handle-bar"></div>
+      </div>
+      <div class="dashboard-customize-header">
+        <h2 id="dashboard-customize-heading">Aperçus</h2>
+        <button type="button" class="dashboard-customize-close-btn" data-dashboard-customize-close aria-label="Fermer">✕</button>
+      </div>
+      <div class="dashboard-customize-scroll">
+        <ul class="dashboard-customize-list">
+          ${buildWidgetList()}
+        </ul>
+      </div>
+      <div class="dashboard-customize-footer">
+        <button type="button" class="btn btn-secondary" data-dashboard-reset>Réinitialiser</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(sheet);
+  bindCustomizeSheetListeners(sheet);
+
+  const toggleBtn = rootContainer?.querySelector('[data-dashboard-customize-toggle]');
+  if (toggleBtn instanceof HTMLButtonElement) {
+    toggleBtn.setAttribute('aria-expanded', 'true');
+  }
+
+  requestAnimationFrame(() => {
+    sheet.classList.add('is-open');
+  });
+}
+
+function closeCustomizeSheet() {
+  const sheet = document.querySelector('.dashboard-customize-sheet');
+  if (!sheet) return;
+
+  const toggleBtn = rootContainer?.querySelector('[data-dashboard-customize-toggle]');
+  if (toggleBtn instanceof HTMLButtonElement) {
+    toggleBtn.setAttribute('aria-expanded', 'false');
+  }
+
+  sheet.classList.remove('is-open');
+
+  const panel = sheet.querySelector('.dashboard-customize-panel');
+  const remove = () => sheet.remove();
+
+  if (panel instanceof HTMLElement) {
+    panel.addEventListener(
+      'transitionend',
+      (event) => {
+        if (event.propertyName === 'transform') remove();
+      },
+      { once: true }
+    );
+  }
+
+  window.setTimeout(remove, 350);
+}
+
+function handleWidgetToggle(event) {
+  const target = event.target;
+  if (!(target instanceof HTMLInputElement)) return;
+  const widgetId = target.dataset.dashboardWidgetId;
+  if (!widgetId) return;
+
+  dashboardConfig = dashboardConfig.map((widget) =>
+    widget.id === widgetId ? { ...widget, visible: target.checked } : widget
+  );
+  persistWidgetConfig(dashboardConfig);
+  renderDashboard();
+}
+
+function resetWidgets() {
+  dashboardConfig = getDefaultWidgetConfig();
+  persistWidgetConfig(dashboardConfig);
+  renderDashboard();
+
+  const list = document.querySelector('.dashboard-customize-list');
+  if (list) {
+    list.innerHTML = buildWidgetList();
+    const sheet = document.querySelector('.dashboard-customize-sheet');
+    if (sheet) {
+      sheet.querySelectorAll('[data-dashboard-widget-toggle]').forEach((el) => {
+        el.addEventListener('change', handleWidgetToggle);
+      });
+    }
+  }
+}
+
 function mountNowWelcomeBlock(nowData) {
   if (!rootContainer) return;
   const welcomeMain = rootContainer.querySelector('.dashboard__welcome-main');
@@ -335,7 +466,7 @@ function renderDashboard() {
   rootContainer.innerHTML = createDashboardView(now, widgetsData, {
     widgets: filteredWidgetConfig,
     customization: {
-      isOpen: isCustomizationOpen
+      isOpen: hasCustomizeSheet()
     }
   });
   const emptyState = rootContainer.querySelector('.dashboard__empty-state');
@@ -343,12 +474,6 @@ function renderDashboard() {
     emptyState.textContent = 'Active des outils dans les Réglages ⚙️';
   }
   mountNowWelcomeBlock(widgetsData.now);
-  if (isCustomizationOpen) {
-    queueMicrotask(() => {
-      const panel = rootContainer?.querySelector('.dashboard__customize-panel');
-      if (panel instanceof HTMLElement) panel.scrollTop = 0;
-    });
-  }
   window.dispatchEvent(new CustomEvent('adhd:dashboard-rendered'));
 }
 
@@ -399,33 +524,13 @@ function bindEvents() {
     const target = event.target;
     if (!(target instanceof HTMLElement)) return;
 
-    const clickedInCustomizeControl = Boolean(target.closest('[data-dashboard-customize-control]'));
-    if (isCustomizationOpen && !clickedInCustomizeControl) {
-      isCustomizationOpen = false;
-      renderDashboard();
-      return;
-    }
-
     const customizeToggle = target.closest('[data-dashboard-customize-toggle]');
     if (customizeToggle instanceof HTMLButtonElement) {
-      isCustomizationOpen = !isCustomizationOpen;
-      renderDashboard();
-      return;
-    }
-
-    if (target.closest('[data-dashboard-customize-dismiss]')) {
-      if (isCustomizationOpen) {
-        isCustomizationOpen = false;
-        renderDashboard();
+      if (hasCustomizeSheet()) {
+        closeCustomizeSheet();
+      } else {
+        openCustomizeSheet();
       }
-      return;
-    }
-
-    const resetButton = target.closest('[data-dashboard-customize-reset]');
-    if (resetButton instanceof HTMLButtonElement) {
-      dashboardConfig = getDefaultWidgetConfig();
-      persistWidgetConfig(dashboardConfig);
-      renderDashboard();
       return;
     }
 
@@ -437,22 +542,6 @@ function bindEvents() {
   };
 
   rootContainer.addEventListener('click', onClick);
-
-  onChange = (event) => {
-    const target = event.target;
-    if (!(target instanceof HTMLInputElement)) return;
-    if (target.dataset.dashboardToggleWidget !== 'true') return;
-    const widgetId = target.dataset.dashboardWidgetId;
-    if (!widgetId) return;
-
-    dashboardConfig = dashboardConfig.map((widget) =>
-      widget.id === widgetId ? { ...widget, visible: target.checked } : widget
-    );
-    persistWidgetConfig(dashboardConfig);
-    renderDashboard();
-  };
-
-  rootContainer.addEventListener('change', onChange);
 
   onPomodoroStateChange = () => {
     updatePomodoroWidgetOnly();
@@ -473,12 +562,14 @@ const dashboard = {
   init(container) {
     rootContainer = container;
     dashboardConfig = normalizeWidgetConfig(load('dashboard:config', { widgets: [] }));
-    isCustomizationOpen = false;
     startClock();
     bindEvents();
   },
 
   destroy() {
+    closeCustomizeSheet();
+    document.querySelector('.dashboard-customize-sheet')?.remove();
+
     if (refreshTimer) {
       clearInterval(refreshTimer);
       refreshTimer = null;
@@ -487,9 +578,6 @@ const dashboard = {
     if (rootContainer) {
       if (onClick) {
         rootContainer.removeEventListener('click', onClick);
-      }
-      if (onChange) {
-        rootContainer.removeEventListener('change', onChange);
       }
       rootContainer.innerHTML = '';
       rootContainer = null;
@@ -502,11 +590,9 @@ const dashboard = {
     }
 
     onClick = null;
-    onChange = null;
     onPomodoroStateChange = null;
     onSyncComplete = null;
     dashboardConfig = [];
-    isCustomizationOpen = false;
   },
 
   getDashboardWidget() {

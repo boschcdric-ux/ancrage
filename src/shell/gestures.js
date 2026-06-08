@@ -77,7 +77,7 @@ function applyModuleNavFromSwipe(moduleId, direction) {
 
 function isInsideBlockingOverlay(target) {
   if (!(target instanceof Element)) return false;
-  if (target.closest('.dashboard__customize-sheet-root')) return true;
+  if (target.closest('.dashboard-customize-sheet')) return true;
   if (target.closest('.calendar-panel-overlay')) return true;
   if (target.closest('.budget__modal:not([hidden])')) return true;
   if (target.closest('[data-shopping-modal]:not([hidden])')) return true;

@@ -1,16 +1,16 @@
 function resolveBottomSheetFromTarget(target) {
   if (!(target instanceof Element)) return null;
-  const dash = target.closest('.dashboard__customize-panel');
+  const dash = target.closest('.dashboard-customize-panel');
   if (dash) {
-    const root = dash.closest('.dashboard__customize-sheet-root');
+    const root = dash.closest('.dashboard-customize-sheet');
     return {
       movable: dash,
       scrollRoot:
-        dash.querySelector('.dashboard__customize-scroll') instanceof HTMLElement
-          ? dash.querySelector('.dashboard__customize-scroll')
+        dash.querySelector('.dashboard-customize-scroll') instanceof HTMLElement
+          ? dash.querySelector('.dashboard-customize-scroll')
           : dash,
       close: () =>
-        root?.querySelector('[data-dashboard-customize-dismiss]')?.dispatchEvent(
+        root?.querySelector('[data-dashboard-customize-close]')?.dispatchEvent(
           new MouseEvent('click', { bubbles: true })
         )
     };
@@ -90,7 +90,7 @@ function resolveBottomSheetFromTarget(target) {
 
 function isSheetVerticalDragAllowed(target, ctx) {
   const dragHandle = target.closest(
-    '.dashboard__customize-handle, .dashboard__customize-head, .calendar-panel__handle, .calendar-panel__header, .budget__sheet-handle, .shopping__modal-title, .journal__editor-top, .now__task-prompt-text, .now__task-prompt-actions'
+    '.dashboard-customize-handle, .dashboard-customize-header, .calendar-panel__handle, .calendar-panel__header, .budget__sheet-handle, .shopping__modal-title, .journal__editor-top, .now__task-prompt-text, .now__task-prompt-actions'
   );
   if (dragHandle) return true;
   if (ctx.scrollRoot.scrollTop > 0 && ctx.scrollRoot.contains(target)) return false;
