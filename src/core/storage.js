@@ -518,7 +518,7 @@ async function pullCollectionIntoLocal(collection) {
  */
 async function syncFromPocketBase() {
   if (!POCKETBASE_URL) {
-    console.info('Mode démo — sync désactivée');
+    console.warn('Mode démo — sync désactivée');
     emitSyncState();
     return;
   }
