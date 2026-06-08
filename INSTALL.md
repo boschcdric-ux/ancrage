@@ -5,6 +5,29 @@
 
 ---
 
+## Tester sans Raspberry Pi
+
+Tu veux voir l'app avant d'investir dans le matériel ? Lance-la en 2 minutes sur ton ordinateur :
+
+### Prérequis
+- [Node.js](https://nodejs.org) (v18+)
+- [Git](https://git-scm.com)
+
+### Lancer en local
+
+```bash
+git clone https://github.com/boschcdric-ux/ancrage.git
+cd ancrage
+npm install
+npm run dev
+```
+
+Ouvre [http://localhost:5173](http://localhost:5173) dans ton navigateur.
+
+> 💡 En mode local, les données sont sauvegardées dans ton navigateur uniquement. Aucun Raspberry Pi requis pour tester.
+
+---
+
 ## Ce dont tu as besoin
 
 ### Matériel
