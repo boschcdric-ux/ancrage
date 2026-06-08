@@ -37,6 +37,43 @@ Trop de modules ? Désactive ceux dont tu n'as pas besoin. Ils disparaissent com
 
 ---
 
+## Aperçu
+
+<div align="center">
+
+### Les essentiels
+
+<img src="docs/screenshots/01-que-faire.png" 
+  width="23%" alt="Que faire ?">
+<img src="docs/screenshots/02-dashboard.png" 
+  width="23%" alt="Tableau de bord">
+<img src="docs/screenshots/08-taches.png" 
+  width="23%" alt="Tâches">
+<img src="docs/screenshots/03-humeur.png" 
+  width="23%" alt="Humeur">
+
+### L'expérience
+
+<img src="docs/screenshots/05-journal.png" 
+  width="23%" alt="Journal">
+<img src="docs/screenshots/05-journal-2.png" 
+  width="23%" alt="Journal formaté">
+<img src="docs/screenshots/03-humeur-2.png" 
+  width="23%" alt="Humeur graphique">
+<img src="docs/screenshots/04-respiration.png" 
+  width="23%" alt="Respiration">
+
+### Autres modules
+
+<img src="docs/screenshots/06-pomodoro.png" 
+  width="23%" alt="Minuterie">
+<img src="docs/screenshots/07-focus.png" 
+  width="23%" alt="Focus">
+
+</div>
+
+---
+
 ## Les modules
 
 | Module | Ce que ça fait | Problème TDAH adressé |
