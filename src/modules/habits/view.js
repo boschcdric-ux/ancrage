@@ -261,7 +261,7 @@ function createOnboardingView(onboardingPetKind) {
     <section class="habits habits--onboarding animate-fade-in">
       <article class="habits__onboarding card animate-slide-up">
         <h1 class="habits__onboarding-title">Habitudes 🌱</h1>
-        <p class="habits__onboarding-lead">Des routines douces, sans punition. Les streaks ne se cassent pas.</p>
+        <p class="habits__onboarding-lead">Des routines douces, sans punition. Pas de compteur qui repart à zéro.</p>
         <p class="habits__onboarding-question">Tu as un animal de compagnie ?</p>
         <div class="habits__onboarding-picks">
           <button type="button" class="${pickClass('dog')}" data-onboarding-pick="dog">🐕 Chien</button>

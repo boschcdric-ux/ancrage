@@ -158,6 +158,34 @@ describe('mergeArrayById', () => {
     expect(june1.mood).toBe(4);
   });
 
+  test('fusionne par clé composite date+habitId — cas Habitudes', () => {
+    const remote = [
+      {
+        date: '2026-06-08',
+        habitId: 'habit-1',
+        timestamp: 1000
+      }
+    ];
+    const local = [
+      {
+        date: '2026-06-08',
+        habitId: 'habit-1',
+        timestamp: 2000
+      },
+      {
+        date: '2026-06-08',
+        habitId: 'habit-2',
+        timestamp: 1500
+      }
+    ];
+    const result = mergeArrayById(remote, local);
+    expect(result.length).toBe(2);
+    const h1 = result.find((e) => e.habitId === 'habit-1');
+    expect(h1.timestamp).toBe(2000);
+    const h2 = result.find((e) => e.habitId === 'habit-2');
+    expect(h2).toBeDefined();
+  });
+
   test('ne duplique pas les entrées identiques', () => {
     const entry = { id: '1', text: 'test', updatedAt: 1000 };
     const result = mergeArrayById([entry], [entry]);

@@ -781,7 +781,7 @@ function mountCaptureOnboarding(onComplete) {
           </li>
           <li class="app-onboarding__list-item">
             <span class="app-onboarding__list-icon" aria-hidden="true">✓</span>
-            <span>Pas de streaks à maintenir à tout prix</span>
+            <span>Pas de compteur à maintenir à tout prix</span>
           </li>
           <li class="app-onboarding__list-item">
             <span class="app-onboarding__list-icon" aria-hidden="true">✓</span>

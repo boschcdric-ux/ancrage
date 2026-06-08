@@ -555,7 +555,7 @@ const weatherModule = {
     if (!state.selectedCity || !state.current) {
       return {
         title: 'Météo',
-        content: 'Configure ta ville dans le module Météo.'
+        content: 'Configure ta ville dans Météo.'
       };
     }
 

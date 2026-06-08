@@ -17,7 +17,7 @@ export const MODULES_HELP = {
     title: 'Habitudes 🌱',
     problem:
       'Les cerveaux TDAH ont du mal à automatiser les routines — pas par manque de volonté, mais parce que le cerveau a besoin de plus de répétitions pour ancrer une habitude.',
-    why: 'Ce module suit tes routines sans jamais te punir si tu rates un jour. Tu n\'as pas coché hier ? Pas grave — le compteur ne repart pas à zéro. L\'important c\'est de reprendre.',
+    why: 'Cet outil suit tes routines sans jamais te punir si tu rates un jour. Tu n\'as pas coché hier ? Pas grave — le compteur ne repart pas à zéro. L\'important c\'est de reprendre.',
     tip: 'Commence par 1 ou 2 habitudes maximum. Mieux vaut une routine solide que dix abandonnées.'
   },
   mood: {
@@ -81,7 +81,7 @@ export const MODULES_HELP = {
     problem:
       'Arriver en magasin sans liste avec un cerveau TDAH = acheter ce qui attire l\'œil, pas ce dont on a besoin.',
     why: 'Une liste avec budget en temps réel évite les oublis et les dépassements.',
-    tip: 'Connecte-le au module Budget pour voir l\'impact direct sur tes finances.'
+    tip: 'Connecte-le à Budget pour voir l\'impact direct sur tes finances.'
   },
   weather: {
     title: 'Météo 🌤️',

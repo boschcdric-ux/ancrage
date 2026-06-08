@@ -332,7 +332,7 @@ function createCustomizationPanel(widgets, isOpen) {
         type="button"
         class="dashboard__customize-backdrop"
         data-dashboard-customize-dismiss
-        aria-label="Fermer la personnalisation des widgets"
+        aria-label="Fermer la personnalisation des aperçus"
       ></button>
       <aside
         class="dashboard__customize-panel card"
@@ -342,7 +342,7 @@ function createCustomizationPanel(widgets, isOpen) {
       >
         <div class="dashboard__customize-handle" aria-hidden="true"></div>
         <div class="dashboard__customize-head">
-          <h2 class="dashboard__customize-title" id="dashboard-customize-heading">Widgets</h2>
+          <h2 class="dashboard__customize-title" id="dashboard-customize-heading">Aperçus</h2>
           <button
             type="button"
             class="dashboard__customize-close"
@@ -420,7 +420,7 @@ function createDashboardView(date = new Date(), widgetsData, options = {}) {
             type="button"
             class="btn dashboard__customize-toggle"
             data-dashboard-customize-toggle
-            aria-label="Personnaliser le dashboard"
+            aria-label="Personnaliser l'accueil"
             aria-expanded="${isCustomizationOpen ? 'true' : 'false'}"
           >
             <span aria-hidden="true">⚙️</span>
@@ -432,7 +432,7 @@ function createDashboardView(date = new Date(), widgetsData, options = {}) {
       <div class="dashboard__grid">
         ${
           widgetsHtml ||
-          '<p class="card dashboard__empty-state animate-fade-in">Activez des widgets pour personnaliser votre dashboard</p>'
+          '<p class="card dashboard__empty-state animate-fade-in">Active des aperçus pour personnaliser ton accueil</p>'
         }
       </div>
     </section>

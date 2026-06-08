@@ -143,7 +143,7 @@ function createPomodoroView(state) {
             class="pomodoro__ring"
             viewBox="0 0 220 220"
             role="img"
-            aria-label="Progression du timer"
+            aria-label="Progression de la minuterie"
           >
             <circle class="pomodoro__ring-bg" cx="110" cy="110" r="96"></circle>
             <circle class="pomodoro__ring-progress" cx="110" cy="110" r="96" data-pomodoro-ring></circle>

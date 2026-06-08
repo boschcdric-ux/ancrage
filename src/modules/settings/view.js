@@ -74,8 +74,8 @@ export function createSettingsMarkup(moduleRows, themeOptions, notifications) {
       <h1 class="settings__title">Réglages</h1>
 
       <section class="settings-section" aria-labelledby="settings-modules-heading">
-        <h2 id="settings-modules-heading" class="settings-section__title">Modules actifs</h2>
-        <div class="settings-module-list" role="group" aria-label="Modules dans la barre de navigation">
+        <h2 id="settings-modules-heading" class="settings-section__title">Outils actifs</h2>
+        <div class="settings-module-list" role="group" aria-label="Outils dans la barre de navigation">
           ${rowsHtml}
         </div>
       </section>

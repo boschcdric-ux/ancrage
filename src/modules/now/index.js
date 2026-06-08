@@ -407,7 +407,7 @@ function render() {
     // Erreur silencieuse en prod : affichage de l’écran d’erreur utilisateur
     rootContainer.innerHTML = `
       <section class="now now--error" role="alert">
-        <p class="now--error__title">Impossible d’afficher le module</p>
+        <p class="now--error__title">Impossible d’afficher Que faire ?</p>
         <pre class="now--error__detail">${escapeHtml(String(e && e.message ? e.message : e))}</pre>
       </section>
     `;

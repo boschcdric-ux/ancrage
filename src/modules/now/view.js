@@ -78,7 +78,7 @@ function createNowView({
 }
 
 function createDashboardNowCompact(text = '') {
-  const safe = escapeHtml(String(text).trim() || 'Ouvre le module pour une suggestion.');
+  const safe = escapeHtml(String(text).trim() || 'Ouvre Que faire ? pour une suggestion.');
   return `
     <div class="now-dashboard-compact" data-now-dashboard-compact-inner>
       <p class="now-dashboard-compact__text">${safe}</p>

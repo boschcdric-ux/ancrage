@@ -318,19 +318,24 @@ function isNonEmptySyncPayload(value) {
 function mergeArrayById(remote, local) {
   if (!remote.length && !local.length) return [];
 
-  const sample = remote[0] || local[0];
-  const idKey =
-    sample?.id !== undefined ? 'id' : sample?.date !== undefined ? 'date' : 'timestamp';
+  const getKey = (item) => {
+    if (item?.id !== undefined) return item.id;
+    if (item?.date !== undefined && item?.habitId !== undefined) {
+      return `${item.date}::${item.habitId}`;
+    }
+    if (item?.date !== undefined) return item.date;
+    return item?.timestamp;
+  };
 
   const map = new Map();
 
   for (const item of remote) {
-    const key = item[idKey];
+    const key = getKey(item);
     if (key !== undefined) map.set(key, item);
   }
 
   for (const item of local) {
-    const key = item[idKey];
+    const key = getKey(item);
     if (key === undefined) continue;
     const existing = map.get(key);
     if (!existing) {

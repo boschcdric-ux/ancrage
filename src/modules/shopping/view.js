@@ -423,7 +423,7 @@ function createShoppingShell(addCategory = 'autre') {
           <div class="shopping__modal-body" data-shopping-modal-body></div>
           <label class="shopping__modal-check">
             <input type="checkbox" data-shopping-save-budget />
-            <span>Ajouter le total aux dépenses du module Budget (facultatif — la barre budget courses ne dépend pas de cette case)</span>
+            <span>Ajouter le total aux dépenses de Budget (facultatif — la barre budget courses ne dépend pas de cette case)</span>
           </label>
           <div class="shopping__modal-actions">
             <button type="button" class="btn btn-secondary" data-shopping-modal-cancel>Annuler</button>

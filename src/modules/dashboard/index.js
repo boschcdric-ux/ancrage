@@ -340,7 +340,7 @@ function renderDashboard() {
   });
   const emptyState = rootContainer.querySelector('.dashboard__empty-state');
   if (emptyState) {
-    emptyState.textContent = 'Activez des modules dans les Réglages ⚙️';
+    emptyState.textContent = 'Active des outils dans les Réglages ⚙️';
   }
   mountNowWelcomeBlock(widgetsData.now);
   if (isCustomizationOpen) {
@@ -467,7 +467,7 @@ function bindEvents() {
 
 const dashboard = {
   id: 'dashboard',
-  label: 'Dashboard',
+  label: 'Accueil',
   icon: '🏠',
 
   init(container) {

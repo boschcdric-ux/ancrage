@@ -533,7 +533,7 @@ function resetTimer() {
   stopTimer();
   remainingSeconds = getModeDurationSeconds(mode);
   sessionTotalSeconds = remainingSeconds;
-  setNotification('Timer réinitialisé.');
+  setNotification('Minuterie réinitialisée.');
   updateDisplay();
   emitPomodoroStateChange();
 }
@@ -584,7 +584,7 @@ function bindEvents() {
     const pause = target.closest('[data-pomodoro-pause]');
     if (pause instanceof HTMLButtonElement) {
       stopTimer();
-      setNotification('Timer en pause.');
+      setNotification('Minuterie en pause.');
       return;
     }
 
