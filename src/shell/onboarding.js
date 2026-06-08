@@ -29,6 +29,9 @@ const ALL_MODULE_IDS = [
 
 const ALWAYS_ACTIVE_MODULE_IDS = new Set(['now', 'dashboard', 'settings', 'capture']);
 
+/** Modules accessibles dans les Réglages mais jamais activés automatiquement par l'onboarding. */
+const OPT_IN_ONLY_MODULE_IDS = new Set(['planning-boulot']);
+
 const PROFILE_Q1 = [
   {
     id: 'overwhelmed',
@@ -112,7 +115,7 @@ function applyModuleProfile(activeSet) {
 }
 
 function applyAllModulesActive() {
-  persistDisabledModuleIds(new Set());
+  persistDisabledModuleIds(OPT_IN_ONLY_MODULE_IDS);
   markProfileDone();
 }
 

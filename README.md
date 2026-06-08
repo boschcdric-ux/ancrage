@@ -7,6 +7,14 @@
 
 Elle s'adapte à toi. Pas l'inverse.
 
+<div align="center">
+
+**[▶️ Essayer la démo](https://ancragedemo.netlify.app)**
+&nbsp;&nbsp;•&nbsp;&nbsp;
+*Données locales à ton navigateur — rien n'est synchronisé*
+
+</div>
+
 ---
 
 ## Ce que ça change vraiment
