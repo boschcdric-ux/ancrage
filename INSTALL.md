@@ -206,6 +206,8 @@ Dans PocketBase, va dans **Collections** et crée les 20 collections suivantes.
 4. Dans **API Rules**, mets `""` (chaîne vide) pour toutes les règles — cela autorise l'accès local
 5. Clique sur **Save**
 
+> ⚠️ Laisser les règles API vides est sécurisé uniquement parce que l'accès au Pi passe par Tailscale (VPN privé). Ne jamais exposer PocketBase directement sur internet sans authentification.
+
 | # | Nom de la collection |
 |---|---------------------|
 | 1 | `captures` |
@@ -238,7 +240,7 @@ Ces étapes se font sur ton **Mac ou PC**, pas sur le Pi.
 ### 4.1 Cloner le projet
 
 ```bash
-git clone https://github.com/[username]/ancrage.git
+git clone https://github.com/boschcdric-ux/ancrage.git
 cd ancrage
 npm install
 ```
@@ -256,6 +258,19 @@ VITE_POCKETBASE_URL=https://100.XX.XX.XX
 ```
 
 > Remplace `100.XX.XX.XX` par ton IP Tailscale.
+
+### 4.2b Créer ton script de déploiement
+
+```bash
+cp deploy.example.sh deploy.sh
+```
+
+Ouvre `deploy.sh` et remplace les variables :
+```
+DEPLOY_USER="votre-utilisateur"
+DEPLOY_HOST="votre-ip-tailscale"
+DEPLOY_PATH="/home/votre-utilisateur/ancrage/dist"
+```
 
 ### 4.3 Builder et déployer
 
@@ -340,7 +355,7 @@ rm -rf ~/pocketbase ~/ancrage
 
 - 📖 [Architecture et décisions techniques](docs/decisions/)
 - 🤝 [Contribuer à Ancrage](CONTRIBUTING.md)
-- 🐛 [Signaler un bug](https://github.com/[username]/ancrage/issues)
+- 🐛 [Signaler un bug](https://github.com/boschcdric-ux/ancrage/issues)
 
 ---
 
@@ -390,7 +405,7 @@ Si tu utilises un PC Windows pour builder et déployer l'app.
 ### Cloner et installer
 
 ```powershell
-git clone https://github.com/[username]/ancrage.git
+git clone https://github.com/boschcdric-ux/ancrage.git
 cd ancrage
 npm install
 ```

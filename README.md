@@ -108,7 +108,7 @@ Frontend  : HTML/CSS/JavaScript vanilla + Vite
 Stockage  : localStorage (instantané) + PocketBase (sync)
 Serveur   : Nginx sur Raspberry Pi 5
 Réseau    : Tailscale (VPN chiffré)
-Tests     : Vitest (unitaires) + smoke tests (20/20)
+Tests     : smoke tests (intégrité structurelle des 20 modules) + tests unitaires Vitest (storage + mood)
 ```
 
 Les décisions architecturales sont documentées dans [docs/decisions/](docs/decisions/).

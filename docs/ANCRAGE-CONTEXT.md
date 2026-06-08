@@ -75,6 +75,8 @@ src/
         └── README.md    ← Description du module
 ```
 
+**400 lignes recommandées** — au-delà, envisager un découpage.
+
 ---
 
 ## La règle la plus importante

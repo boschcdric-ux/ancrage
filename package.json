@@ -1,7 +1,7 @@
 {
-  "name": "adhd-app",
-  "version": "0.1.0",
-  "description": "Application de productivité TDAH-first",
+  "name": "ancrage",
+  "version": "1.0.0",
+  "description": "Application PWA TDAH-first — L'app qui s'adapte à ton cerveau",
   "type": "module",
   "scripts": {
     "test:smoke": "node scripts/smoke-test.js",

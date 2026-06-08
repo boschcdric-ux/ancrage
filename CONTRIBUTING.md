@@ -19,7 +19,7 @@ décrit ce qu'il veut en langage naturel, et une IA génère le code.
 
 ### Option 1 — Signaler un bug ou une idée
 
-Le plus simple ! Ouvre une [Issue GitHub](https://github.com/[username]/ancrage/issues)
+Le plus simple ! Ouvre une [Issue GitHub](https://github.com/boschcdric-ux/ancrage/issues)
 et décris :
 - Ce que tu as observé (bug) ou ce que tu aimerais (idée)
 - Sur quel appareil (iPhone, Android, Mac, PC)
