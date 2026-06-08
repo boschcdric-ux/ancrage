@@ -4,7 +4,9 @@
 // (même contenu que dans localStorage). Règles API + CORS : autoriser l’origine de l’app.
 
 const PREFIX = 'adhd-app:';
-const POCKETBASE_URL = import.meta.env.VITE_POCKETBASE_URL || 'http://localhost:8090';
+const POCKETBASE_URL =
+  (import.meta.env.VITE_POCKETBASE_URL || '').trim() ||
+  (import.meta.env.DEV ? 'http://localhost:8090' : '');
 
 function getPocketBaseUrl() {
   return POCKETBASE_URL;
@@ -161,6 +163,7 @@ function pbTimeToMs(iso) {
 }
 
 async function pbFetch(path, options = {}) {
+  if (!getPocketBaseUrl()) return null;
   const url = `${getPocketBaseUrl()}/api${path}`;
   const init = {
     ...options,
@@ -177,6 +180,11 @@ async function pbFetch(path, options = {}) {
 }
 
 async function probePocketBase() {
+  if (!getPocketBaseUrl()) {
+    pocketBaseReachable = false;
+    emitSyncState();
+    return false;
+  }
   const res = await pbFetch('/health', { method: 'GET' });
   pocketBaseReachable = Boolean(res && res.ok);
   emitSyncState();
@@ -509,6 +517,12 @@ async function pullCollectionIntoLocal(collection) {
  * Charge les enregistrements PocketBase vers localStorage (données distantes plus récentes).
  */
 async function syncFromPocketBase() {
+  if (!POCKETBASE_URL) {
+    console.info('Mode démo — sync désactivée');
+    emitSyncState();
+    return;
+  }
+
   if (!migrationRanThisSession) {
     try {
       localStorage.removeItem(MIGRATION_KEY);

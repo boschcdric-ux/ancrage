@@ -8,6 +8,8 @@ dist/
 .env
 .env.*
 !.env.example
+!.env.netlify.example
+.env.netlify
 
 # Fichiers personnels
 Mon\ Espace.command
