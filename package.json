@@ -1,0 +1,33 @@
+{
+  "name": "adhd-app",
+  "version": "0.1.0",
+  "description": "Application de productivité TDAH-first",
+  "type": "module",
+  "scripts": {
+    "test:smoke": "node scripts/smoke-test.js",
+    "test:unit": "vitest run src/core/ src/modules/mood/",
+    "lint": "eslint src/ --ext .js",
+    "dev": "vite",
+    "dev:dev": "vite --mode dev --config vite.config.dev.js",
+    "build": "vite build",
+    "build:dev": "vite build --mode dev --config vite.config.dev.js",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.1",
+    "happy-dom": "^20.9.0",
+    "vite": "^5.0.0",
+    "vite-plugin-pwa": "^1.2.0",
+    "vitest": "^4.1.8"
+  },
+  "dependencies": {
+    "@tiptap/core": "^3.22.3",
+    "@tiptap/extension-color": "^3.26.0",
+    "@tiptap/extension-highlight": "^3.26.0",
+    "@tiptap/extension-task-item": "^3.22.3",
+    "@tiptap/extension-task-list": "^3.22.3",
+    "@tiptap/extension-text-style": "^3.26.0",
+    "@tiptap/starter-kit": "^3.22.3",
+    "sharp": "^0.34.5"
+  }
+}

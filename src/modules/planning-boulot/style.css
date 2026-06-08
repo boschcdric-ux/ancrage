@@ -1,0 +1,533 @@
+/*
+ * MOBILE_RULES — Ancrage (obligatoire pour ce module et les futurs)
+ * Voir .context/MOBILE_RULES.md
+ *
+ * 1. Tactile : boutons/inputs/select/checkbox min-height 44px ; icônes min 44×44px
+ * 2. Pas de débordement : racine width/max-width 100%, box-sizing border-box, overflow-x hidden
+ * 3. Padding bas nav : calc(var(--nav-height) + var(--space-4)) sur .planning
+ * 4. Scroll iOS : overflow-y auto + -webkit-overflow-scrolling touch sur conteneurs scrollables
+ * 5. Label visible au-dessus de chaque input/select (.planning-time-field, .planning-field)
+ */
+
+.planning {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  margin: 0 auto;
+  padding: var(--space-4);
+  padding-bottom: calc(var(--nav-height, 72px) + var(--space-4));
+  font-family: var(--font-family);
+  color: var(--text-primary);
+}
+
+.planning-config-container {
+  padding-bottom: calc(var(--nav-height, 72px) + var(--space-6));
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  max-height: 100%;
+}
+
+.planning-today-card {
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  margin-bottom: var(--space-3);
+  box-sizing: border-box;
+}
+
+.planning-today-card__title {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-lg);
+  font-weight: var(--font-semibold);
+  line-height: var(--line-height-tight);
+}
+
+.planning-today-card__meta {
+  margin: 0 0 var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.planning-today-card__body {
+  margin-bottom: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.planning-today-card__slots,
+.planning-today-card__duration {
+  margin: 0;
+  font-size: var(--text-base);
+  line-height: var(--line-height-normal);
+}
+
+.planning-today-card__status {
+  margin: 0;
+  font-size: var(--text-xl);
+  font-weight: var(--font-semibold);
+}
+
+.planning-today-card__edit {
+  width: 100%;
+  min-height: 44px;
+  box-sizing: border-box;
+}
+
+.planning-overtime {
+  color: var(--warning);
+  font-weight: var(--font-bold);
+  margin: 0;
+}
+
+.planning-week__title {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-base);
+  font-weight: var(--font-semibold);
+  color: var(--text-secondary);
+}
+
+.planning-week-row {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  padding: var(--space-2) var(--space-2);
+  border-bottom: 1px solid var(--border);
+  box-sizing: border-box;
+}
+
+.planning-week-row.today {
+  background: var(--accent-soft);
+  border-radius: var(--radius-sm);
+  font-weight: var(--font-bold);
+}
+
+.planning-week-row.past {
+  opacity: 0.5;
+}
+
+.planning-week-row__day {
+  flex: 0 0 2.5rem;
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+}
+
+.planning-week-row__detail {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  font-size: var(--text-sm);
+}
+
+.planning-week-row__slots {
+  color: var(--text-primary);
+  word-break: break-word;
+}
+
+.planning-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+}
+
+.planning-actions__btn {
+  width: 100%;
+  min-height: 44px;
+  box-sizing: border-box;
+}
+
+.planning-config-day,
+.planning-config-slot,
+.planning-field {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.planning-field,
+.planning-time-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.planning-time-field {
+  min-width: 0;
+  width: 100%;
+  overflow: visible;
+}
+
+.planning-field label,
+.planning-time-field label {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  font-weight: var(--font-medium);
+}
+
+.planning-site-select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: var(--text-sm);
+  font-family: var(--font-family);
+  min-height: 44px;
+}
+
+.planning-time-input {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  min-height: 44px;
+  overflow: hidden;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: var(--text-base);
+  font-family: var(--font-family);
+  box-sizing: border-box !important;
+}
+
+.planning-config-slot.is-muted .planning-time-field,
+.planning-config-slot.is-muted .planning-field,
+.planning-config-slot.is-muted .planning-site-select,
+.planning-config-slot.is-muted .planning-time-input {
+  opacity: 0.55;
+}
+
+.planning-config__header {
+  margin-bottom: var(--space-4);
+}
+
+.planning-config__back {
+  margin-bottom: var(--space-3);
+  min-height: 44px;
+}
+
+.planning-config__title {
+  margin: 0;
+  font-size: var(--text-xl);
+  font-weight: var(--font-semibold);
+}
+
+.planning-config__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.planning-config__tab {
+  min-height: 44px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-family: var(--font-family);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: background var(--duration-fast) var(--ease-out);
+}
+
+.planning-config__tab.is-active {
+  background: var(--accent-soft);
+  color: var(--text-primary);
+  border-color: var(--accent);
+  font-weight: var(--font-semibold);
+}
+
+.planning-config__form {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.planning-config__days {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.planning-config-day {
+  padding: var(--space-4);
+  box-sizing: border-box;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.planning-config-day__header,
+.planning-day-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.planning-config-day__title {
+  margin: 0;
+  font-size: var(--text-base);
+  font-weight: var(--font-semibold);
+  min-width: 0;
+}
+
+.planning-config-day__off,
+.planning-repos-wrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.planning-repos-wrapper label {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.planning-config-day__off input[type='checkbox'],
+.planning-day-header input[type='checkbox'],
+.planning-repos-check {
+  appearance: checkbox !important;
+  -webkit-appearance: checkbox !important;
+  width: 20px !important;
+  height: 20px !important;
+  min-height: 20px !important;
+  min-width: 20px !important;
+  max-width: 20px !important;
+  border-radius: 4px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  cursor: pointer;
+  flex-shrink: 0;
+  background: none !important;
+  border: 2px solid var(--border) !important;
+}
+
+.planning-config-slot {
+  margin-bottom: var(--space-3);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.planning-config-slot__label {
+  display: block;
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-2);
+}
+
+.planning-config-slot__hint {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.planning-config-slot__fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+  overflow: visible;
+}
+
+.planning-holiday-periods {
+  margin-bottom: var(--space-6);
+}
+
+.planning-holiday-periods__title {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-base);
+  font-weight: var(--font-semibold);
+}
+
+.planning-holiday-periods__hint {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.planning-holiday-periods__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.planning-holiday-period {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  box-sizing: border-box;
+}
+
+.planning-holiday-period__fields {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.planning-holiday-period__delete {
+  flex-shrink: 0;
+  min-width: 44px;
+  min-height: 44px;
+  padding: var(--space-2);
+}
+
+.planning-holiday-periods__add {
+  width: 100%;
+  min-height: 44px;
+  box-sizing: border-box;
+}
+
+.planning-config__ref {
+  margin-bottom: var(--space-6);
+}
+
+.planning-config__save {
+  width: 100%;
+  min-height: 44px;
+  margin-bottom: var(--space-4);
+  box-sizing: border-box;
+}
+
+.planning-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+  box-sizing: border-box;
+}
+
+.planning-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.planning-modal-content {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  background: var(--bg-primary);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  padding: var(--space-6) var(--space-4) var(--space-8);
+  box-sizing: border-box;
+}
+
+.planning-modal__title {
+  margin: 0 0 var(--space-4);
+  font-size: var(--text-lg);
+  font-weight: var(--font-semibold);
+}
+
+.planning-modal__slot-section {
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border);
+}
+
+.planning-modal__slot-title {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-base);
+  font-weight: var(--font-semibold);
+}
+
+.planning-modal__slot2-wrap {
+  margin-bottom: var(--space-4);
+}
+
+.planning-modal__slot2-toggle {
+  width: 100%;
+  min-height: 44px;
+  margin-bottom: var(--space-2);
+  box-sizing: border-box;
+}
+
+.planning-modal__slot2-panel {
+  display: none;
+}
+
+.planning-modal__slot2-panel.is-open {
+  display: block;
+}
+
+.planning-modal__check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  margin-bottom: var(--space-3);
+  cursor: pointer;
+}
+
+.planning-modal__check input[type='checkbox'] {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.planning-modal__check--off {
+  margin-bottom: var(--space-4);
+  font-weight: var(--font-medium);
+}
+
+.planning-modal__actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.planning-modal__actions .btn {
+  min-height: 44px;
+  box-sizing: border-box;
+}
+
+.planning-widget__line {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .planning-config__tab {
+    transition: none;
+  }
+}

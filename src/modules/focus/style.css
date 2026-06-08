@@ -1,0 +1,202 @@
+.focus {
+  min-height: calc(100vh - (var(--space-12) + var(--space-16)));
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.focus__intro {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: var(--space-16) var(--space-6);
+  text-align: center;
+}
+
+.focus__title {
+  font-size: clamp(var(--text-2xl), 4vw, 3rem);
+  font-weight: var(--font-bold);
+}
+
+.focus__intro-text {
+  margin-top: var(--space-3);
+  margin-bottom: var(--space-8);
+  color: var(--text-secondary);
+  font-size: var(--text-lg);
+}
+
+.focus--active {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: var(--space-6);
+  transition:
+    background-color 1s var(--ease-default),
+    color 1s var(--ease-default);
+}
+
+.focus--active[data-focus-theme="midnight"] {
+  background: #0a0a0f;
+  color: #f0f0f5;
+}
+
+.focus--active[data-focus-theme="ocean"] {
+  background: #0a1628;
+  color: #e0f0ff;
+}
+
+.focus--active[data-focus-theme="forest"] {
+  background: #0a1a0f;
+  color: #e0f5e0;
+}
+
+.focus--active[data-focus-theme="cosmos"] {
+  background: #0f0a1a;
+  color: #f0e0ff;
+}
+
+.focus__topbar {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
+}
+
+.focus__top-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.focus__icon-btn {
+  width: 38px;
+  height: 38px;
+  border: 1px solid color-mix(in srgb, white 20%, transparent);
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, white 8%, transparent);
+  color: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: var(--text-base);
+  transition: transform var(--duration-fast) var(--ease-default), background var(--duration-fast) var(--ease-default);
+}
+
+.focus__icon-btn:hover {
+  transform: translateY(-1px);
+  background: color-mix(in srgb, white 14%, transparent);
+}
+
+.focus__center {
+  width: min(900px, 100%);
+  text-align: center;
+  display: grid;
+  gap: var(--space-8);
+  justify-items: center;
+}
+
+.focus__timer-wrap {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.focus__mode {
+  font-size: var(--text-lg);
+  opacity: 0.8;
+}
+
+.focus__timer {
+  font-size: clamp(3.6rem, 13vw, 9rem);
+  line-height: 1;
+  font-weight: var(--font-bold);
+  letter-spacing: 0.03em;
+}
+
+.focus__task-wrap {
+  display: grid;
+  gap: var(--space-3);
+  width: min(920px, 100%);
+}
+
+.focus__task {
+  font-size: clamp(2rem, 6vw, 4.5rem);
+  font-weight: var(--font-bold);
+  line-height: 1.15;
+}
+
+.focus__task--empty {
+  font-size: clamp(1.5rem, 4vw, 2.4rem);
+  opacity: 0.9;
+}
+
+.focus__subtask {
+  min-height: 1.6em;
+  font-size: clamp(1rem, 2.3vw, 1.7rem);
+  opacity: 0.72;
+}
+
+.focus__suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3);
+}
+
+.focus__task-suggestion {
+  max-width: min(320px, 100%);
+}
+
+.focus__suggestions-empty {
+  opacity: 0.74;
+  font-size: var(--text-lg);
+}
+
+.focus__start-pomodoro {
+  margin-top: var(--space-2);
+}
+
+.focus__ambiences {
+  position: absolute;
+  bottom: var(--space-5);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: var(--space-3);
+}
+
+.focus__ambience-btn {
+  width: 44px;
+  height: 44px;
+  border: 1px solid color-mix(in srgb, white 25%, transparent);
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, white 8%, transparent);
+  color: inherit;
+  cursor: pointer;
+  transition: transform var(--duration-fast) var(--ease-default), background var(--duration-fast) var(--ease-default);
+}
+
+.focus__ambience-btn:hover {
+  transform: translateY(-2px);
+  background: color-mix(in srgb, white 16%, transparent);
+}
+
+.focus__ambience-btn.is-active {
+  background: color-mix(in srgb, white 25%, transparent);
+}
+
+:root[data-focus-active="true"] #app-module-nav {
+  display: none !important;
+}
+
+:root[data-focus-active="true"] #app-module-content {
+  padding: 0 !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .focus--active {
+    transition: none;
+  }
+}

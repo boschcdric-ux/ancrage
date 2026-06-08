@@ -1,0 +1,27 @@
+# Dépendances
+node_modules/
+
+# Build
+dist/
+
+# Variables d'environnement
+.env
+.env.*
+!.env.example
+
+# Fichiers personnels
+Mon\ Espace.command
+README-DEPLOY.md
+README-LANCEMENT.md
+AUDIT-*.md
+*-backup-*.zip
+deploy.sh
+deploy-dev.sh
+
+# Certificats
+*.pem
+*.key
+
+# macOS
+.DS_Store
+.cursor/
