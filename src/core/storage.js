@@ -725,13 +725,13 @@ function getSyncIndicatorState() {
     return {
       mode: 'pending',
       emoji: '🟡',
-      label: 'Synchronisation en attente avec PocketBase'
+      label: 'Mise à jour en attente'
     };
   }
   return {
     mode: 'synced',
     emoji: '🟢',
-    label: 'Synchronisé avec PocketBase'
+    label: 'Tes données sont à jour ✓'
   };
 }
 

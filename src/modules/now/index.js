@@ -1,7 +1,7 @@
 import './style.css';
 import { save, load } from '../../core/storage.js';
 import { navigate } from '../../core/router.js';
-import { createNowView, createDashboardNowCompact, escapeHtml } from './view.js';
+import { createNowView, createDashboardNowCompact } from './view.js';
 
 const MOOD_KEY = 'mood:entries';
 const TASKS_KEY = 'tasks:items';
@@ -44,6 +44,17 @@ const DEFAULT_SUGGESTION = {
   taskId: '',
   habitId: ''
 };
+
+const NOW_USER_ERROR_MESSAGE =
+  "Oups, quelque chose s'est passé. Ferme l'app et réouvre-la. 🌱";
+
+function createNowUserErrorMarkup() {
+  return `
+    <section class="now now--error" role="alert">
+      <p class="now--error__title">${NOW_USER_ERROR_MESSAGE}</p>
+    </section>
+  `;
+}
 
 let rootContainer = null;
 let onClick = null;
@@ -403,14 +414,8 @@ function render() {
       taskPromptVisible: taskPrompt.visible,
       taskPromptTitle: taskPrompt.title
     });
-  } catch (e) {
-    // Erreur silencieuse en prod : affichage de l’écran d’erreur utilisateur
-    rootContainer.innerHTML = `
-      <section class="now now--error" role="alert">
-        <p class="now--error__title">Impossible d’afficher Que faire ?</p>
-        <pre class="now--error__detail">${escapeHtml(String(e && e.message ? e.message : e))}</pre>
-      </section>
-    `;
+  } catch {
+    rootContainer.innerHTML = createNowUserErrorMarkup();
   }
 }
 
@@ -569,15 +574,9 @@ const nowModule = {
       bindEvents();
       if (refreshTimerId) clearInterval(refreshTimerId);
       refreshTimerId = setInterval(tickClock, 30_000);
-    } catch (err) {
-      // Erreur silencieuse en prod : écran d’erreur dans le conteneur
+    } catch {
       if (container instanceof HTMLElement) {
-        container.innerHTML = `
-          <section class="now now--error" role="alert">
-            <p class="now--error__title">Erreur au chargement de « Que faire ? »</p>
-            <pre class="now--error__detail">${escapeHtml(String(err && err.message ? err.message : err))}</pre>
-          </section>
-        `;
+        container.innerHTML = createNowUserErrorMarkup();
       }
       rootContainer = container instanceof HTMLElement ? container : null;
     }

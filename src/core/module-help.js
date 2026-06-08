@@ -110,6 +110,34 @@ export const MODULES_HELP = {
       'Les distractions visuelles (notifications, onglets, désordre) interrompent le flux de concentration du cerveau TDAH.',
     why: 'Un écran épuré avec une ambiance visuelle douce pour entrer dans la concentration sans friction.',
     tip: 'Associe-le à une session Minuterie pour une concentration complète.'
+  },
+  dashboard: {
+    title: 'Accueil 🏠',
+    problem:
+      "Avec un cerveau TDAH, il est difficile d'avoir une vue d'ensemble sans être submergé par trop d'informations.",
+    why: 'Un tableau de bord personnalisable qui montre uniquement ce qui compte pour toi aujourd\'hui. Tu choisis ce qui s\'affiche.',
+    tip: "Le Ta-Da ! en haut montre ce que tu as accompli aujourd'hui — pas ce qu'il te reste à faire."
+  },
+  notes: {
+    title: 'Bloc-notes 📝',
+    problem:
+      "Certaines pensées importantes ne méritent pas d'être des tâches, mais disparaissent si on ne les note pas quelque part.",
+    why: 'Des post-its numériques pour capturer les idées en cours, les infos temporaires, les choses à retenir cette semaine.',
+    tip: "Utilise une couleur par thème — bleu pour le boulot, vert pour les idées, rouge pour l'urgent."
+  },
+  'planning-boulot': {
+    title: 'Planning 🏢',
+    problem:
+      'Les cerveaux TDAH ont souvent du mal à anticiper leur semaine de travail et à s\'y préparer mentalement.',
+    why: "Un planning de ta semaine de travail pour savoir d'un coup d'œil où tu seras et quand.",
+    tip: "Configure tes sites et horaires une fois dans les réglages — l'app s'en souvient pour toi."
+  },
+  settings: {
+    title: 'Réglages ⚙️',
+    problem:
+      "Une app avec trop de fonctionnalités peut être aussi paralysante qu'une to-do list trop longue.",
+    why: 'Tu contrôles exactement quels outils apparaissent dans ta barre de navigation. Masque ce dont tu n\'as pas besoin.',
+    tip: 'Commence avec 4-5 outils maximum. Tu peux toujours en ajouter plus tard.'
   }
 };
 
