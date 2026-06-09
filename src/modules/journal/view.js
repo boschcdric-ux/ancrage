@@ -167,12 +167,24 @@ function createListView(
   `;
 }
 
-function createEditorView(entry, isSaved = true) {
+function entryHasDeletableContent(entry) {
+  const title = String(entry?.title || '').trim();
+  const text = String(entry?.contentText || '').trim();
+  return Boolean(title || text);
+}
+
+function shouldShowDeleteButton(entry, { isDraft = false } = {}) {
+  if (isDraft) return false;
+  return entryHasDeletableContent(entry);
+}
+
+function createEditorView(entry, isSaved = true, editorState = {}) {
   const safeTitle = escapeHtml(entry?.title || '');
   const statusLabel = isSaved ? 'Sauvegardé' : 'Non sauvegardé';
   const statusClass = isSaved ? 'is-saved' : 'is-unsaved';
   const words = Number(entry?.wordCount) || 0;
   const tagValue = entry?.tagId || '';
+  const showDeleteButton = shouldShowDeleteButton(entry, editorState);
 
   return `
     <section class="journal animate-fade-in">
@@ -234,7 +246,12 @@ function createEditorView(entry, isSaved = true) {
           <button type="button" class="btn btn-secondary journal__action-back" data-journal-back>
             ← Retour
           </button>
-          <button type="button" class="btn btn-secondary journal__action-delete" data-journal-delete>
+          <button
+            type="button"
+            class="btn btn-secondary journal__action-delete"
+            data-journal-delete
+            ${showDeleteButton ? '' : 'hidden'}
+          >
             🗑 Supprimer
           </button>
         </div>
@@ -261,4 +278,11 @@ function createDashboardPreview(entry) {
   `;
 }
 
-export { createListView, createEditorView, createDashboardPreview, PREDEFINED_TAGS };
+export {
+  createListView,
+  createEditorView,
+  createDashboardPreview,
+  entryHasDeletableContent,
+  shouldShowDeleteButton,
+  PREDEFINED_TAGS
+};

@@ -38,8 +38,8 @@ const WEEKDAY_LONG = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendre
 
 let rootContainer = null;
 let entries = [];
-let selectedMood = 3;
-let selectedEnergy = 3;
+let selectedMood = null;
+let selectedEnergy = null;
 let noteText = '';
 let selectedPeriod = '7';
 let historyDisplayCount = 40;
@@ -407,6 +407,7 @@ function applyTodayEntryToForm() {
 }
 
 function saveTodayEntry() {
+  if (selectedMood == null || selectedEnergy == null) return;
   const nextEntry = buildEntry();
   const todayIndex = entries.findIndex((entry) => entry.date === nextEntry.date);
   if (todayIndex >= 0) {
@@ -519,10 +520,9 @@ const moodModule = {
   init(container) {
     rootContainer = container;
     entries = readEntries();
-    const today = findTodayEntry();
-    selectedMood = today?.mood || 3;
-    selectedEnergy = today?.energy || 3;
-    noteText = today?.note || '';
+    selectedMood = null;
+    selectedEnergy = null;
+    noteText = '';
     selectedPeriod = '7';
     historyDisplayCount = 40;
     refreshView();
@@ -547,8 +547,8 @@ const moodModule = {
     onPointHover = null;
     onHistoryScroll = null;
     entries = [];
-    selectedMood = 3;
-    selectedEnergy = 3;
+    selectedMood = null;
+    selectedEnergy = null;
     noteText = '';
     selectedPeriod = '7';
     historyDisplayCount = 40;

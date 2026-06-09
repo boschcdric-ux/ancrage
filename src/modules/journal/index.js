@@ -7,7 +7,14 @@ import Highlight from '@tiptap/extension-highlight';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import { save, load, generateUUID } from '../../core/storage.js';
-import { createListView, createEditorView, createDashboardPreview, PREDEFINED_TAGS } from './view.js';
+import {
+  createListView,
+  createEditorView,
+  createDashboardPreview,
+  entryHasDeletableContent,
+  shouldShowDeleteButton,
+  PREDEFINED_TAGS
+} from './view.js';
 
 const STORAGE_KEY = 'journal:entries';
 
@@ -38,6 +45,7 @@ let activeEntryId = null;
 let editor = null;
 let autoSaveTimer = null;
 let isDirty = false;
+let isDraft = false;
 function stripHtml(html = '') {
   const temp = document.createElement('div');
   temp.innerHTML = String(html || '');
@@ -180,6 +188,22 @@ function updateWordCount(wordCount) {
   if (wordsNode) wordsNode.textContent = `${wordCount} mots`;
 }
 
+function updateDeleteButtonVisibility() {
+  if (!rootContainer) return;
+  const deleteButton = rootContainer.querySelector('[data-journal-delete]');
+  if (!(deleteButton instanceof HTMLButtonElement)) return;
+  const entry = getActiveEntry();
+  deleteButton.hidden = !shouldShowDeleteButton(entry, { isDraft });
+}
+
+function removeUnsavedDraftIfEmpty() {
+  if (!isDraft) return;
+  const entry = getActiveEntry();
+  if (!entry || entryHasDeletableContent(entry)) return;
+  const entryIndex = entries.findIndex((item) => item.id === entry.id);
+  if (entryIndex >= 0) entries.splice(entryIndex, 1);
+}
+
 function updateToolbarState() {
   if (!rootContainer || !editor) return;
   const buttons = rootContainer.querySelectorAll('[data-journal-command]');
@@ -224,10 +248,23 @@ function saveActiveEntry() {
   entry.updatedAt = now;
   entry.dayOfWeek = FRENCH_DAY_NAMES[new Date(entry.date).getDay()] || entry.dayOfWeek;
 
+  if (!entryHasDeletableContent(entry)) {
+    if (isDraft) {
+      isDirty = false;
+      setSaveState(false);
+      updateDeleteButtonVisibility();
+      return false;
+    }
+  }
+
   persistEntries();
+  if (entryHasDeletableContent(entry)) {
+    isDraft = false;
+  }
   isDirty = false;
   setSaveState(true);
   updateWordCount(entry.wordCount);
+  updateDeleteButtonVisibility();
   return true;
 }
 
@@ -314,6 +351,7 @@ function mountEditor() {
       isDirty = true;
       setSaveState(false);
       updateWordCount(words);
+      updateDeleteButtonVisibility();
       updateToolbarState();
     },
     onSelectionUpdate: () => {
@@ -347,8 +385,9 @@ function renderEditor() {
     renderList();
     return;
   }
-  rootContainer.innerHTML = createEditorView(entry, !isDirty);
+  rootContainer.innerHTML = createEditorView(entry, !isDirty, { isDraft });
   mountEditor();
+  updateDeleteButtonVisibility();
   setJournalEditorLayoutActive(true);
   const editorContent = rootContainer.querySelector('.journal__editor-content');
   if (editorContent) editorContent.scrollTop = 0;
@@ -359,15 +398,16 @@ function openEntry(entryId) {
   if (!exists) return;
   activeEntryId = entryId;
   isDirty = false;
+  isDraft = false;
   renderEditor();
 }
 
 function openNewEntry() {
   const entry = createEntry();
   entries.unshift(entry);
-  persistEntries();
   activeEntryId = entry.id;
   isDirty = false;
+  isDraft = true;
   renderEditor();
 }
 
@@ -383,6 +423,7 @@ function deleteActiveEntry() {
   persistEntries();
   activeEntryId = null;
   isDirty = false;
+  isDraft = false;
   renderList();
 
   const undo = window.showUndoToast;
@@ -395,6 +436,7 @@ function deleteActiveEntry() {
       persistEntries();
       activeEntryId = removedEntry.id;
       isDirty = false;
+      isDraft = false;
       renderEditor();
     });
   }
@@ -425,8 +467,10 @@ function handleEditorActions(event) {
     const backButton = target.closest('[data-journal-back]');
     if (backButton instanceof HTMLButtonElement) {
       if (isDirty) saveActiveEntry();
+      removeUnsavedDraftIfEmpty();
       activeEntryId = null;
       isDirty = false;
+      isDraft = false;
       renderList();
       return;
     }
@@ -449,6 +493,7 @@ function handleEditorActions(event) {
     active.updatedAt = Date.now();
     isDirty = true;
     setSaveState(false);
+    updateDeleteButtonVisibility();
     return;
   }
 
@@ -463,7 +508,13 @@ function handleEditorActions(event) {
     active.updatedAt = Date.now();
     isDirty = true;
     setSaveState(false);
-    persistEntries();
+    if (!isDraft || entryHasDeletableContent(active)) {
+      persistEntries();
+      if (entryHasDeletableContent(active)) {
+        isDraft = false;
+      }
+    }
+    updateDeleteButtonVisibility();
   }
 }
 
@@ -553,12 +604,14 @@ const journalModule = {
     journalDateSort = 'desc';
     activeEntryId = null;
     isDirty = false;
+    isDraft = false;
     renderList();
     bindEvents();
   },
 
   destroy() {
     if (isDirty) saveActiveEntry();
+    removeUnsavedDraftIfEmpty();
     stopAutosave();
     destroyEditor();
     setJournalEditorLayoutActive(false);
@@ -579,6 +632,7 @@ const journalModule = {
     journalDateSort = 'desc';
     activeEntryId = null;
     isDirty = false;
+    isDraft = false;
 
     if (rootContainer) {
       rootContainer.innerHTML = '';

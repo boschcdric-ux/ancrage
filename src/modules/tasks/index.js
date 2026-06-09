@@ -46,6 +46,7 @@ let emptyListFadeInAfterAmnesty = false;
 let showFullTags = false;
 let expandedTagTaskId = null;
 let expandedTagTimer = null;
+let expandedTaskId = null;
 
 function normalizeSubtask(subtask) {
   if (!subtask || subtask.id == null || subtask.text == null) return null;
@@ -158,6 +159,7 @@ function performAmnesty() {
   tasks = tasks.filter((t) => t.completed && isCompletedToday(t));
   if (highlightedTaskId && !tasks.some((t) => t.id === highlightedTaskId)) highlightedTaskId = null;
   if (openTagMenuTaskId && !tasks.some((t) => t.id === openTagMenuTaskId)) openTagMenuTaskId = null;
+  if (expandedTaskId && !tasks.some((t) => t.id === expandedTaskId)) expandedTaskId = null;
   if (editingTaskId && !tasks.some((t) => t.id === editingTaskId)) editingTaskId = null;
   editingSubtaskId = null;
 
@@ -258,6 +260,7 @@ function renderList() {
     openTagMenuTaskId,
     showFullTags,
     expandedTagTaskId,
+    expandedTaskId,
     tasks.length === 0,
     useEmptyFadeIn
   );
@@ -354,6 +357,7 @@ function deleteTask(taskId) {
 
   if (highlightedTaskId === taskId) highlightedTaskId = null;
   if (openTagMenuTaskId === taskId) openTagMenuTaskId = null;
+  if (expandedTaskId === taskId) expandedTaskId = null;
   if (editingTaskId === taskId) editingTaskId = null;
   editingSubtaskId = null;
   persistTasks();
@@ -569,6 +573,7 @@ function bindEvents() {
     editingTaskId = null;
     editingSubtaskId = null;
     openTagMenuTaskId = null;
+    expandedTaskId = null;
     persistTasks();
     renderList();
     form.reset();
@@ -654,7 +659,19 @@ function bindEvents() {
         listFilter = tid && TAG_ID_SET.has(tid) ? tid : 'all';
       }
       openTagMenuTaskId = null;
+      expandedTaskId = null;
       renderList();
+      return;
+    }
+
+    const expandTarget = target.closest('[data-task-expand]');
+    if (expandTarget instanceof HTMLElement) {
+      const taskId = expandTarget.dataset.taskExpand;
+      if (taskId) {
+        expandedTaskId = expandedTaskId === taskId ? null : taskId;
+        openTagMenuTaskId = null;
+        renderList();
+      }
       return;
     }
 
@@ -796,6 +813,18 @@ function bindEvents() {
       }
     }
 
+    if (expandedTaskId) {
+      const keepExpanded =
+        target.closest('[data-task-expand]') ||
+        target.closest('.tasks__item-actions') ||
+        target.closest('[data-task-toggle]') ||
+        target.closest('.tasks__tag-menu');
+      if (!keepExpanded) {
+        expandedTaskId = null;
+        setTimeout(() => renderList(), 0);
+      }
+    }
+
     if (editingTaskId) {
       const clickedInsideTaskEditor =
         target.closest(`[data-task-edit-input="${editingTaskId}"]`) ||
@@ -866,6 +895,7 @@ const tasksModule = {
     highlightedTaskId = null;
     editingTaskId = null;
     editingSubtaskId = null;
+    expandedTaskId = null;
     showArchivesView = false;
     amnestyToast = null;
     emptyListFadeInAfterAmnesty = false;
@@ -904,6 +934,7 @@ const tasksModule = {
       openTagMenuTaskId,
       showFullTags,
       expandedTagTaskId,
+      expandedTaskId,
       tasks.length === 0,
       {
         showAmnestyBanner,
@@ -952,6 +983,7 @@ const tasksModule = {
     editingSubtaskId = null;
     listFilter = 'all';
     openTagMenuTaskId = null;
+    expandedTaskId = null;
     tasks = [];
     showAmnestyBanner = false;
     showArchivesView = false;

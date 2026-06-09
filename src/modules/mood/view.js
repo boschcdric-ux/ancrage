@@ -201,7 +201,7 @@ function createScaleButtons(items, selectedValue, kind) {
     <div class="mood__scale-grid" role="radiogroup" aria-label="${kind === 'mood' ? 'Humeur' : 'Énergie'}">
       ${items
         .map((item) => {
-          const selected = selectedValue === item.value;
+          const selected = selectedValue != null && selectedValue === item.value;
           return `
             <button
               type="button"
@@ -279,8 +279,15 @@ function createMoodView({
   selectedPeriod,
   chartIsWeekly = false
 }) {
-  const selectedMoodLabel = moodLevels.find((item) => item.value === selectedMood)?.label || 'Choisir une humeur';
-  const selectedEnergyLabel = energyLevels.find((item) => item.value === selectedEnergy)?.label || 'Choisir une énergie';
+  const selectedMoodLabel =
+    selectedMood != null
+      ? moodLevels.find((item) => item.value === selectedMood)?.label || 'Choisir une humeur'
+      : 'Choisir une humeur';
+  const selectedEnergyLabel =
+    selectedEnergy != null
+      ? energyLevels.find((item) => item.value === selectedEnergy)?.label || 'Choisir une énergie'
+      : 'Choisir une énergie';
+  const canSubmit = selectedMood != null && selectedEnergy != null;
   const periodLabel = periodOptions.find((option) => option.id === selectedPeriod)?.label || '7 jours';
   const hasMoreHistory = historyTotal > history.length;
 
@@ -317,7 +324,7 @@ function createMoodView({
             >${escapeHtml(note || '')}</textarea>
           </div>
 
-          <button type="submit" class="btn btn-primary mood__submit">Enregistrer</button>
+          <button type="submit" class="btn btn-primary mood__submit" ${canSubmit ? '' : 'disabled'}>Enregistrer</button>
         </form>
       </section>
 

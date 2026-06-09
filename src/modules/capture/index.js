@@ -20,6 +20,86 @@ let listExpanded = false;
 let editingCaptureId = null;
 let onFormSubmit = null;
 let onCaptureRootClick = null;
+let captureToastTimer = null;
+let captureToastHost = null;
+
+function ensureCaptureToastHost() {
+  if (captureToastHost instanceof HTMLElement && captureToastHost.isConnected) {
+    return captureToastHost;
+  }
+
+  captureToastHost = document.createElement('div');
+  captureToastHost.className = 'app-capture-toast-host';
+  captureToastHost.setAttribute('aria-live', 'polite');
+  captureToastHost.setAttribute('aria-atomic', 'true');
+  Object.assign(captureToastHost.style, {
+    position: 'fixed',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    width: 'min(calc(100vw - 32px), 560px)',
+    zIndex: '60',
+    pointerEvents: 'none',
+    top: 'calc(env(safe-area-inset-top, 0px) + 60px)',
+    bottom: 'auto'
+  });
+  document.body.appendChild(captureToastHost);
+  return captureToastHost;
+}
+
+function positionCaptureToastHost() {
+  if (!(captureToastHost instanceof HTMLElement)) return;
+
+  const vv = window.visualViewport;
+  if (vv) {
+    const keyboardHeight = window.innerHeight - vv.height - vv.offsetTop;
+    if (keyboardHeight > 80) {
+      captureToastHost.style.top = 'auto';
+      captureToastHost.style.bottom = `${keyboardHeight + 16}px`;
+      return;
+    }
+  }
+
+  captureToastHost.style.bottom = 'auto';
+  captureToastHost.style.top = 'calc(env(safe-area-inset-top, 0px) + 60px)';
+}
+
+function showCaptureToast(message) {
+  if (typeof message !== 'string' || !message.trim()) return;
+
+  const host = ensureCaptureToastHost();
+  positionCaptureToastHost();
+
+  if (captureToastTimer) {
+    clearTimeout(captureToastTimer);
+    captureToastTimer = null;
+  }
+
+  const existing = host.querySelector('[data-capture-toast]');
+  if (existing instanceof HTMLElement) existing.remove();
+
+  const toast = document.createElement('div');
+  toast.className = 'app-undo-toast';
+  toast.setAttribute('role', 'status');
+  toast.dataset.captureToast = 'true';
+  toast.innerHTML = `
+    <div class="app-undo-toast__row">
+      <span class="app-undo-toast__text"></span>
+    </div>
+  `;
+
+  const textNode = toast.querySelector('.app-undo-toast__text');
+  if (textNode instanceof HTMLElement) textNode.textContent = message.trim();
+
+  host.appendChild(toast);
+
+  captureToastTimer = window.setTimeout(() => {
+    captureToastTimer = null;
+    toast.classList.add('is-leaving');
+    window.setTimeout(() => {
+      if (toast.isConnected) toast.remove();
+    }, 220);
+  }, 1500);
+}
 
 function normalizeTagId(value) {
   if (value == null || value === '') return null;
@@ -175,6 +255,7 @@ function bindEvents() {
     form.reset();
     if (tagSelect instanceof HTMLSelectElement) tagSelect.value = '';
     input.focus();
+    showCaptureToast('✅ Capturé !');
   };
 
   onCaptureRootClick = (event) => {
@@ -271,6 +352,14 @@ const capture = {
 
     onFormSubmit = null;
     onCaptureRootClick = null;
+    if (captureToastTimer) {
+      clearTimeout(captureToastTimer);
+      captureToastTimer = null;
+    }
+    if (captureToastHost?.isConnected) {
+      captureToastHost.remove();
+    }
+    captureToastHost = null;
     editingCaptureId = null;
     listFilter = 'all';
     listExpanded = false;
