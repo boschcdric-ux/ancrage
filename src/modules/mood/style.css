@@ -137,6 +137,19 @@
   justify-content: center;
 }
 
+.mood__submit:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.mood__submit:disabled:hover {
+  background: var(--accent);
+  transform: none;
+  box-shadow: none;
+}
+
 .mood__chart-head {
   display: flex;
   justify-content: space-between;

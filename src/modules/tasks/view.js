@@ -60,6 +60,15 @@ function createTasksFilterBar(activeFilter = 'all') {
   `;
 }
 
+function createTaskActionButton(className, label, attrs = '') {
+  return `
+    <button type="button" class="tasks__item-action ${className}" ${attrs}>
+      <span class="tasks__item-action-icon" aria-hidden="true">${label.icon}</span>
+      <span class="tasks__item-action-label">${escapeHtml(label.text)}</span>
+    </button>
+  `;
+}
+
 function createTagMenu(taskId, isOpen) {
   const items = [
     `<button type="button" class="tasks__tag-menu-item" data-task-tag-pick="${taskId}" data-tag-id="">Aucun tag</button>`,
@@ -159,13 +168,17 @@ function createTaskItem(
   editingSubtaskId,
   openTagMenuTaskId,
   showFullTags,
-  expandedTagTaskId
+  expandedTagTaskId,
+  expandedTaskId
 ) {
   const checked = task.completed ? 'checked' : '';
   const isCompletedClass = task.completed ? 'tasks__item--completed' : '';
   const strikeClass = task.completed ? 'tasks__task-text--completed' : '';
   const isHighlightedClass = highlightedTaskId === task.id ? 'animate-bounce-in' : '';
   const isEditing = editingTaskId === task.id;
+  const isExpanded = expandedTaskId === task.id;
+  const isExpandedClass = isExpanded ? 'tasks__item--expanded' : '';
+  const isEditingClass = isEditing ? 'tasks__item--editing' : '';
   const showExpandedTag = expandedTagTaskId === task.id;
   const tagBadge =
     !isEditing && task.tagId
@@ -175,98 +188,80 @@ function createTaskItem(
       : '';
   const menuOpen = openTagMenuTaskId === task.id;
 
-  return `
-    <li class="tasks__item card ${isCompletedClass} ${isHighlightedClass} animate-fade-in">
-      <div class="tasks__item-main">
-        <label class="tasks__task-label">
-          <input
-            type="checkbox"
-            data-task-toggle="${task.id}"
-            ${checked}
-          />
-          <span class="tasks__task-title-row">
-            ${tagBadge}
-            ${
-              isEditing
-                ? `<input
-                  type="text"
-                  class="tasks__inline-input tasks__inline-input--task"
-                  data-task-edit-input="${task.id}"
-                  value="${escapeHtml(task.text)}"
-                  maxlength="180"
-                />`
-                : `<span class="tasks__task-text ${strikeClass}">${escapeHtml(task.text)}</span>`
-            }
-          </span>
-        </label>
+  const titleMarkup = isEditing
+    ? `<input
+        type="text"
+        class="tasks__inline-input tasks__inline-input--task"
+        data-task-edit-input="${task.id}"
+        value="${escapeHtml(task.text)}"
+        maxlength="180"
+      />`
+    : `<span class="tasks__item-text tasks__task-text ${strikeClass}" data-task-expand="${task.id}" role="button" tabindex="0">${escapeHtml(task.text)}</span>`;
 
-        <div class="tasks__actions">
-          ${
-            isEditing
-              ? `
-                <button
-                  type="button"
-                  class="tasks__inline-save"
-                  data-task-edit-save="${task.id}"
-                  aria-label="Enregistrer la tâche"
-                  title="Enregistrer"
-                >
-                  ✓
-                </button>
-                <button
-                  type="button"
-                  class="tasks__inline-cancel"
-                  data-task-edit-cancel="${task.id}"
-                  aria-label="Annuler la modification de la tâche"
-                  title="Annuler"
-                >
-                  ↺
-                </button>
-              `
-              : `
-                <div class="tasks__tag-wrap">
-                  <button
-                    type="button"
-                    class="tasks__tag-btn"
-                    data-task-tag-toggle="${task.id}"
-                    aria-label="Choisir un tag"
-                    aria-expanded="${menuOpen ? 'true' : 'false'}"
-                    aria-haspopup="true"
-                    title="Tag"
-                  >
-                    🏷
-                  </button>
-                  ${createTagMenu(task.id, menuOpen)}
-                </div>
-                <button
-                  type="button"
-                  class="tasks__priority ${task.priority ? 'is-active' : ''}"
-                  data-task-priority="${task.id}"
-                  aria-label="${task.priority ? 'Retirer la priorité' : 'Marquer prioritaire'}"
-                  title="Prioritaire"
-                >
-                  ⭐
-                </button>
-                <button
-                  type="button"
-                  class="tasks__edit"
-                  data-task-edit="${task.id}"
-                  aria-label="Modifier la tâche"
-                  title="Modifier"
-                >
-                  ✎
-                </button>
-              `
-          }
-          <button
-            type="button"
-            class="tasks__delete"
-            data-task-delete="${task.id}"
-            aria-label="Supprimer la tâche"
-            title="Supprimer"
-          >
-            ✕
-          </button>
+  const actionsMarkup = isEditing
+    ? `
+        <button
+          type="button"
+          class="tasks__inline-save"
+          data-task-edit-save="${task.id}"
+          aria-label="Enregistrer la tâche"
+          title="Enregistrer"
+        >
+          ✓
+        </button>
+        <button
+          type="button"
+          class="tasks__inline-cancel"
+          data-task-edit-cancel="${task.id}"
+          aria-label="Annuler la modification de la tâche"
+          title="Annuler"
+        >
+          ↺
+        </button>
+      `
+    : `
+        <div class="tasks__tag-wrap">
+          ${createTaskActionButton(
+            'tasks__tag-btn',
+            { icon: '🏷', text: 'Tag' },
+            `data-task-tag-toggle="${task.id}" aria-label="Choisir un tag" aria-expanded="${menuOpen ? 'true' : 'false'}" aria-haspopup="true"`
+          )}
+          ${createTagMenu(task.id, menuOpen)}
+        </div>
+        ${createTaskActionButton(
+          `tasks__priority ${task.priority ? 'is-active' : ''}`,
+          { icon: '⭐', text: 'Priorité' },
+          `data-task-priority="${task.id}" aria-label="${task.priority ? 'Retirer la priorité' : 'Marquer prioritaire'}"`
+        )}
+        ${createTaskActionButton(
+          'tasks__edit',
+          { icon: '✎', text: 'Modifier' },
+          `data-task-edit="${task.id}" aria-label="Modifier la tâche"`
+        )}
+        ${createTaskActionButton(
+          'tasks__delete',
+          { icon: '✕', text: 'Supprimer' },
+          `data-task-delete="${task.id}" aria-label="Supprimer la tâche"`
+        )}
+      `;
+
+  return `
+    <li class="tasks__item card ${isCompletedClass} ${isHighlightedClass} ${isExpandedClass} ${isEditingClass} animate-fade-in">
+      <div class="tasks__item-main">
+        <input
+          type="checkbox"
+          data-task-toggle="${task.id}"
+          ${checked}
+          aria-label="Marquer la tâche comme terminée"
+        />
+        <div class="tasks__item-content">
+          <div class="tasks__item-text-row">
+            ${tagBadge}
+            ${titleMarkup}
+          </div>
+          <div class="tasks__item-actions">
+            ${actionsMarkup}
+          </div>
         </div>
       </div>
 
@@ -304,6 +299,7 @@ function createTasksList(
   openTagMenuTaskId = null,
   showFullTags = false,
   expandedTagTaskId = null,
+  expandedTaskId = null,
   noTasksInStorage = false,
   emptyWithFadeIn = false
 ) {
@@ -323,7 +319,8 @@ function createTasksList(
             editingSubtaskId,
             openTagMenuTaskId,
             showFullTags,
-            expandedTagTaskId
+            expandedTagTaskId,
+            expandedTaskId
           )
         )
         .join('')}
@@ -404,6 +401,7 @@ function createTasksView(
   openTagMenuTaskId = null,
   showFullTags = false,
   expandedTagTaskId = null,
+  expandedTaskId = null,
   noTasksInStorage = false,
   ui = {}
 ) {
@@ -491,6 +489,7 @@ function createTasksView(
               openTagMenuTaskId,
               showFullTags,
               expandedTagTaskId,
+              expandedTaskId,
               noTasksInStorage,
               emptyListFadeIn
             )}
