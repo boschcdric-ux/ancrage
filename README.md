@@ -7,13 +7,36 @@
 
 Elle s'adapte à toi. Pas l'inverse.
 
+## Commencer maintenant — sans rien installer
+
 <div align="center">
 
-**[▶️ Essayer la démo](https://ancragedemo.netlify.app)**
-&nbsp;&nbsp;•&nbsp;&nbsp;
-*Données locales à ton navigateur — rien n'est synchronisé*
+**[▶️ Ouvrir Ancrage](https://ancragedemo.netlify.app)**
+
+*Fonctionne directement dans ton navigateur.  
+Tes données restent sur ton appareil, nulle part ailleurs.*
 
 </div>
+
+### Installer comme app sur ton téléphone
+
+Ancrage fonctionne comme une vraie app — sans passer par l'App Store.
+
+**Sur iPhone (Safari) :**
+1. Ouvre [ancragedemo.netlify.app](https://ancragedemo.netlify.app) dans Safari
+2. Appuie sur le bouton Partager ↑
+3. Sélectionne "Sur l'écran d'accueil"
+4. Appuie sur "Ajouter"
+
+**Sur Android (Chrome) :**
+1. Ouvre [ancragedemo.netlify.app](https://ancragedemo.netlify.app) dans Chrome
+2. Appuie sur les 3 points ⋮
+3. Sélectionne "Ajouter à l'écran d'accueil"
+
+> ✅ Tous les modules sont disponibles  
+> ✅ Fonctionne hors connexion  
+> ✅ Données sauvegardées sur ton appareil  
+> ✅ Gratuit, sans compte, sans publicité
 
 ---
 
@@ -119,19 +142,23 @@ Chaque décision de design suit les mêmes principes :
 
 ---
 
-## Installation
+## Sync multi-appareils (optionnel)
 
-Ancrage tourne sur un **Raspberry Pi** chez toi — tes données ne quittent jamais ton domicile.
+Tu utilises Ancrage sur plusieurs appareils et tu veux que tes données se synchronisent entre eux ?
 
-👉 **[Lire le guide d'installation complet](INSTALL.md)**
+C'est là qu'intervient le Raspberry Pi — un mini-ordinateur qui tourne chez toi et synchronise tout.
 
-Le guide couvre : Mac, Windows, iPhone, Android — pas à pas, avec captures d'écran.
+> 💡 Ce n'est pas obligatoire.
+> La grande majorité des utilisateurs n'en ont pas besoin.
 
-> 💡 Le Pi consomme ~5W en fonctionnement — environ 5€/an d'électricité.
+👉 **[Guide d'installation complet](INSTALL.md)**
 
+Le guide couvre : Mac, Windows, iPhone, Android — pas à pas.
+
+Ou tester en local sur ton ordinateur :
 ```bash
-# Une fois installé, déployer une mise à jour
-git pull && npm install && ./deploy.sh
+git clone https://github.com/boschcdric-ux/ancrage.git
+cd ancrage && npm install && npm run dev
 ```
 
 ---
