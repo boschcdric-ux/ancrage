@@ -8,6 +8,7 @@ import {
   createTasksFilterBar,
   createTasksArchivesPanel,
   createAmnestyBannerMarkup,
+  createCreateTagSelector,
   PREDEFINED_TAGS,
   computeTideProgress,
   tideLabel,
@@ -32,6 +33,8 @@ let rootContainer = null;
 let tasks = [];
 let listFilter = 'all';
 let openTagMenuTaskId = null;
+let pendingCreateTagId = null;
+let openCreateTagMenu = false;
 let onFormSubmit = null;
 let onClick = null;
 let onChange = null;
@@ -351,6 +354,12 @@ function renderList() {
   }
 
   if (form) form.hidden = showArchivesView;
+
+  const createTagWrap = rootContainer.querySelector('[data-task-create-tag]');
+  if (createTagWrap) {
+    createTagWrap.outerHTML = createCreateTagSelector(pendingCreateTagId, openCreateTagMenu);
+  }
+
   if (mainStack) mainStack.hidden = showArchivesView;
   if (archivesView) archivesView.hidden = !showArchivesView;
   if (archivesFoot) archivesFoot.hidden = showArchivesView;
@@ -384,7 +393,7 @@ function renderList() {
   }
 }
 
-function createTask(text) {
+function createTask(text, tagId = null) {
   return {
     id: generateUUID(),
     text: text.trim(),
@@ -392,7 +401,7 @@ function createTask(text) {
     createdAt: Date.now(),
     completedAt: null,
     subtasks: [],
-    tagId: null,
+    tagId: tagId ?? null,
     priority: false
   };
 }
@@ -657,11 +666,13 @@ function bindEvents() {
       return;
     }
 
-    tasks.unshift(createTask(value));
+    tasks.unshift(createTask(value, pendingCreateTagId));
     highlightedTaskId = null;
     editingTaskId = null;
     editingSubtaskId = null;
     openTagMenuTaskId = null;
+    pendingCreateTagId = null;
+    openCreateTagMenu = false;
     expandedTaskId = null;
     persistTasks();
     renderList();
@@ -772,11 +783,29 @@ function bindEvents() {
       return;
     }
 
+    const createTagPick = target.closest('[data-create-tag-pick]');
+    if (createTagPick instanceof HTMLButtonElement) {
+      const tagId = createTagPick.dataset.tagId ?? '';
+      pendingCreateTagId = normalizeTagId(tagId || null);
+      openCreateTagMenu = false;
+      renderList();
+      return;
+    }
+
+    const createTagToggle = target.closest('[data-create-tag-toggle]');
+    if (createTagToggle instanceof HTMLButtonElement) {
+      openCreateTagMenu = !openCreateTagMenu;
+      openTagMenuTaskId = null;
+      renderList();
+      return;
+    }
+
     const tagToggle = target.closest('[data-task-tag-toggle]');
     if (tagToggle instanceof HTMLButtonElement) {
       const taskId = tagToggle.dataset.taskTagToggle;
       if (!taskId) return;
       openTagMenuTaskId = openTagMenuTaskId === taskId ? null : taskId;
+      openCreateTagMenu = false;
       renderList();
       return;
     }
@@ -906,6 +935,18 @@ function bindEvents() {
       }
     }
 
+    if (openCreateTagMenu) {
+      const insideCreateTagUi =
+        target.closest('[data-task-create-tag]') ||
+        target.closest('[data-create-tag-menu]') ||
+        target.closest('[data-create-tag-toggle]') ||
+        target.closest('[data-create-tag-pick]');
+      if (!insideCreateTagUi) {
+        openCreateTagMenu = false;
+        setTimeout(() => renderList(), 0);
+      }
+    }
+
     if (expandedTaskId) {
       const keepExpanded =
         target.closest('[data-task-expand]') ||
@@ -913,6 +954,8 @@ function bindEvents() {
         target.closest('[data-task-toggle]') ||
         target.closest('.tasks__tag-menu') ||
         target.closest('.tasks__tag-wrap') ||
+        target.closest('[data-task-create-tag]') ||
+        target.closest('[data-create-tag-menu]') ||
         target.closest('.tasks__subtasks-list') ||
         target.closest('.tasks__subtask-form') ||
         target.closest('[data-subtask-toggle]') ||
@@ -996,6 +1039,8 @@ const tasksModule = {
     tasks = readTasks();
     listFilter = 'all';
     openTagMenuTaskId = null;
+    pendingCreateTagId = null;
+    openCreateTagMenu = false;
     highlightedTaskId = null;
     editingTaskId = null;
     editingSubtaskId = null;
@@ -1056,7 +1101,9 @@ const tasksModule = {
         allDone,
         showAnchor: allDone,
         anchorAnimate: false
-      }
+      },
+      pendingCreateTagId,
+      openCreateTagMenu
     );
     bindEvents();
   },
@@ -1095,6 +1142,8 @@ const tasksModule = {
     editingSubtaskId = null;
     listFilter = 'all';
     openTagMenuTaskId = null;
+    pendingCreateTagId = null;
+    openCreateTagMenu = false;
     expandedTaskId = null;
     wasAllDone = false;
     tasks = [];
