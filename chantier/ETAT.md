@@ -3,7 +3,7 @@
 > Ce fichier est la mémoire du chantier. L'agent le lit au début de chaque
 > mission et le met à jour à la fin. Il doit rester factuel et concis.
 
-**Dernière mise à jour :** 2026-07-06 — M05
+**Dernière mise à jour :** 2026-07-06 — M05b
 
 ---
 
@@ -17,7 +17,7 @@
 | M03 | Ménage : code mort et duplications | ✅ faite (en attente validation Cédric) | 2026-07-06 |
 | M04 | Socle design : thèmes, mouvement, typographie | ✅ faite (en attente validation Cédric) | 2026-07-06 |
 | M05 | Signature Tâches : la ligne de flottaison | ✅ faite (en attente validation Cédric) | 2026-07-06 |
-| M05b | Correctif interactions sous-tâches/tag | ⬜ à faire
+| M05b | Correctif interactions sous-tâches/tag | ✅ faite (en attente validation Cédric) | 2026-07-06 |
 
 Statuts : ⬜ à faire · 🔶 en cours · ✅ faite et validée par Cédric · 🛑 bloquée
 
@@ -30,15 +30,15 @@ sans justification écrite.*
 
 | Métrique | Baseline (M00) | Dernière valeur | Mission |
 |---|---|---|---|
-| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M05 |
-| Tests unitaires | 22/22 passés (2 fichiers) | 42/42 passés (6 fichiers) | M05 |
-| Lint | 0 erreur | 0 erreur | M05 |
-| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 275 KB (`index-BOvMyc0Q.js`) | M05 |
-| JS initial (gzip) | 243 KB | 75 KB | M05 |
-| CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 113 KB (`index-DZvOYv93.css`, entrée HTML) | M05 |
+| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M05b |
+| Tests unitaires | 22/22 passés (2 fichiers) | 42/42 passés (6 fichiers) | M05b |
+| Lint | 0 erreur | 0 erreur | M05b |
+| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 275 KB (`index-DTE4qdCO.js`) | M05b |
+| JS initial (gzip) | 243 KB | 76 KB | M05b |
+| CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 113 KB (`index-DZvOYv93.css`, entrée HTML) | M05b |
 | Nombre de chunks JS | 1 | 9 | M01 |
 | Polices woff2 (dist) | — | ~122 KB (7 fichiers) | M04 |
-| Precache PWA | — | 1066 KiB (23 entrées) | M05 |
+| Precache PWA | — | 1067 KiB (23 entrées) | M05b |
 
 Variation bundle M05 : +4,3 KB brut sur le chunk d'entrée JS (275 vs 270 M04) — hors tolérance ±2 KB
 mais +1,5 KB gzip seulement ; justifié par markup SVG inline (houle, ancre, coche) et fonctions tide
@@ -63,6 +63,25 @@ et zéro `#c9a227` dans `tasks/style.css`.
 - CSS entrée : 113 KB brut (`index-DZvOYv93.css`), 18 KB gzip
 - Precache : 1066 KiB
 - Grep contrôle : 0 `!important` et 0 `#c9a227` dans `tasks/style.css`
+
+### Rituel AVANT M05b (2026-07-06)
+
+- Smoke : 20/20 modules, 4/4 shell
+- Unit : 42/42 (6 fichiers)
+- Lint : 0 erreur
+- Build entrée : 275 KB brut (`index-DYqjOxU9.js`), 76 KB gzip
+- CSS entrée : 113 KB brut (`index-DZvOYv93.css`), 18 KB gzip
+- Precache : 1066 KiB
+
+### Rituel APRÈS M05b (2026-07-06)
+
+- Smoke : 20/20 modules, 4/4 shell
+- Unit : 42/42 (6 fichiers)
+- Lint : 0 erreur
+- Build entrée : 275 KB brut (`index-DTE4qdCO.js`), 76 KB gzip (+0,5 KB brut, sélecteurs `closest` supplémentaires)
+- CSS entrée : 113 KB brut (`index-DZvOYv93.css`), 18 KB gzip (inchangé)
+- Precache : 1067 KiB
+- `git diff --stat` : uniquement `src/modules/tasks/index.js` (handler `onPointerDown`)
 
 ### Simulation quota plein (procédure dev, M02)
 
@@ -134,6 +153,10 @@ Vérification automatisée équivalente : `npm run test:unit` — tests `save() 
 - M05 : chips filtre avec compteur du restant ; tâches faites en bas (tri affichage dans view.js).
 - M05 : amnistie — bannière pointillés, sortie `pardon` douce, message « Pardonné. Demain est une autre marée. »
 - M05 : 11 `!important` et `#c9a227` supprimés de `tasks/style.css`.
+- M05b : `keepExpanded` dans `onPointerDown` aligné sur le HTML M05 — `.tasks__subtasks-list`
+  (pas `.tasks__subtasks`, absent du view.js), formulaire sous-tâches, zones tag, édition sous-tâche.
+- M05b : leçon — une mission « présentation seule » doit inclure les handlers `closest(...)` qui
+  dépendent des enveloppes/classes HTML modifiées.
 
 ---
 

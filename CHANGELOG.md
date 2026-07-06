@@ -49,3 +49,10 @@ Historique des modifications du chantier `chantier/redesign`.
 - Cases à cocher custom (trait SVG, anneaux), chips filtre avec compteurs, états vides verbatim.
 - Tests `tide.test.js` (+9 tests, total 42/42). Zéro `!important` dans `tasks/style.css`.
 - Bundle JS entrée : +4,3 KB brut (+1,5 KB gzip) — SVG inline + fonctions tide. CSS entrée : +4 KB.
+
+### M05b — Correctif interactions sous-tâches et tag
+
+- Handler `onPointerDown` : `keepExpanded` élargi pour couvrir sous-tâches, formulaire d'ajout,
+  menu tag et édition inline (aligné sur `view.js` actuel).
+- Garde menu tag renforcée (`[data-task-tag-toggle]`, `[data-task-tag-pick]`).
+- Un seul fichier touché (`tasks/index.js`). Bundle entrée : +0,5 KB brut (sélecteurs JS).
