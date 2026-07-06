@@ -3,7 +3,7 @@
 > Ce fichier est la mémoire du chantier. L'agent le lit au début de chaque
 > mission et le met à jour à la fin. Il doit rester factuel et concis.
 
-**Dernière mise à jour :** 2026-07-06 — M08e
+**Dernière mise à jour :** 2026-07-06 — M09
 
 ---
 
@@ -25,6 +25,7 @@
 | M08c | Capture : popover tag fantôme (display) | ✅ faite (en attente validation Cédric) | 2026-07-06 |
 | M08d | Capture : flash popover à l'ouverture | ✅ faite (en attente validation Cédric) | 2026-07-06 |
 | M08e | Capture : un seul chemin d'ouverture popover | ✅ faite (en attente validation Cédric) | 2026-07-06 |
+| M09 | Signature Respiration : respirer avec la mer | ✅ faite (en attente validation Cédric) | 2026-07-06 |
 
 Statuts : ⬜ à faire · 🔶 en cours · ✅ faite et validée par Cédric · 🛑 bloquée
 
@@ -37,15 +38,15 @@ sans justification écrite.*
 
 | Métrique | Baseline (M00) | Dernière valeur | Mission |
 |---|---|---|---|
-| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M08e |
-| Tests unitaires | 22/22 passés (2 fichiers) | 44/44 passés (7 fichiers) | M08e |
-| Lint | 0 erreur | 0 erreur | M08e |
-| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 283 KB (`index-y54b0APg.js`) | M08e |
-| JS initial (gzip) | 243 KB | 78 KB | M08e |
-| CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 117 KB (`index-DKelf_h_.css`, entrée HTML) | M08e |
+| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M09 |
+| Tests unitaires | 22/22 passés (2 fichiers) | 44/44 passés (7 fichiers) | M09 |
+| Lint | 0 erreur | 0 erreur | M09 |
+| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 283 KB (`index-fv5tNCPv.js`) | M09 |
+| JS initial (gzip) | 243 KB | 78 KB | M09 |
+| CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 117 KB (`index-B1lW4Acg.css`, entrée HTML) | M09 |
 | Nombre de chunks JS | 1 | 9 | M01 |
 | Polices woff2 (dist) | — | ~122 KB (7 fichiers) | M04 |
-| Precache PWA | — | 1079 KiB (23 entrées) | M08e |
+| Precache PWA | — | 1078 KiB (23 entrées) | M09 |
 
 Variation bundle M05 : +4,3 KB brut sur le chunk d'entrée JS (275 vs 270 M04) — hors tolérance ±2 KB
 mais +1,5 KB gzip seulement ; justifié par markup SVG inline (houle, ancre, coche) et fonctions tide
@@ -234,6 +235,27 @@ et zéro `#c9a227` dans `tasks/style.css`.
 - `git diff --stat` : uniquement `capture/index.js` + `capture/view.js`
 - Commits : `refactor:` un seul chemin ouverture popover ; `chore:` clôture M08e
 
+### Rituel AVANT M09 (2026-07-06)
+
+- Smoke : 20/20 modules, 4/4 shell
+- Unit : 44/44 (7 fichiers)
+- Lint : 0 erreur
+- Build entrée : 283 KB brut (`index-y54b0APg.js`), 78 KB gzip
+- CSS entrée : 117 KB brut (`index-DKelf_h_.css`), 19 KB gzip
+- Precache : 1079 KiB
+
+### Rituel APRÈS M09 (2026-07-06)
+
+- Smoke : 20/20 modules, 4/4 shell
+- Unit : 44/44 (7 fichiers)
+- Lint : 0 erreur
+- Build entrée : 283 KB brut (`index-fv5tNCPv.js`), 78 KB gzip (−0,5 KB brut, +0,3 KB gzip — moteur audio vagues)
+- CSS entrée : 117 KB brut (`index-B1lW4Acg.css`), 19 KB gzip (−0,2 KB, styles mer)
+- Precache : 1078 KiB
+- Grep contrôle : 0 `a78bfa`, 0 `!important` dans `breathing/`
+- `git diff --stat` : uniquement `breathing/index.js` + `breathing/style.css` + `breathing/view.js`
+- Commits : `feat:` signature mer + audio ; `chore:` clôture M09
+
 ### Simulation quota plein (procédure dev, M02)
 
 1. `npm run preview`, ouvrir l'app dans le navigateur.
@@ -347,6 +369,16 @@ Vérification automatisée équivalente : `npm run test:unit` — tests `save() 
   externe (clic-dehors, Échap). Leçon patron : **jamais `popovertarget` ET handler JS sur le même
   déclencheur** — un seul maître à bord.
 - M08e : saga Capture finalisée (M07 → M08e) — validation groupée Cédric attendue.
+- M09 : Respiration = 3e signature (l'eau qui mesure → l'eau qui accueille → l'eau qui guide).
+  Orbe supprimé ; la mer monte/descend avec les phases sur le moteur existant (timers inchangés).
+- M09 : moteur audio vagues transplanté depuis la maquette (bruit filtré + enveloppes par phase).
+  Réglage Activé/Désactivé conservé ; `AudioContext` au premier geste ; `stopSound()` en pause/fin.
+- M09 : `setWater(level, seconds, easing)` — LOW=22 / HIGH=82, easings maquette, halo `holding` en rétention.
+- M09 : labels Inspire / Retiens / Expire / Poumons vides ; fin « Mer étale. » + « Séance tenue. »
+- M09 : largeur standard `min(420px, 100%)` centrée — première brique harmonisation largeurs modules.
+  Mission balai largeurs à planifier juste après.
+- M09 : `#a78bfa` et tous les `!important` supprimés de `breathing/style.css`.
+- M09 : mouvement réduit — aucune animation eau/houle ; compte à rebours textuel guide la séance.
 
 ---
 
@@ -359,7 +391,7 @@ Vérification automatisée équivalente : `npm run test:unit` — tests `save() 
 - M00 : chunk JS unique > 500 kB — **Résolu en M01.**
 - M01 : `npm run test:unit` n'incluait pas `registry.test.js` —
   **Corrigé hors mission par Cédric** (script élargi à `src/`).
-- M04 : `breathing/style.css` — cercle actif utilise `#a78bfa` (violet legacy) en dur.
+- M04 : `breathing/style.css` — cercle actif utilise `#a78bfa` (violet legacy) en dur. **Résolu en M09.**
 - M04 : `focus/style.css` — fonds d'ambiance (`#0a0a0f`, `#0a1628`, etc.) codés en dur,
   ne suivent pas les tokens thème.
 - M04 : `journal/style.css` — surligneur jaune `#fef08a` en dur.
