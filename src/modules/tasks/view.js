@@ -264,6 +264,7 @@ function createTaskItem(
         : renderTagDot(task.id, task.tagId)
       : '';
   const menuOpen = openTagMenuTaskId === task.id;
+  const isTagOpenClass = menuOpen ? 'tasks__item--tag-open' : '';
 
   const titleMarkup = isEditing
     ? `<input
@@ -339,7 +340,7 @@ function createTaskItem(
       >⭐</button>`;
 
   return `
-    <li class="tasks__item ${isCompletedClass} ${isJustDoneClass} ${isExpandedClass} ${isEditingClass}" data-task-id="${task.id}">
+    <li class="tasks__item ${isCompletedClass} ${isJustDoneClass} ${isExpandedClass} ${isEditingClass} ${isTagOpenClass}" data-task-id="${task.id}">
       <div class="tasks__item-row">
         ${isEditing ? '' : createTaskCheck(task.id, task.completed, false, isJustDone)}
         <div class="tasks__item-body">
