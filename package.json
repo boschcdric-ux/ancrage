@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "test:smoke": "node scripts/smoke-test.js",
-    "test:unit": "vitest run src/core/ src/modules/mood/",
+    "test:unit": "vitest run src/",
     "lint": "eslint src/ --ext .js",
     "dev": "vite",
     "dev:dev": "vite --mode dev --config vite.config.dev.js",
