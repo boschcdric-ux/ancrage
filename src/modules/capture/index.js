@@ -1,9 +1,14 @@
 import './style.css';
 import { save, load, generateUUID } from '../../core/storage.js';
-import { createCaptureView, createCaptureListBlock, createCaptureFilterBar, PREDEFINED_TAGS } from './view.js';
+import {
+  createCaptureView,
+  createCaptureListBlock,
+  createCaptureFilterBar,
+  createCaptureTagPicker,
+  PREDEFINED_TAGS
+} from './view.js';
 
 const STORAGE_KEY = 'capture:items';
-const MAX_STORED_CAPTURES = 100;
 const MAX_VISIBLE_CAPTURES = 5;
 
 const TAG_ID_SET = new Set(PREDEFINED_TAGS.map((t) => t.id));
@@ -18,87 +23,21 @@ let captures = [];
 let listFilter = 'all';
 let listExpanded = false;
 let editingCaptureId = null;
+let formTagId = null;
+let openFormTagMenu = false;
 let onFormSubmit = null;
 let onCaptureRootClick = null;
-let captureToastTimer = null;
-let captureToastHost = null;
+let onInputInput = null;
+let onKeyDown = null;
+let onPointerDown = null;
 
-function ensureCaptureToastHost() {
-  if (captureToastHost instanceof HTMLElement && captureToastHost.isConnected) {
-    return captureToastHost;
-  }
-
-  captureToastHost = document.createElement('div');
-  captureToastHost.className = 'app-capture-toast-host';
-  captureToastHost.setAttribute('aria-live', 'polite');
-  captureToastHost.setAttribute('aria-atomic', 'true');
-  Object.assign(captureToastHost.style, {
-    position: 'fixed',
-    left: '50%',
-    transform: 'translateX(-50%)',
-    width: 'min(calc(100vw - 32px), 560px)',
-    zIndex: '60',
-    pointerEvents: 'none',
-    top: 'calc(env(safe-area-inset-top, 0px) + 60px)',
-    bottom: 'auto'
-  });
-  document.body.appendChild(captureToastHost);
-  return captureToastHost;
+/** Export test : la persistance ne tronque plus la liste. */
+export function getCapturesToPersist(items) {
+  return items;
 }
 
-function positionCaptureToastHost() {
-  if (!(captureToastHost instanceof HTMLElement)) return;
-
-  const vv = window.visualViewport;
-  if (vv) {
-    const keyboardHeight = window.innerHeight - vv.height - vv.offsetTop;
-    if (keyboardHeight > 80) {
-      captureToastHost.style.top = 'auto';
-      captureToastHost.style.bottom = `${keyboardHeight + 16}px`;
-      return;
-    }
-  }
-
-  captureToastHost.style.bottom = 'auto';
-  captureToastHost.style.top = 'calc(env(safe-area-inset-top, 0px) + 60px)';
-}
-
-function showCaptureToast(message) {
-  if (typeof message !== 'string' || !message.trim()) return;
-
-  const host = ensureCaptureToastHost();
-  positionCaptureToastHost();
-
-  if (captureToastTimer) {
-    clearTimeout(captureToastTimer);
-    captureToastTimer = null;
-  }
-
-  const existing = host.querySelector('[data-capture-toast]');
-  if (existing instanceof HTMLElement) existing.remove();
-
-  const toast = document.createElement('div');
-  toast.className = 'app-undo-toast';
-  toast.setAttribute('role', 'status');
-  toast.dataset.captureToast = 'true';
-  toast.innerHTML = `
-    <div class="app-undo-toast__row">
-      <span class="app-undo-toast__text"></span>
-    </div>
-  `;
-
-  const textNode = toast.querySelector('.app-undo-toast__text');
-  if (textNode instanceof HTMLElement) textNode.textContent = message.trim();
-
-  host.appendChild(toast);
-
-  captureToastTimer = window.setTimeout(() => {
-    captureToastTimer = null;
-    toast.classList.add('is-leaving');
-    window.setTimeout(() => {
-      if (toast.isConnected) toast.remove();
-    }, 220);
-  }, 1500);
+function prefersReducedMotion() {
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
 function normalizeTagId(value) {
@@ -122,7 +61,7 @@ function readCaptures() {
 }
 
 function persistCaptures() {
-  save(STORAGE_KEY, captures.slice(0, MAX_STORED_CAPTURES));
+  save(STORAGE_KEY, getCapturesToPersist(captures));
 }
 
 function filterCapturesForList(items) {
@@ -138,25 +77,47 @@ function getListDisplayState() {
   const filtered = getFilteredCaptures();
   const visible = listExpanded ? filtered : filtered.slice(0, MAX_VISIBLE_CAPTURES);
   const remaining = listExpanded ? 0 : Math.max(0, filtered.length - MAX_VISIBLE_CAPTURES);
-  return { visible, remaining, expanded: listExpanded };
+  return {
+    visible,
+    remaining,
+    expanded: listExpanded,
+    filteredTotal: filtered.length,
+    maxVisible: MAX_VISIBLE_CAPTURES
+  };
 }
 
 function getFormElements() {
-  if (!rootContainer) return { form: null, input: null, label: null, submit: null, tagSelect: null };
+  if (!rootContainer) {
+    return { form: null, input: null, submit: null, counter: null, ack: null, capCard: null, capLayer: null, surface: null };
+  }
   return {
     form: rootContainer.querySelector('[data-capture-form]'),
     input: rootContainer.querySelector('[data-capture-input]'),
-    label: rootContainer.querySelector('[data-capture-label]'),
     submit: rootContainer.querySelector('[data-capture-submit]'),
-    tagSelect: rootContainer.querySelector('[data-capture-tag]')
+    counter: rootContainer.querySelector('[data-capture-counter]'),
+    ack: rootContainer.querySelector('[data-capture-ack]'),
+    capCard: rootContainer.querySelector('[data-cap-card]'),
+    capLayer: rootContainer.querySelector('[data-cap-layer]'),
+    surface: rootContainer.querySelector('[data-cap-surface]')
   };
+}
+
+function getInputAriaLabel() {
+  return editingCaptureId ? LABEL_EDIT_CAPTURE : LABEL_NEW_CAPTURE;
 }
 
 function resetEditingState() {
   editingCaptureId = null;
-  const { label, submit } = getFormElements();
-  if (label) label.textContent = LABEL_NEW_CAPTURE;
+  const { input, submit } = getFormElements();
+  if (input) input.setAttribute('aria-label', LABEL_NEW_CAPTURE);
   if (submit) submit.textContent = BTN_CAPTURE;
+}
+
+function refreshCaptureTagPicker() {
+  if (!rootContainer) return;
+  const wrap = rootContainer.querySelector('[data-capture-tag-wrap]');
+  if (!wrap) return;
+  wrap.outerHTML = createCaptureTagPicker(formTagId || '', openFormTagMenu);
 }
 
 function refreshCaptureList() {
@@ -165,13 +126,77 @@ function refreshCaptureList() {
   const listContainer = rootContainer.querySelector('[data-capture-list]');
   if (!listContainer) return;
 
-  const { visible, remaining, expanded } = getListDisplayState();
-  if (filtersNode) filtersNode.innerHTML = createCaptureFilterBar(listFilter);
+  const { visible, remaining, expanded, filteredTotal, maxVisible } = getListDisplayState();
+  if (filtersNode) filtersNode.innerHTML = createCaptureFilterBar(listFilter, captures);
   listContainer.innerHTML = createCaptureListBlock(visible, {
     noCapturesInStorage: captures.length === 0,
     remaining,
-    expanded
+    expanded,
+    filteredTotal,
+    maxVisible
   });
+}
+
+function updateCharCounter() {
+  const { input, counter } = getFormElements();
+  if (!(input instanceof HTMLTextAreaElement) || !(counter instanceof HTMLElement)) return;
+  const length = input.value.length;
+  if (length >= 200) {
+    counter.textContent = `${length} caractères`;
+    counter.classList.add('is-visible');
+  } else {
+    counter.textContent = '';
+    counter.classList.remove('is-visible');
+  }
+}
+
+function playDropAck() {
+  const { ack } = getFormElements();
+  if (!(ack instanceof HTMLElement)) return;
+  ack.classList.remove('is-playing');
+  void ack.offsetWidth;
+  ack.classList.add('is-playing');
+}
+
+function playDropAnimation() {
+  playDropAck();
+
+  if (prefersReducedMotion()) return;
+
+  const { input, capCard, capLayer, surface } = getFormElements();
+  if (!(input instanceof HTMLTextAreaElement) || !(capCard instanceof HTMLElement) || !(capLayer instanceof HTMLElement)) {
+    return;
+  }
+
+  const cardRect = capCard.getBoundingClientRect();
+  const inputRect = input.getBoundingClientRect();
+  const startY = inputRect.bottom - cardRect.top;
+  const fall = cardRect.height - startY - 14;
+
+  const drop = document.createElement('span');
+  drop.className = 'cap__drop';
+  drop.style.top = `${startY}px`;
+  drop.style.setProperty('--fall', `${fall}px`);
+  capLayer.appendChild(drop);
+
+  drop.addEventListener(
+    'animationend',
+    () => {
+      drop.remove();
+      for (const cls of ['cap__impact', 'cap__impact cap__impact--2']) {
+        const ring = document.createElement('span');
+        ring.className = cls;
+        capLayer.appendChild(ring);
+        ring.addEventListener('animationend', () => ring.remove(), { once: true });
+      }
+      if (surface instanceof HTMLElement) {
+        surface.classList.remove('is-bob');
+        void surface.offsetWidth;
+        surface.classList.add('is-bob');
+      }
+    },
+    { once: true }
+  );
 }
 
 function createCapture(text, tagId) {
@@ -183,17 +208,14 @@ function createCapture(text, tagId) {
   };
 }
 
-function deleteCapture(captureId, form) {
-  const captureIndex = captures.findIndex((capture) => capture.id === captureId);
-  if (captureIndex < 0) return;
-  const removedCapture = normalizeCapture(captures[captureIndex]);
-  if (!removedCapture) return;
-
+function finalizeDelete(captureId, captureIndex, removedCapture, form) {
   if (captureId === editingCaptureId) {
     resetEditingState();
     form.reset();
-    const { tagSelect } = getFormElements();
-    if (tagSelect instanceof HTMLSelectElement) tagSelect.value = '';
+    formTagId = null;
+    openFormTagMenu = false;
+    refreshCaptureTagPicker();
+    updateCharCounter();
   }
 
   captures.splice(captureIndex, 1);
@@ -213,6 +235,26 @@ function deleteCapture(captureId, form) {
   }
 }
 
+function deleteCapture(captureId, form) {
+  const captureIndex = captures.findIndex((capture) => capture.id === captureId);
+  if (captureIndex < 0) return;
+  const removedCapture = normalizeCapture(captures[captureIndex]);
+  if (!removedCapture) return;
+
+  const itemEl = rootContainer?.querySelector(`[data-capture-item="${captureId}"]`);
+  if (itemEl instanceof HTMLElement && !prefersReducedMotion()) {
+    itemEl.classList.add('capture__item--leaving');
+    itemEl.addEventListener(
+      'animationend',
+      () => finalizeDelete(captureId, captureIndex, removedCapture, form),
+      { once: true }
+    );
+    return;
+  }
+
+  finalizeDelete(captureId, captureIndex, removedCapture, form);
+}
+
 function bindEvents() {
   if (!rootContainer) return;
 
@@ -222,9 +264,6 @@ function bindEvents() {
   onFormSubmit = (event) => {
     event.preventDefault();
     const value = input.value.trim();
-    const { tagSelect } = getFormElements();
-    const rawTag = tagSelect instanceof HTMLSelectElement ? tagSelect.value : '';
-    const tagId = normalizeTagId(rawTag);
 
     if (!value) {
       input.classList.remove('animate-shake');
@@ -237,31 +276,69 @@ function bindEvents() {
       if (index === -1) {
         resetEditingState();
         form.reset();
+        formTagId = null;
+        openFormTagMenu = false;
+        refreshCaptureTagPicker();
+        updateCharCounter();
         return;
       }
-      captures[index] = { ...captures[index], text: value, tagId };
+      captures[index] = { ...captures[index], text: value, tagId: formTagId };
       persistCaptures();
       refreshCaptureList();
       form.reset();
-      if (tagSelect instanceof HTMLSelectElement) tagSelect.value = '';
+      formTagId = null;
+      openFormTagMenu = false;
+      refreshCaptureTagPicker();
       resetEditingState();
+      updateCharCounter();
       input.focus();
       return;
     }
 
-    captures.unshift(createCapture(value, tagId));
+    captures.unshift(createCapture(value, formTagId));
     persistCaptures();
-    refreshCaptureList();
     form.reset();
-    if (tagSelect instanceof HTMLSelectElement) tagSelect.value = '';
+    formTagId = null;
+    openFormTagMenu = false;
+    refreshCaptureTagPicker();
+    updateCharCounter();
+    playDropAnimation();
+    setTimeout(() => refreshCaptureList(), 480);
     input.focus();
-    showCaptureToast('✅ Capturé !');
+  };
+
+  onInputInput = () => updateCharCounter();
+
+  onKeyDown = (event) => {
+    if (!(event.target instanceof HTMLTextAreaElement) || !event.target.matches('[data-capture-input]')) {
+      return;
+    }
+    if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+      event.preventDefault();
+      form.requestSubmit();
+    }
   };
 
   onCaptureRootClick = (event) => {
     const target = event.target;
     const origin = target instanceof Element ? target : target.parentElement;
     if (!origin) return;
+
+    const tagToggle = origin.closest('[data-capture-tag-toggle]');
+    if (tagToggle instanceof HTMLButtonElement) {
+      openFormTagMenu = !openFormTagMenu;
+      refreshCaptureTagPicker();
+      return;
+    }
+
+    const tagPick = origin.closest('[data-capture-tag-pick]');
+    if (tagPick instanceof HTMLButtonElement) {
+      const raw = tagPick.dataset.tagId ?? '';
+      formTagId = normalizeTagId(raw || null);
+      openFormTagMenu = false;
+      refreshCaptureTagPicker();
+      return;
+    }
 
     const filterBtn = origin.closest('[data-capture-filter]');
     if (filterBtn instanceof HTMLButtonElement) {
@@ -296,13 +373,14 @@ function bindEvents() {
       if (!item) return;
 
       editingCaptureId = captureId;
+      formTagId = item.tagId;
+      openFormTagMenu = false;
       input.value = item.text;
-      const { label, submit, tagSelect } = getFormElements();
-      if (label) label.textContent = LABEL_EDIT_CAPTURE;
+      input.setAttribute('aria-label', LABEL_EDIT_CAPTURE);
+      const { submit } = getFormElements();
       if (submit) submit.textContent = BTN_SAVE_EDIT;
-      if (tagSelect instanceof HTMLSelectElement) {
-        tagSelect.value = item.tagId || '';
-      }
+      refreshCaptureTagPicker();
+      updateCharCounter();
       input.focus();
       input.setSelectionRange(input.value.length, input.value.length);
       form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -317,8 +395,29 @@ function bindEvents() {
     deleteCapture(captureId, form);
   };
 
+  onPointerDown = (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+
+    if (openFormTagMenu) {
+      const insideTagUi =
+        target.closest('.tagpick') ||
+        target.closest('[data-capture-tag-wrap]') ||
+        target.closest('[data-capture-tag-menu]') ||
+        target.closest('[data-capture-tag-toggle]') ||
+        target.closest('[data-capture-tag-pick]');
+      if (!insideTagUi) {
+        openFormTagMenu = false;
+        refreshCaptureTagPicker();
+      }
+    }
+  };
+
   form.addEventListener('submit', onFormSubmit);
+  input.addEventListener('input', onInputInput);
   rootContainer.addEventListener('click', onCaptureRootClick);
+  rootContainer.addEventListener('keydown', onKeyDown);
+  rootContainer.addEventListener('pointerdown', onPointerDown);
 }
 
 const capture = {
@@ -332,11 +431,15 @@ const capture = {
     listFilter = 'all';
     listExpanded = false;
     editingCaptureId = null;
-    const { visible, remaining, expanded } = getListDisplayState();
-    rootContainer.innerHTML = createCaptureView(visible, listFilter, '', captures.length, {
+    formTagId = null;
+    openFormTagMenu = false;
+    const { visible, remaining, expanded, filteredTotal, maxVisible } = getListDisplayState();
+    rootContainer.innerHTML = createCaptureView(visible, listFilter, formTagId || '', captures, {
       remaining,
-      expanded
-    });
+      expanded,
+      filteredTotal,
+      maxVisible
+    }, openFormTagMenu, getInputAriaLabel());
     bindEvents();
   },
 
@@ -344,23 +447,25 @@ const capture = {
     if (rootContainer && onCaptureRootClick) {
       rootContainer.removeEventListener('click', onCaptureRootClick);
     }
-
-    const form = rootContainer?.querySelector('[data-capture-form]');
-    if (form && onFormSubmit) {
-      form.removeEventListener('submit', onFormSubmit);
+    if (rootContainer && onKeyDown) {
+      rootContainer.removeEventListener('keydown', onKeyDown);
     }
+    if (rootContainer && onPointerDown) {
+      rootContainer.removeEventListener('pointerdown', onPointerDown);
+    }
+
+    const { form, input } = getFormElements();
+    if (form && onFormSubmit) form.removeEventListener('submit', onFormSubmit);
+    if (input && onInputInput) input.removeEventListener('input', onInputInput);
 
     onFormSubmit = null;
     onCaptureRootClick = null;
-    if (captureToastTimer) {
-      clearTimeout(captureToastTimer);
-      captureToastTimer = null;
-    }
-    if (captureToastHost?.isConnected) {
-      captureToastHost.remove();
-    }
-    captureToastHost = null;
+    onInputInput = null;
+    onKeyDown = null;
+    onPointerDown = null;
     editingCaptureId = null;
+    formTagId = null;
+    openFormTagMenu = false;
     listFilter = 'all';
     listExpanded = false;
     captures = [];
