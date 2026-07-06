@@ -531,7 +531,9 @@ function bindEvents() {
     updateCharCounter();
     playDropAnimation();
     setTimeout(() => refreshCaptureList(), 480);
-    input.focus();
+    const coarsePointer = window.matchMedia('(pointer: coarse)').matches;
+    if (coarsePointer) input.blur();
+    else input.focus();
   };
 
   onInputInput = () => updateCharCounter();

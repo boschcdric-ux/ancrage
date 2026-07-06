@@ -77,7 +77,7 @@
   padding: 13px 15px;
   color: var(--text-primary);
   font-family: inherit;
-  font-size: 0.96rem;
+  font-size: max(1rem, 16px);
   line-height: 1.45;
   transition: border-color var(--duration-fast), box-shadow var(--duration-fast);
   outline: none;
