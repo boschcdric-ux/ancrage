@@ -60,17 +60,21 @@ const BREATHING_PROGRAMS = [
 
 const PHASE_ORDER = ['inhale', 'hold', 'exhale', 'holdAfterExhale'];
 
-const ORB_MIN = 120;
-const ORB_MAX = 200;
+const WATER_LOW = 22;
+const WATER_HIGH = 82;
 
 let rootContainer = null;
 let onClick = null;
+let onKeyDown = null;
 let tickId = null;
 let audioCtx = null;
+let noiseSrc = null;
+let filterNode = null;
+let gainNode = null;
 
 let screen = 'idle';
-let settingsOpen = false;
 let reducedMotion = false;
+let waterLevel = WATER_LOW;
 
 let durationMin = 5;
 let programId = 'coherence';
@@ -80,8 +84,6 @@ let cycleIndex = 1;
 let totalCycles = 30;
 let phase = 'inhale';
 let phaseRemainingMs = 5000;
-
-let orbSnapNext = false;
 
 function getProgram() {
   return BREATHING_PROGRAMS.find((p) => p.id === programId) || BREATHING_PROGRAMS[2];
@@ -141,89 +143,95 @@ function prefersReducedMotion() {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
-function getAudioContext() {
-  if (!audioCtx) {
-    const Ctx = window.AudioContext || window.webkitAudioContext;
-    if (!Ctx) return null;
-    audioCtx = new Ctx();
+function initAudio() {
+  if (audioCtx) return;
+  const Ctx = window.AudioContext || window.webkitAudioContext;
+  if (!Ctx) return;
+  audioCtx = new Ctx();
+  const len = audioCtx.sampleRate * 2;
+  const buf = audioCtx.createBuffer(1, len, audioCtx.sampleRate);
+  const d = buf.getChannelData(0);
+  let last = 0;
+  for (let i = 0; i < len; i++) {
+    const w = Math.random() * 2 - 1;
+    last = (last + 0.04 * w) / 1.04;
+    d[i] = last * 4.2;
   }
-  return audioCtx;
+  noiseSrc = audioCtx.createBufferSource();
+  noiseSrc.buffer = buf;
+  noiseSrc.loop = true;
+  filterNode = audioCtx.createBiquadFilter();
+  filterNode.type = 'lowpass';
+  filterNode.frequency.value = 280;
+  filterNode.Q.value = 0.6;
+  gainNode = audioCtx.createGain();
+  gainNode.gain.value = 0;
+  noiseSrc.connect(filterNode).connect(gainNode).connect(audioCtx.destination);
+  noiseSrc.start();
 }
 
 async function resumeAudioIfNeeded() {
-  const ctx = getAudioContext();
-  if (!ctx) return;
-  if (ctx.state === 'suspended') {
+  if (!audioCtx) return;
+  if (audioCtx.state === 'suspended') {
     try {
-      await ctx.resume();
+      await audioCtx.resume();
     } catch {
       /* ignore */
     }
   }
 }
 
-function playPhaseBell(phaseType) {
-  if (!soundEnabled) return;
-  const ctx = getAudioContext();
-  if (!ctx) return;
-
-  const t = ctx.currentTime;
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  osc.type = 'sine';
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-
-  const peak = 0.04;
-
-  switch (phaseType) {
-    case 'inhale':
-      osc.frequency.setValueAtTime(440, t);
-      osc.frequency.exponentialRampToValueAtTime(528, t + 0.8);
-      gain.gain.setValueAtTime(0.0001, t);
-      gain.gain.exponentialRampToValueAtTime(peak, t + 0.12);
-      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.8);
-      osc.start(t);
-      osc.stop(t + 0.85);
-      break;
-    case 'hold':
-      osc.frequency.setValueAtTime(528, t);
-      gain.gain.setValueAtTime(0.0001, t);
-      gain.gain.exponentialRampToValueAtTime(peak * 0.65, t + 0.08);
-      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
-      osc.start(t);
-      osc.stop(t + 0.55);
-      break;
-    case 'exhale':
-      osc.frequency.setValueAtTime(528, t);
-      osc.frequency.exponentialRampToValueAtTime(396, t + 0.8);
-      gain.gain.setValueAtTime(0.0001, t);
-      gain.gain.exponentialRampToValueAtTime(peak, t + 0.12);
-      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.8);
-      osc.start(t);
-      osc.stop(t + 0.85);
-      break;
-    case 'holdAfterExhale':
-      osc.frequency.setValueAtTime(396, t);
-      gain.gain.setValueAtTime(0.0001, t);
-      gain.gain.exponentialRampToValueAtTime(peak * 0.25, t + 0.05);
-      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.3);
-      osc.start(t);
-      osc.stop(t + 0.35);
-      break;
-    default:
-      return;
+function waveSound(phaseName, dur) {
+  if (!soundEnabled || !audioCtx || !gainNode || !filterNode) return;
+  const now = audioCtx.currentTime;
+  const g = gainNode.gain;
+  const f = filterNode.frequency;
+  g.cancelScheduledValues(now);
+  f.cancelScheduledValues(now);
+  g.setValueAtTime(g.value, now);
+  f.setValueAtTime(f.value, now);
+  if (phaseName === 'inhale') {
+    g.linearRampToValueAtTime(0.16, now + dur * 0.85);
+    f.exponentialRampToValueAtTime(900, now + dur);
+  } else if (phaseName === 'exhale') {
+    g.setValueAtTime(Math.max(g.value, 0.14), now);
+    g.linearRampToValueAtTime(0.015, now + dur);
+    f.exponentialRampToValueAtTime(240, now + dur);
+  } else {
+    g.linearRampToValueAtTime(0.05, now + 0.6);
+    f.exponentialRampToValueAtTime(320, now + 0.6);
   }
 }
 
-function orbTargetPx(forPhase) {
-  if (reducedMotion) return Math.round((ORB_MIN + ORB_MAX) / 2);
-  if (forPhase === 'inhale' || forPhase === 'hold') return ORB_MAX;
-  return ORB_MIN;
+function stopSound() {
+  if (!audioCtx || !gainNode) return;
+  const now = audioCtx.currentTime;
+  gainNode.gain.cancelScheduledValues(now);
+  gainNode.gain.setValueAtTime(gainNode.gain.value, now);
+  gainNode.gain.linearRampToValueAtTime(0, now + 1.2);
 }
 
-function shouldSnapOrb(forPhase) {
-  return forPhase === 'inhale' || forPhase === 'exhale';
+function setWater(level, seconds, easing) {
+  const sea = rootContainer?.querySelector('[data-breathing-sea]');
+  if (!(sea instanceof HTMLElement)) return;
+  sea.style.setProperty('--breath-ms', `${seconds * 1000}ms`);
+  sea.style.setProperty('--breath-ease', easing);
+  sea.style.setProperty('--level', `${level}%`);
+  waterLevel = level;
+}
+
+function applyPhaseWater(phaseName, durSec) {
+  if (reducedMotion) return;
+  if (phaseName === 'inhale') {
+    setWater(WATER_HIGH, durSec, 'cubic-bezier(.35,0,.35,1)');
+  } else if (phaseName === 'exhale') {
+    setWater(WATER_LOW, durSec, 'cubic-bezier(.45,0,.55,1)');
+  }
+}
+
+function onPhaseStart(phaseName, durSec) {
+  waveSound(phaseName, durSec);
+  applyPhaseWater(phaseName, durSec);
 }
 
 function phaseLabelText() {
@@ -231,14 +239,18 @@ function phaseLabelText() {
     case 'inhale':
       return 'Inspire';
     case 'hold':
-      return 'Rétention';
+      return 'Retiens';
     case 'exhale':
       return 'Expire';
     case 'holdAfterExhale':
-      return 'Pause';
+      return 'Poumons vides';
     default:
       return '';
   }
+}
+
+function isHoldingPhase() {
+  return phase === 'hold' || phase === 'holdAfterExhale';
 }
 
 function countdownFromMs(ms) {
@@ -268,65 +280,54 @@ function sessionProgressRatio() {
   return Math.min(1, Math.max(0, (completedCycles * cycleSec + elapsedInCycle) / totalSec));
 }
 
+function seaCardAriaLabel() {
+  if (screen === 'idle') return 'Commencer la session de respiration';
+  if (screen === 'complete') return 'Séance terminée — toucher pour recommencer';
+  if (screen === 'running') return 'Session en cours — toucher pour mettre en pause';
+  if (screen === 'paused') return 'Session en pause — toucher pour reprendre';
+  return '';
+}
+
+function phaseDisplayText() {
+  if (screen === 'idle') return 'Respire avec la mer';
+  if (screen === 'complete') return 'Mer étale.';
+  if (screen === 'paused') return 'En pause';
+  return phaseLabelText();
+}
+
+function phaseHintText() {
+  if (screen === 'idle') return "Touche l'eau pour commencer";
+  if (screen === 'complete') return 'Séance tenue.';
+  return '';
+}
+
 function buildState() {
-  const program = getProgram();
-  const orbPx = orbTargetPx(phase);
-  const midOrb = Math.round((ORB_MIN + ORB_MAX) / 2);
-  const orbSizePx =
-    screen === 'idle'
-      ? midOrb
-      : orbSnapNext
-        ? phase === 'inhale'
-          ? ORB_MIN
-          : ORB_MAX
-        : orbPx;
-
-  const orbPhase =
-    screen === 'idle' ? 'idle' : screen === 'complete' ? 'idle' : phase;
-
   return {
     screen,
     durationMin,
-    program,
     programs: BREATHING_PROGRAMS,
     programId,
     soundEnabled,
     reducedMotion,
     cycleIndex,
     totalCycles,
-    phase,
-    orbPhase,
-    phaseLabel: screen === 'running' || screen === 'paused' ? phaseLabelText() : '',
-    phaseCountdown: screen === 'running' || screen === 'paused' ? countdownFromMs(phaseRemainingMs) : '',
-    phaseDurationSec: getPhaseDurationSec(phase),
-    orbSizePx,
-    sessionProgress: screen === 'running' || screen === 'paused' ? sessionProgressRatio() : 0,
-    settingsOpen
+    phaseWord: phaseDisplayText(),
+    phaseCount:
+      screen === 'running' || screen === 'paused' ? countdownFromMs(phaseRemainingMs) : 0,
+    phaseHint: phaseHintText(),
+    waterLevel,
+    holding: screen === 'running' && isHoldingPhase(),
+    sessionProgress:
+      screen === 'running' || screen === 'paused' ? sessionProgressRatio() : screen === 'complete' ? 1 : 0,
+    seaCardLabel: seaCardAriaLabel()
   };
 }
 
-function render() {
+function render(opts = {}) {
   if (!rootContainer) return;
   rootContainer.innerHTML = createBreathingView(buildState());
-  if (orbSnapNext && (screen === 'running' || screen === 'paused')) {
-    const orb = rootContainer.querySelector('[data-breathing-orb]');
-    if (orb instanceof HTMLElement) {
-      void orb.offsetWidth;
-      const target = orbTargetPx(phase);
-      const dur = getPhaseDurationSec(phase) * 1000;
-      const ease = 'cubic-bezier(0.4, 0, 0.2, 1)';
-      const animateSize = shouldSnapOrb(phase);
-      orb.style.transition = reducedMotion
-        ? 'none'
-        : animateSize
-          ? `width ${dur}ms ${ease}, height ${dur}ms ${ease}, background-color 1s ease, border-color 1s ease`
-          : 'background-color 1s ease, border-color 1s ease';
-      if (animateSize) {
-        orb.style.width = `${target}px`;
-        orb.style.height = `${target}px`;
-      }
-    }
-    orbSnapNext = false;
+  if (opts.applyPhase && screen === 'running') {
+    onPhaseStart(phase, opts.phaseDurSec ?? getPhaseDurationSec(phase));
   }
 }
 
@@ -334,6 +335,27 @@ function clearTick() {
   if (tickId != null) {
     clearInterval(tickId);
     tickId = null;
+  }
+}
+
+function updateLiveDom() {
+  const countEl = rootContainer?.querySelector('.breathing__phase-count');
+  if (countEl) {
+    const n = countdownFromMs(phaseRemainingMs);
+    countEl.textContent = n > 0 ? `${n} s` : '';
+  }
+  const wordEl = rootContainer?.querySelector('.breathing__phase-word');
+  if (wordEl) wordEl.textContent = phaseDisplayText();
+  const cyclesEl = rootContainer?.querySelector('.breathing__cycles');
+  if (cyclesEl) cyclesEl.textContent = `cycle ${cycleIndex} / ${totalCycles}`;
+  const lineEl = rootContainer?.querySelector('.breathing__session-line');
+  if (lineEl instanceof HTMLElement) {
+    const pct = Math.min(100, Math.max(0, sessionProgressRatio() * 100));
+    lineEl.style.setProperty('--session', `${pct}%`);
+  }
+  const card = rootContainer?.querySelector('[data-breathing-sea-card]');
+  if (card) {
+    card.classList.toggle('breathing__sea-card--holding', screen === 'running' && isHoldingPhase());
   }
 }
 
@@ -346,9 +368,7 @@ function onPhaseBoundary() {
   if (nextPhase) {
     phase = nextPhase;
     phaseRemainingMs = getPhaseDurationSec(phase) * 1000;
-    playPhaseBell(phase);
-    orbSnapNext = shouldSnapOrb(phase);
-    render();
+    render({ applyPhase: true });
     return;
   }
 
@@ -360,9 +380,7 @@ function onPhaseBoundary() {
   cycleIndex += 1;
   phase = phases[0];
   phaseRemainingMs = getPhaseDurationSec(phase) * 1000;
-  playPhaseBell(phase);
-  orbSnapNext = shouldSnapOrb(phase);
-  render();
+  render({ applyPhase: true });
 }
 
 function tick() {
@@ -373,25 +391,12 @@ function tick() {
     onPhaseBoundary();
     return;
   }
-  const timeEl = rootContainer?.querySelector('.breathing__countdown');
-  if (timeEl) timeEl.textContent = String(countdownFromMs(phaseRemainingMs));
-  const labelEl = rootContainer?.querySelector('.breathing__phase-text');
-  if (labelEl) labelEl.textContent = phaseLabelText();
-  const meta = rootContainer?.querySelector('.breathing__session-meta');
-  if (meta) meta.textContent = `Cycle ${cycleIndex} / ${totalCycles}`;
-  const bar = rootContainer?.querySelector('.breathing__progress-bar');
-  if (bar instanceof HTMLElement) {
-    bar.style.width = `${Math.min(100, Math.max(0, sessionProgressRatio() * 100))}%`;
-  }
-  const wrap = rootContainer?.querySelector('.breathing__progress');
-  if (wrap) {
-    const pct = Math.round(sessionProgressRatio() * 100);
-    wrap.setAttribute('aria-valuenow', String(pct));
-  }
+  updateLiveDom();
 }
 
 function finishSessionSuccess() {
   clearTick();
+  stopSound();
   appendSessionRecord({
     date: new Date().toISOString().slice(0, 10),
     duration: durationMin,
@@ -400,10 +405,14 @@ function finishSessionSuccess() {
   });
   screen = 'complete';
   render();
+  if (!reducedMotion) setWater(WATER_LOW, 3, 'ease-out');
 }
 
 function startSession() {
-  void resumeAudioIfNeeded();
+  if (soundEnabled) {
+    initAudio();
+    void resumeAudioIfNeeded();
+  }
   reducedMotion = prefersReducedMotion();
   const s = readSettings();
   durationMin = s.durationMin;
@@ -415,9 +424,8 @@ function startSession() {
   phase = phases[0];
   phaseRemainingMs = getPhaseDurationSec(phase) * 1000;
   screen = 'running';
-  orbSnapNext = true;
-  playPhaseBell(phase);
-  render();
+  waterLevel = WATER_LOW;
+  render({ applyPhase: true });
   clearTick();
   tickId = window.setInterval(tick, 250);
 }
@@ -426,31 +434,42 @@ function pauseSession() {
   if (screen !== 'running') return;
   screen = 'paused';
   clearTick();
+  stopSound();
   render();
 }
 
 function resumeSession() {
   if (screen !== 'paused') return;
   screen = 'running';
-  render();
+  const durSec = phaseRemainingMs / 1000;
+  render({ applyPhase: true, phaseDurSec: durSec });
   tickId = window.setInterval(tick, 250);
 }
 
 function stopSession() {
   clearTick();
+  stopSound();
   screen = 'idle';
   phase = 'inhale';
   cycleIndex = 1;
   totalCycles = computeTotalCycles();
+  waterLevel = WATER_LOW;
   render();
+  if (!reducedMotion) setWater(WATER_LOW, 3, 'ease-out');
 }
 
-function resetToIdleAfterComplete() {
-  screen = 'idle';
-  phase = 'inhale';
-  cycleIndex = 1;
-  totalCycles = computeTotalCycles();
-  render();
+function toggleSeaCard() {
+  if (screen === 'idle' || screen === 'complete') {
+    startSession();
+    return;
+  }
+  if (screen === 'running') {
+    pauseSession();
+    return;
+  }
+  if (screen === 'paused') {
+    resumeSession();
+  }
 }
 
 function weekSessionCount() {
@@ -474,17 +493,30 @@ function hasSessionToday() {
 
 function bindEvents() {
   if (!rootContainer) return;
+
+  onKeyDown = (event) => {
+    const card = event.target instanceof HTMLElement ? event.target.closest('[data-breathing-sea-card]') : null;
+    if (!card) return;
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      toggleSeaCard();
+    }
+  };
+
   onClick = (event) => {
     const target = event.target;
     if (!(target instanceof HTMLElement)) return;
 
-    if (target.closest('[data-breathing-settings]')) {
-      settingsOpen = !settingsOpen;
-      render();
-      return;
+    if (target.closest('[data-breathing-sea-card]') && !target.closest('[data-breathing-pause], [data-breathing-resume], [data-breathing-stop]')) {
+      const inControls = target.closest('.breathing__controls');
+      if (!inControls) {
+        toggleSeaCard();
+        return;
+      }
     }
 
     if (target.closest('[data-breathing-set-duration]')) {
+      if (screen !== 'idle' && screen !== 'complete') return;
       const btn = target.closest('[data-breathing-set-duration]');
       const v = btn instanceof HTMLElement ? Number(btn.dataset.breathingSetDuration) : NaN;
       if ([3, 5, 10].includes(v)) {
@@ -497,6 +529,7 @@ function bindEvents() {
     }
 
     if (target.closest('[data-breathing-set-program]')) {
+      if (screen !== 'idle' && screen !== 'complete') return;
       const btn = target.closest('[data-breathing-set-program]');
       const id = btn instanceof HTMLElement ? btn.dataset.breathingSetProgram : '';
       if (BREATHING_PROGRAMS.some((p) => p.id === id)) {
@@ -512,13 +545,17 @@ function bindEvents() {
     if (soundBtn instanceof HTMLElement && soundBtn.dataset.breathingToggleSound != null) {
       soundEnabled = soundBtn.dataset.breathingToggleSound === '1';
       writeSettings({ durationMin, soundEnabled, programId });
-      render();
-      return;
-    }
-
-    if (target.closest('[data-breathing-orb-start]')) {
-      settingsOpen = false;
-      startSession();
+      if (soundEnabled) {
+        initAudio();
+        void resumeAudioIfNeeded();
+      } else {
+        stopSound();
+      }
+      if (screen === 'running' && soundEnabled) {
+        render({ applyPhase: true, phaseDurSec: phaseRemainingMs / 1000 });
+      } else {
+        render();
+      }
       return;
     }
 
@@ -534,21 +571,22 @@ function bindEvents() {
 
     if (target.closest('[data-breathing-stop]')) {
       stopSession();
-      return;
-    }
-
-    if (target.closest('[data-breathing-new]')) {
-      resetToIdleAfterComplete();
     }
   };
+
   rootContainer.addEventListener('click', onClick);
+  rootContainer.addEventListener('keydown', onKeyDown);
 }
 
 function unbindEvents() {
   if (rootContainer && onClick) {
     rootContainer.removeEventListener('click', onClick);
   }
+  if (rootContainer && onKeyDown) {
+    rootContainer.removeEventListener('keydown', onKeyDown);
+  }
   onClick = null;
+  onKeyDown = null;
 }
 
 const breathingModule = {
@@ -565,15 +603,16 @@ const breathingModule = {
     programId = s.programId;
     totalCycles = computeTotalCycles();
     screen = 'idle';
-    settingsOpen = false;
     phase = 'inhale';
     cycleIndex = 1;
+    waterLevel = WATER_LOW;
     render();
     bindEvents();
   },
 
   destroy() {
     clearTick();
+    stopSound();
     unbindEvents();
     screen = 'idle';
     if (rootContainer) {

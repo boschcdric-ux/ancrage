@@ -1,345 +1,351 @@
 .breathing {
   font-family: var(--font-family);
-  min-height: min(100dvh, calc(100vh - 6rem));
+  width: min(420px, 100%);
+  margin: 0 auto;
+  padding: var(--space-4) var(--space-3) var(--space-8);
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  align-items: stretch;
-  justify-content: space-between;
-  max-width: 24rem;
-  margin: 0 auto;
-  padding: var(--space-4) var(--space-4) var(--space-8);
-  box-sizing: border-box;
+  gap: var(--space-4);
   background: var(--bg-primary);
   color: var(--text-primary);
 }
 
-.breathing__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-3);
+/* ---------- La mer (le guide) ---------- */
+.breathing__sea-card {
+  position: relative;
+  height: 380px;
+  border-radius: 24px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  isolation: isolate;
+  cursor: pointer;
 }
 
-.breathing__titles {
+.breathing__sea-card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.breathing__sea {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: var(--level, 22%);
+  background: linear-gradient(to bottom, var(--water-front), var(--water-back) 60%);
+  transition: height var(--breath-ms, 1000ms) var(--breath-ease, ease-in-out);
+}
+
+.breathing__sea-waves {
+  position: absolute;
+  top: -18px;
+  left: 0;
+  width: 200%;
+  height: 20px;
+}
+
+.breathing__sea-waves path {
+  fill: var(--water-front);
+}
+
+.breathing__sea-waves--back path {
+  fill: var(--water-back);
+}
+
+.breathing__sea-waves--back {
+  animation: breathing-drift 15s linear infinite;
+}
+
+.breathing__sea-waves--front {
+  animation: breathing-drift 10s linear infinite reverse;
+}
+
+@keyframes breathing-drift {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+.breathing__sea-card--holding .breathing__sea {
+  box-shadow: 0 -12px 40px var(--water-glow);
+}
+
+.breathing__sea-card--holding .breathing__sea-waves--back,
+.breathing__sea-card--holding .breathing__sea-waves--front {
+  animation-duration: 26s, 18s;
+}
+
+.breathing__phase {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.breathing__phase-word {
+  font-family: var(--font-display);
+  font-weight: var(--font-bold);
+  font-size: 2rem;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  transition: opacity var(--duration-normal) var(--ease-out);
+}
+
+.breathing__sea-card--idle .breathing__phase-word {
+  font-size: 1.5rem;
+}
+
+.breathing__phase-count {
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-base);
+  color: var(--text-secondary);
+  min-height: 1.25em;
+}
+
+.breathing__phase-hint {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+.breathing__session-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 3px;
+  background: var(--accent);
+  width: var(--session, 0%);
+  transition: width 1s linear;
+  z-index: 3;
+  border-radius: 0 2px 2px 0;
+}
+
+.breathing__cycles {
+  position: absolute;
+  bottom: 10px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  z-index: 2;
+}
+
+.breathing__sea-card--done .breathing__phase-word {
+  color: var(--accent);
+}
+
+/* ---------- Contrôles session ---------- */
+.breathing__controls {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: center;
+}
+
+.breathing__controls[hidden] {
+  display: none;
+}
+
+.breathing__ctl {
+  padding: 10px 18px;
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: var(--font-bold);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background var(--duration-fast), transform var(--duration-fast) var(--ease-spring);
+}
+
+.breathing__ctl:hover {
+  background: var(--bg-hover);
+}
+
+.breathing__ctl:active {
+  transform: scale(0.95);
+}
+
+.breathing__ctl--primary {
+  background: var(--accent);
+  color: var(--text-on-accent);
+  border-color: transparent;
+}
+
+.breathing__ctl--primary:hover {
+  background: var(--accent-hover);
+}
+
+/* ---------- Programmes ---------- */
+.breathing__progs {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+  padding: var(--space-4);
+}
+
+.breathing__progs-title {
+  margin: 0 0 10px;
+  font-size: var(--text-xs);
+  font-weight: var(--font-bold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.breathing__prog-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.breathing__prog {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  text-align: left;
+  padding: 11px 12px;
+  border-radius: var(--radius-lg);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background var(--duration-fast), border-color var(--duration-fast);
+}
+
+.breathing__prog:hover:not(:disabled) {
+  background: var(--bg-hover);
+}
+
+.breathing__prog.is-active {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.breathing__prog:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.breathing__prog-emoji {
+  font-size: 1.2rem;
+  flex: none;
+}
+
+.breathing__prog-body {
   flex: 1;
   min-width: 0;
 }
 
-.breathing__title {
-  margin: 0;
-  font-size: var(--text-lg);
-  font-weight: var(--font-semibold);
-  color: var(--text-primary);
-  letter-spacing: 0.02em;
-  line-height: 1.3;
-}
-
-.breathing__subtitle {
-  margin: var(--space-1) 0 0;
-  font-size: var(--text-sm);
-  color: var(--text-muted);
-  line-height: 1.4;
-}
-
-.breathing__gear {
-  flex-shrink: 0;
-  width: 40px;
-  height: 40px;
-  border: none;
-  border-radius: var(--radius-full);
-  background: transparent;
-  color: var(--text-muted);
-  font-size: var(--text-lg);
-  cursor: pointer;
-  opacity: 0.65;
-  transition: opacity var(--duration-fast) var(--ease-out);
-}
-
-.breathing__gear:hover {
-  opacity: 1;
-}
-
-.breathing__center {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 14rem;
-  gap: var(--space-4);
-}
-
-.breathing__orb-wrap {
-  position: relative;
-  width: 220px;
-  height: 220px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  padding: 0;
-  background: transparent;
-}
-
-.breathing__orb-wrap--clickable {
-  cursor: pointer;
-}
-
-.breathing__orb-wrap--clickable:hover .breathing__orb {
-  transform: scale(1.04);
-  opacity: 0.92;
-}
-
-.breathing__orb-wrap--clickable:active .breathing__orb {
-  transform: scale(0.97);
-}
-
-.breathing__orb {
-  position: absolute;
-  border-radius: var(--radius-full);
-  box-sizing: border-box;
-  will-change: width, height, background-color;
-  transition: background-color 1s ease, border-color 1s ease, transform var(--duration-normal) var(--ease-out), opacity var(--duration-normal) var(--ease-out);
-}
-
-.breathing__orb--idle {
-  background: var(--accent-soft);
-  border: 2px solid var(--accent);
-}
-
-.breathing__orb--inhale {
-  background: color-mix(in srgb, var(--accent) 30%, var(--bg-primary));
-  border: 2px solid color-mix(in srgb, var(--accent) 45%, transparent);
-}
-
-.breathing__orb--hold {
-  background: color-mix(in srgb, #a78bfa 30%, var(--bg-primary));
-  border: 2px solid color-mix(in srgb, #a78bfa 45%, transparent);
-}
-
-.breathing__orb--exhale {
-  background: color-mix(in srgb, var(--success) 20%, var(--bg-primary));
-  border: 2px solid color-mix(in srgb, var(--success) 40%, transparent);
-}
-
-.breathing__orb--holdAfterExhale {
-  background: color-mix(in srgb, var(--text-secondary) 15%, var(--bg-primary));
-  border: 2px solid color-mix(in srgb, var(--text-secondary) 30%, transparent);
-}
-
-.breathing__orb.is-paused {
-  filter: grayscale(0.15);
-  opacity: 0.85;
-}
-
-.breathing__orb-label {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  pointer-events: none;
-  text-align: center;
-  padding: var(--space-2);
-}
-
-.breathing__phase-text {
-  font-size: var(--text-2xl);
+.breathing__prog-label {
+  display: block;
   font-weight: var(--font-bold);
+  font-size: var(--text-sm);
+}
+
+.breathing__prog.is-active .breathing__prog-label {
   color: var(--accent);
-  line-height: 1.2;
 }
 
-.breathing__countdown {
-  font-size: var(--text-xl);
-  font-weight: var(--font-medium);
-  color: var(--text-secondary);
+.breathing__prog-desc {
+  display: block;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+.breathing__prog-rhythm {
+  flex: none;
   font-variant-numeric: tabular-nums;
-  min-height: 1.5em;
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
 }
 
-.breathing__session-meta {
-  margin: 0;
+.breathing__row {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.breathing__row-label {
+  font-size: var(--text-xs);
+  font-weight: var(--font-bold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  width: 100%;
+}
+
+.breathing__chip {
+  padding: 7px 14px;
+  border-radius: var(--radius-full);
   font-size: var(--text-sm);
   color: var(--text-secondary);
-  text-align: center;
-}
-
-.breathing__session-meta--idle {
-  color: var(--text-muted);
-}
-
-.breathing__progress {
-  width: 100%;
-  max-width: 280px;
-  height: 6px;
-  border-radius: var(--radius-full);
   background: var(--bg-tertiary);
-  overflow: hidden;
-}
-
-.breathing__progress--hidden {
-  visibility: hidden;
-}
-
-.breathing__progress-bar {
-  height: 100%;
-  background: var(--accent);
-  border-radius: var(--radius-full);
-  transition: width 400ms var(--ease-default);
-}
-
-.breathing__footer {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  padding-top: var(--space-4);
-  min-height: 0;
-}
-
-.breathing__btn-main {
-  width: 100%;
-  min-height: 48px;
-}
-
-.breathing__actions-row {
-  display: flex;
-  gap: var(--space-3);
-  width: 100%;
-}
-
-.breathing__btn-half {
-  flex: 1;
-  min-height: 48px;
-}
-
-.breathing__settings-panel {
-  margin-top: var(--space-4);
-  padding: var(--space-4);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
-.breathing__settings-title {
-  margin: 0;
-  font-size: var(--text-xs);
-  font-weight: var(--font-semibold);
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.breathing__settings-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-}
-
-.breathing__chip.is-active {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-  color: var(--accent);
-}
-
-.breathing__programs {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-2);
-}
-
-.breathing__program-card {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-1);
-  padding: var(--space-3);
-  border: 2px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--bg-secondary);
-  color: var(--text-primary);
+  border: 1px solid var(--border);
   cursor: pointer;
-  text-align: left;
-  transition: border-color var(--duration-fast) var(--ease-out), background var(--duration-fast) var(--ease-out);
+  transition: background var(--duration-fast), border-color var(--duration-fast), color var(--duration-fast);
 }
 
-.breathing__program-card:hover {
+.breathing__chip:hover:not(:disabled) {
   background: var(--bg-hover);
 }
 
-.breathing__program-card.is-active {
-  border-color: var(--accent);
+.breathing__chip.is-active {
   background: var(--accent-soft);
-}
-
-.breathing__program-card:nth-child(5) {
-  grid-column: 1 / -1;
-  max-width: calc(50% - var(--space-1));
-  justify-self: center;
-}
-
-.breathing__program-emoji {
-  font-size: var(--text-2xl);
-  line-height: 1;
-}
-
-.breathing__program-label {
-  font-size: var(--text-sm);
-  font-weight: var(--font-semibold);
-  color: var(--text-primary);
-  line-height: 1.3;
-}
-
-.breathing__program-card.is-active .breathing__program-label {
   color: var(--accent);
-}
-
-.breathing__program-desc {
-  font-size: var(--text-xs);
-  color: var(--text-muted);
-  line-height: 1.35;
-}
-
-.breathing__complete {
-  text-align: center;
-  padding: var(--space-6) var(--space-4);
-}
-
-.breathing__complete-spark {
-  display: block;
-  font-size: 2.5rem;
-  line-height: 1;
-  margin-bottom: var(--space-3);
-}
-
-.breathing__complete-title {
-  margin: 0;
-  font-size: var(--text-xl);
+  border-color: var(--accent);
   font-weight: var(--font-bold);
-  color: var(--text-primary);
 }
 
-.breathing__complete-sub {
-  margin: var(--space-2) 0 0;
-  font-size: var(--text-lg);
-  color: var(--text-secondary);
+.breathing__chip:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+/* ---------- Mouvement réduit ---------- */
+.breathing__sea-card--reduced .breathing__sea {
+  transition: none;
+}
+
+.breathing__sea-card--reduced .breathing__sea-waves--back,
+.breathing__sea-card--reduced .breathing__sea-waves--front {
+  animation: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .breathing__orb {
-    transition: background-color 1s ease, border-color 1s ease !important;
-    transform: none !important;
-  }
-
-  .breathing__orb-wrap--clickable:hover .breathing__orb,
-  .breathing__orb-wrap--clickable:active .breathing__orb {
-    transform: none;
-    opacity: 1;
-  }
-
-  .breathing__progress-bar {
+  .breathing__sea {
     transition: none;
   }
+
+  .breathing__sea-waves--back,
+  .breathing__sea-waves--front {
+    animation: none;
+  }
+
+  .breathing__session-line {
+    transition: none;
+  }
+}
+
+/* ---------- Widget dashboard (inchangé) ---------- */
+.breathing-dashboard__text {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.breathing-dashboard__cta {
+  width: 100%;
 }
