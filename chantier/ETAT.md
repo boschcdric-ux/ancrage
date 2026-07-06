@@ -3,7 +3,7 @@
 > Ce fichier est la mémoire du chantier. L'agent le lit au début de chaque
 > mission et le met à jour à la fin. Il doit rester factuel et concis.
 
-**Dernière mise à jour :** 2026-07-06 — M02
+**Dernière mise à jour :** 2026-07-06 — M03
 
 ---
 
@@ -14,7 +14,7 @@
 | M00 | Baseline et branche de chantier | ✅ faite et validée par Cédric | 2026-07-06 |
 | M01 | Restaurer le code-splitting (registry) | ✅ faite et validée par Cédric | 2026-07-06 |
 | M02 | Fiabiliser la sauvegarde | ✅ faite et validée par Cédric | 2026-07-06 |
-| M03 | Ménage : code mort et duplications | ⬜ à faire | — |
+| M03 | Ménage : code mort et duplications | ✅ faite (en attente validation Cédric) | 2026-07-06 |
 
 Statuts : ⬜ à faire · 🔶 en cours · ✅ faite et validée par Cédric · 🛑 bloquée
 
@@ -27,15 +27,30 @@ sans justification écrite.*
 
 | Métrique | Baseline (M00) | Dernière valeur | Mission |
 |---|---|---|---|
-| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M02 |
-| Tests unitaires | 22/22 passés (2 fichiers) | 27/27 passés (3 fichiers) | M02 |
-| Lint | 0 erreur | 0 erreur | M02 |
-| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 266 KB (`index-DrIUZi_X.js`) | M02 |
-| JS initial (gzip) | 243 KB | 72 KB | M02 |
+| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M03 |
+| Tests unitaires | 22/22 passés (2 fichiers) | 29/29 passés (4 fichiers) | M03 |
+| Lint | 0 erreur | 0 erreur | M03 |
+| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 270 KB (`index-B472g6Nm.js`) | M03 |
+| JS initial (gzip) | 243 KB | 74 KB | M03 |
 | CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 106 KB (`index-DuW-ywyn.css`, entrée HTML) | M01 |
 | Nombre de chunks JS | 1 | 9 | M01 |
 
-Variation bundle M02 : +1,2 KB sur le chunk d'entrée (266 vs 265 KB M01) — dans la tolérance ±2 KB.
+Variation bundle M03 : −0,9 KB sur le chunk d'entrée (270 vs 271 KB M02) — dans la tolérance ±2 KB.
+
+### Rituel AVANT M03 (2026-07-06)
+
+- Smoke : 20/20 modules, 4/4 shell
+- Unit : 27/27 (3 fichiers)
+- Lint : 0 erreur
+- Build entrée : 271 KB brut (`index-DrIUZi_X.js`), 74 KB gzip
+
+### Rituel APRÈS M03 (2026-07-06)
+
+- Smoke : 20/20 modules, 4/4 shell
+- Unit : 29/29 (4 fichiers, +2 tests `localDateString`)
+- Lint : 0 erreur
+- Build entrée : 270 KB brut (`index-B472g6Nm.js`), 74 KB gzip
+- Grep contrôle : 0 `function escapeHtml` dans `src/modules`, 0 `function localDateString` dans `src/modules`
 
 ### Simulation quota plein (procédure dev, M02)
 
@@ -85,6 +100,13 @@ Vérification automatisée équivalente : `npm run test:unit` — tests `save() 
   `main.js` (cooldown 10 s) — aucun appelant de `save()` modifié.
 - M02 : rétention backups quotidiens réduite de 7 à 3 snapshots — PocketBase
   reste la sauvegarde longue durée.
+- M03 : `escapeHtml` — 8 copies identiques (replaceAll + 5 caractères) fusionnées ;
+  `settings` et `breathing` avaient une variante sans échappement apostrophe →
+  import canonique (comportement enrichi, sans régression visuelle attendue).
+- M03 : `formatDateFr` divergent renommé — mood → `formatDateShortFr` (sans année),
+  journal → `formatDateFullFr` (Intl long + année) ; budget `formatDateLongFr` inchangé
+  (format manuel « d mois y »).
+- M03 : `localDateString` identique tasks/dashboard → `core/format.js` + 2 tests.
 
 ---
 
