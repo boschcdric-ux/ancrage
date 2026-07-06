@@ -56,3 +56,11 @@ Historique des modifications du chantier `chantier/redesign`.
   menu tag et édition inline (aligné sur `view.js` actuel).
 - Garde menu tag renforcée (`[data-task-tag-toggle]`, `[data-task-tag-pick]`).
 - Un seul fichier touché (`tasks/index.js`). Bundle entrée : +0,5 KB brut (sélecteurs JS).
+
+### M06 — Tâches : réparer tag, bordure, tag à la création
+
+- Menu tag visible : `overflow: visible` via `.tasks__item--tag-open` quand menu ouvert.
+- Barre d'ajout : bordure unique sur le conteneur `.tasks__form`.
+- Tag à la création : bouton 🏷 dans la barre, `createTask(text, tagId)`, reset après ajout.
+- Deux commits (`fix:` puis `feat:`). Bundle JS entrée : +1,8 KB brut / +0,4 KB gzip (dans tolérance).
+- CSS entrée : +1 KB (sélecteur création). Série Tâches M05–M06 prête pour validation groupée.
