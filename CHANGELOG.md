@@ -94,3 +94,12 @@ Historique des modifications du chantier `chantier/redesign`.
 - `composant-popover-tag.html` = patron canonique pour tout futur menu flottant.
 - Saga Capture (M07 + M08 + M08b) prête pour validation groupée.
 - Bundle JS entrée : +0,35 KB brut / +0,13 KB gzip (dans tolérance ±2 KB). CSS entrée : −0,3 KB.
+
+### M08c — Capture : popover tag fantôme (display)
+
+- Correctif : `display: flex` retiré de `.tagpick__popover` au repos — écrasait le masquage
+  natif (`display: none`) et affichait le menu en permanence dans le flux sous le champ.
+- Flex appliqué uniquement sur `:popover-open` (API native) et `.tagpick__popover--fallback.is-open`
+  (repli). Aucun changement JS.
+- Saga Capture (M07 + M08 + M08b + M08c) prête pour validation groupée.
+- Bundle JS entrée : inchangé. CSS entrée : +0,04 KB (négligeable).
