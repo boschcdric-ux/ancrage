@@ -5,7 +5,7 @@ import {
   createMoodView,
   createDashboardMoodWidget,
   createHistory,
-  formatDateFr
+  formatDateShortFr
 } from './view.js';
 
 const STORAGE_KEY = 'mood:entries';
@@ -323,7 +323,7 @@ function updateTooltipFromPoint(target) {
   const isWeekly = target.dataset.isWeekly === 'true';
 
   if (!hasData) {
-    tooltip.textContent = `${formatDateFr(date)} · Pas de donnée pour ce jour.`;
+    tooltip.textContent = `${formatDateShortFr(date)} · Pas de donnée pour ce jour.`;
     return;
   }
 
@@ -336,7 +336,7 @@ function updateTooltipFromPoint(target) {
   const note = (target.dataset.note || '').trim();
   const prefix = isWeekly ? 'Semaine du ' : '';
 
-  tooltip.textContent = `${prefix}${formatDateFr(date)} · ${moodEmoji} Humeur ${moodDisplay}/5 · ${energyEmoji} Énergie ${energyDisplay}/5 · ${note || 'Sans note'}`;
+  tooltip.textContent = `${prefix}${formatDateShortFr(date)} · ${moodEmoji} Humeur ${moodDisplay}/5 · ${energyEmoji} Énergie ${energyDisplay}/5 · ${note || 'Sans note'}`;
 }
 
 function updateHistoryList() {

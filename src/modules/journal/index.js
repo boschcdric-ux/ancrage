@@ -122,7 +122,7 @@ function getSortedEntries() {
   });
 }
 
-function formatDateFr(date) {
+function formatDateFullFr(date) {
   const dt = new Date(date);
   if (Number.isNaN(dt.getTime())) return '';
   return new Intl.DateTimeFormat('fr-FR', {
@@ -147,7 +147,7 @@ function getVisibleEntries() {
 
   return list.map((entry) => ({
     ...entry,
-    formattedDate: formatDateFr(entry.date)
+    formattedDate: formatDateFullFr(entry.date)
   }));
 }
 
@@ -643,7 +643,7 @@ const journalModule = {
   getDashboardWidget() {
     const latest = readEntries()
       .sort((a, b) => b.updatedAt - a.updatedAt)
-      .map((entry) => ({ ...entry, formattedDate: formatDateFr(entry.date) }))[0];
+      .map((entry) => ({ ...entry, formattedDate: formatDateFullFr(entry.date) }))[0];
 
     return {
       title: 'Journal',
