@@ -10,6 +10,62 @@ const PREDEFINED_TAGS = [
   { id: 'personnel', emoji: '👤', label: 'Personnel' }
 ];
 
+const CHECK_SVG =
+  '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+
+const WATER_BACK_SVG =
+  '<svg class="tasks__water-back" viewBox="0 0 1200 24" preserveAspectRatio="none" aria-hidden="true"><path d="M0,13 C75,4 150,22 300,13 C450,4 525,22 600,13 C675,4 750,22 900,13 C1050,4 1125,22 1200,13 L1200,24 L0,24 Z"/></svg>';
+
+const WATER_FRONT_SVG =
+  '<svg class="tasks__water-front" viewBox="0 0 1200 24" preserveAspectRatio="none" aria-hidden="true"><path d="M0,15 C100,8 200,20 300,15 C400,10 500,20 600,15 C700,8 800,20 900,15 C1000,10 1100,20 1200,15 L1200,24 L0,24 Z"/></svg>';
+
+const ANCHOR_SVG =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="5" r="2.4"/><path d="M12 7.4V21M12 21c-4.4 0-8-3.2-8-7.4M12 21c4.4 0 8-3.2 8-7.4M2.8 13.6H6M18 13.6h3.2"/></svg>';
+
+/**
+ * Progression de marée 0..1 — « commencer compte ».
+ * Tâche faite = 1 ; tâche non faite avec sous-tâches = (faites/total) × 0,6.
+ */
+function computeTideProgress(tasks) {
+  if (!tasks.length) return 0;
+  let sum = 0;
+  for (const task of tasks) {
+    if (task.completed) {
+      sum += 1;
+      continue;
+    }
+    if (task.subtasks?.length) {
+      const done = task.subtasks.filter((s) => s.completed).length;
+      sum += (done / task.subtasks.length) * 0.6;
+    }
+  }
+  return sum / tasks.length;
+}
+
+/** Libellé de marée selon la progression et l'état « tout fait ». */
+function tideLabel(progress, allDone) {
+  if (allDone) return 'journée tenue';
+  if (progress <= 0.02) return 'mer étale';
+  if (progress < 0.45) return 'la mer monte';
+  if (progress < 0.85) return 'la marée est belle';
+  return 'presque marée haute';
+}
+
+function tideLevelPercent(progress) {
+  return `${(8 + progress * 74).toFixed(1)}%`;
+}
+
+function getFilterChipCount(allTasks, filterId) {
+  if (filterId === 'all') return allTasks.filter((t) => !t.completed).length;
+  if (filterId === 'priority') return allTasks.filter((t) => t.priority && !t.completed).length;
+  return allTasks.filter((t) => t.tagId === filterId && !t.completed).length;
+}
+
+function renderChipCount(count) {
+  if (count <= 0) return '';
+  return `<span class="tasks__filter-chip-n">${count}</span>`;
+}
+
 function renderTagBadge(tagId) {
   const tag = PREDEFINED_TAGS.find((t) => t.id === tagId);
   if (!tag) return '';
@@ -22,9 +78,10 @@ function renderTagDot(taskId, tagId) {
   return `<button type="button" class="tasks__tag-dot shared-tag-badge--${tag.id}" data-task-tag-preview="${taskId}" aria-label="Afficher le tag ${escapeHtml(tag.label)}" title="${escapeHtml(tag.label)}"></button>`;
 }
 
-function createTasksFilterBar(activeFilter = 'all') {
-  const tagButtons = PREDEFINED_TAGS.map(
-    (t) => `
+function createTasksFilterBar(activeFilter = 'all', allTasks = []) {
+  const tagButtons = PREDEFINED_TAGS.map((t) => {
+    const count = getFilterChipCount(allTasks, t.id);
+    return `
     <button
       type="button"
       class="tasks__filter-chip ${activeFilter === t.id ? 'is-active' : ''}"
@@ -32,10 +89,13 @@ function createTasksFilterBar(activeFilter = 'all') {
       data-task-filter-tag="${t.id}"
       aria-pressed="${activeFilter === t.id ? 'true' : 'false'}"
     >
-      ${t.emoji} ${escapeHtml(t.label)}
+      ${t.emoji} ${escapeHtml(t.label)}${renderChipCount(count)}
     </button>
-  `
-  ).join('');
+  `;
+  }).join('');
+
+  const allCount = getFilterChipCount(allTasks, 'all');
+  const prioCount = getFilterChipCount(allTasks, 'priority');
 
   return `
     <div class="tasks__filters" role="toolbar" aria-label="Filtrer les tâches">
@@ -45,7 +105,7 @@ function createTasksFilterBar(activeFilter = 'all') {
         data-task-filter="all"
         aria-pressed="${activeFilter === 'all' ? 'true' : 'false'}"
       >
-        Toutes
+        Toutes${renderChipCount(allCount)}
       </button>
       ${tagButtons}
       <button
@@ -54,7 +114,7 @@ function createTasksFilterBar(activeFilter = 'all') {
         data-task-filter="priority"
         aria-pressed="${activeFilter === 'priority' ? 'true' : 'false'}"
       >
-        ⭐ Prioritaires
+        ⭐ Prioritaires${renderChipCount(prioCount)}
       </button>
     </div>
   `;
@@ -85,33 +145,51 @@ function createTagMenu(taskId, isOpen) {
   `;
 }
 
-function createSubtaskItem(subtask, editingSubtaskId) {
-  const checked = subtask.completed ? 'checked' : '';
-  const completedClass = subtask.completed ? 'tasks__subtask-text--completed' : '';
+function createTaskCheck(taskId, completed, isSubtask = false, justDone = false) {
+  const subClass = isSubtask ? ' tasks__check--sub' : '';
+  const justClass = justDone ? ' tasks__check--just-done' : '';
+  const doneClass = completed && !justDone ? ' tasks__check--done' : '';
+  const label = isSubtask ? '' : 'Marquer la tâche comme terminée';
+  const dataAttr = isSubtask ? `data-subtask-toggle="${taskId}"` : `data-task-toggle="${taskId}"`;
+
+  return `
+    <label class="tasks__check-wrap${subClass}">
+      <input
+        type="checkbox"
+        class="tasks__check-input"
+        ${dataAttr}
+        ${completed ? 'checked' : ''}
+        aria-label="${escapeHtml(label)}"
+      />
+      <span class="tasks__check${justClass}${doneClass}" aria-hidden="true">${CHECK_SVG}</span>
+    </label>
+  `;
+}
+
+function createSubtaskItem(subtask, editingSubtaskId, parentJustDone = false) {
+  const completedClass = subtask.completed ? 'tasks__subtask--completed' : '';
   const isEditing = editingSubtaskId === subtask.id;
 
   return `
-    <li class="tasks__subtask card">
+    <li class="tasks__subtask ${completedClass}">
       <div class="tasks__subtask-main">
-        <label class="tasks__subtask-label">
-          <input
-            type="checkbox"
-            data-subtask-toggle="${subtask.id}"
-            ${checked}
-          />
-          ${
-            isEditing
-              ? `<input
+        ${
+          isEditing
+            ? ''
+            : createTaskCheck(subtask.id, subtask.completed, true, parentJustDone && subtask.completed)
+        }
+        ${
+          isEditing
+            ? `<input
                   type="text"
                   class="tasks__inline-input tasks__inline-input--subtask"
                   data-subtask-edit-input="${subtask.id}"
                   value="${escapeHtml(subtask.text)}"
                   maxlength="140"
                 />`
-              : `<span class="tasks__subtask-text ${completedClass}">${escapeHtml(subtask.text)}</span>`
-          }
-        </label>
-        <div class="tasks__actions">
+            : `<span class="tasks__subtask-text">${escapeHtml(subtask.text)}</span>`
+        }
+        <div class="tasks__subtask-actions">
           ${
             isEditing
               ? `
@@ -171,13 +249,12 @@ function createTaskItem(
   expandedTagTaskId,
   expandedTaskId
 ) {
-  const checked = task.completed ? 'checked' : '';
   const isCompletedClass = task.completed ? 'tasks__item--completed' : '';
-  const strikeClass = task.completed ? 'tasks__task-text--completed' : '';
-  const isHighlightedClass = highlightedTaskId === task.id ? 'animate-bounce-in' : '';
-  const isEditing = editingTaskId === task.id;
+  const isJustDone = highlightedTaskId === task.id && task.completed;
+  const isJustDoneClass = isJustDone ? 'tasks__item--just-done' : '';
   const isExpanded = expandedTaskId === task.id;
   const isExpandedClass = isExpanded ? 'tasks__item--expanded' : '';
+  const isEditing = editingTaskId === task.id;
   const isEditingClass = isEditing ? 'tasks__item--editing' : '';
   const showExpandedTag = expandedTagTaskId === task.id;
   const tagBadge =
@@ -196,7 +273,13 @@ function createTaskItem(
         value="${escapeHtml(task.text)}"
         maxlength="180"
       />`
-    : `<span class="tasks__item-text tasks__task-text ${strikeClass}" data-task-expand="${task.id}" role="button" tabindex="0">${escapeHtml(task.text)}</span>`;
+    : `<span class="tasks__item-text" data-task-expand="${task.id}" role="button" tabindex="0">${escapeHtml(task.text)}</span>`;
+
+  const subtaskDone = task.subtasks.filter((s) => s.completed).length;
+  const subtaskProgress =
+    task.subtasks.length > 0
+      ? `<div class="tasks__subtasks-progress">${subtaskDone} / ${task.subtasks.length} étapes</div>`
+      : '';
 
   const actionsMarkup = isEditing
     ? `
@@ -229,14 +312,14 @@ function createTaskItem(
           ${createTagMenu(task.id, menuOpen)}
         </div>
         ${createTaskActionButton(
-          `tasks__priority ${task.priority ? 'is-active' : ''}`,
-          { icon: '⭐', text: 'Priorité' },
-          `data-task-priority="${task.id}" aria-label="${task.priority ? 'Retirer la priorité' : 'Marquer prioritaire'}"`
-        )}
-        ${createTaskActionButton(
           'tasks__edit',
           { icon: '✎', text: 'Modifier' },
           `data-task-edit="${task.id}" aria-label="Modifier la tâche"`
+        )}
+        ${createTaskActionButton(
+          'tasks__subtask-add',
+          { icon: '＋', text: 'Étape' },
+          `data-task-expand="${task.id}" aria-label="Ajouter une étape"`
         )}
         ${createTaskActionButton(
           'tasks__delete',
@@ -245,33 +328,34 @@ function createTaskItem(
         )}
       `;
 
+  const priorityBtn = isEditing
+    ? ''
+    : `<button
+        type="button"
+        class="tasks__priority-star ${task.priority ? 'is-active' : ''}"
+        data-task-priority="${task.id}"
+        aria-pressed="${task.priority ? 'true' : 'false'}"
+        aria-label="${task.priority ? 'Retirer la priorité' : 'Marquer prioritaire'}"
+      >⭐</button>`;
+
   return `
-    <li class="tasks__item card ${isCompletedClass} ${isHighlightedClass} ${isExpandedClass} ${isEditingClass} animate-fade-in">
-      <div class="tasks__item-main">
-        <input
-          type="checkbox"
-          data-task-toggle="${task.id}"
-          ${checked}
-          aria-label="Marquer la tâche comme terminée"
-        />
-        <div class="tasks__item-content">
-          <div class="tasks__item-text-row">
-            ${tagBadge}
-            ${titleMarkup}
-          </div>
-          <div class="tasks__item-actions">
-            ${actionsMarkup}
-          </div>
+    <li class="tasks__item ${isCompletedClass} ${isJustDoneClass} ${isExpandedClass} ${isEditingClass}" data-task-id="${task.id}">
+      <div class="tasks__item-row">
+        ${isEditing ? '' : createTaskCheck(task.id, task.completed, false, isJustDone)}
+        <div class="tasks__item-body">
+          ${titleMarkup}
         </div>
+        ${priorityBtn}
+        ${tagBadge}
       </div>
 
-      <div class="tasks__subtasks">
+      <div class="tasks__item-detail">
         ${
           task.subtasks.length
-            ? `<ul class="tasks__subtasks-list">${task.subtasks
-                .map((subtask) => createSubtaskItem(subtask, editingSubtaskId))
+            ? `<ul class="tasks__subtasks-list">${subtaskProgress}${task.subtasks
+                .map((subtask) => createSubtaskItem(subtask, editingSubtaskId, isJustDone))
                 .join('')}</ul>`
-            : '<p class="tasks__subtasks-empty">Aucune sous-tâche.</p>'
+            : ''
         }
 
         <form class="tasks__subtask-form" data-subtask-form="${task.id}">
@@ -282,10 +366,14 @@ function createTaskItem(
             placeholder="Nouvelle sous-tâche..."
             maxlength="140"
           />
-          <button type="submit" class="btn" data-subtask-submit="${task.id}">
-            Ajouter une sous-tâche
+          <button type="submit" class="tasks__subtask-submit" data-subtask-submit="${task.id}">
+            Ajouter une étape
           </button>
         </form>
+
+        <div class="tasks__item-actions">
+          ${actionsMarkup}
+        </div>
       </div>
     </li>
   `;
@@ -301,16 +389,37 @@ function createTasksList(
   expandedTagTaskId = null,
   expandedTaskId = null,
   noTasksInStorage = false,
-  emptyWithFadeIn = false
+  emptyWithFadeIn = false,
+  filterActive = false
 ) {
   if (!tasks.length) {
-    const fadeClass = emptyWithFadeIn ? ' animate-fade-in' : '';
-    return `<p class="tasks__empty${fadeClass}">${noTasksInStorage ? 'Ajoute ta première tâche pour démarrer.' : 'Aucune tâche ne correspond à ce filtre.'}</p>`;
+    const fadeClass = emptyWithFadeIn ? ' tasks__empty--rise' : '';
+    if (noTasksInStorage) {
+      return `
+        <div class="tasks__empty${fadeClass}">
+          <div class="tasks__empty-title">Mer libre.</div>
+          <div class="tasks__empty-hint">Rien à faire n'est pas rien. Pose une pensée quand elle vient.</div>
+        </div>`;
+    }
+    if (filterActive) {
+      return `
+        <div class="tasks__empty${fadeClass}">
+          <div class="tasks__empty-title">Rien sous ce filtre.</div>
+          <div class="tasks__empty-hint">La mer est calme de ce côté.</div>
+        </div>`;
+    }
+    return `
+      <div class="tasks__empty${fadeClass}">
+        <div class="tasks__empty-title">Mer libre.</div>
+        <div class="tasks__empty-hint">Rien à faire n'est pas rien. Pose une pensée quand elle vient.</div>
+      </div>`;
   }
+
+  const displaySorted = [...tasks].sort((a, b) => Number(a.completed) - Number(b.completed));
 
   return `
     <ul class="tasks__list">
-      ${tasks
+      ${displaySorted
         .map((task) =>
           createTaskItem(
             task,
@@ -345,7 +454,7 @@ function createArchivedTaskLine(task) {
 
 function createTasksArchivesPanel(archiveEntries = []) {
   if (!archiveEntries.length) {
-    return '<p class="tasks__archives-empty">Aucune tâche archivée pour l’instant.</p>';
+    return '<p class="tasks__archives-empty">Aucune tâche archivée pour l\u2019instant.</p>';
   }
 
   return archiveEntries
@@ -353,13 +462,13 @@ function createTasksArchivesPanel(archiveEntries = []) {
       const label = formatArchiveDateLabel(entry.archivedDate);
       const lines = entry.tasks.map((t) => createArchivedTaskLine(t)).join('');
       return `
-        <section class="tasks__archive-group card animate-fade-in" aria-labelledby="tasks-archive-h-${index}">
+        <section class="tasks__archive-group" aria-labelledby="tasks-archive-h-${index}">
           <div class="tasks__archive-group-head">
             <h2 class="tasks__archive-group-title" id="tasks-archive-h-${index}">${label}</h2>
             <span class="tasks__archive-group-meta">${entry.tasks.length} tâche${entry.tasks.length > 1 ? 's' : ''}</span>
           </div>
           <ul class="tasks__archive-group-list">${lines}</ul>
-          <button type="button" class="btn btn-secondary tasks__archive-restore" data-tasks-archive-restore="${index}">
+          <button type="button" class="tasks__archive-restore" data-tasks-archive-restore="${index}">
             Restaurer
           </button>
         </section>
@@ -373,21 +482,42 @@ function createAmnestyBannerMarkup(pendingCount, visible) {
   const escCount = escapeHtml(String(pendingCount));
   const taskWord = pendingCount === 1 ? 'tâche' : 'tâches';
   return `
-    <div class="tasks__amnesty-banner card${hiddenClass}" data-tasks-amnesty-banner role="region" aria-label="Amnistie des tâches" aria-hidden="${visible ? 'false' : 'true'}">
+    <div class="tasks__amnesty${hiddenClass}" data-tasks-amnesty-banner role="region" aria-label="Amnistie des tâches" aria-hidden="${visible ? 'false' : 'true'}">
       <p class="tasks__amnesty-text">
-        La semaine a été chargée ? 🌿<br />
-        Tu as ${escCount} ${taskWord} en attente.<br />
-        Veux-tu archiver tout ça et repartir de zéro aujourd’hui ?
+        <strong>${escCount} ${taskWord}</strong> en attente. Les pardonner&nbsp;?
       </p>
-      <div class="tasks__amnesty-actions">
-        <button type="button" class="btn btn-primary tasks__amnesty-archive" data-tasks-amnesty-archive>
-          🗂 Archiver et repartir
-        </button>
-        <button type="button" class="tasks__amnesty-dismiss" data-tasks-amnesty-dismiss>
-          Non, je garde tout
-        </button>
-      </div>
+      <button type="button" class="tasks__amnesty-btn" data-tasks-amnesty-archive>
+        Amnistie
+      </button>
+      <button type="button" class="tasks__amnesty-dismiss" data-tasks-amnesty-dismiss aria-label="Garder les tâches en attente">
+        ✕
+      </button>
     </div>
+  `;
+}
+
+function createTasksHead(progress, tideText, levelPercent, showAnchor, anchorAnimate) {
+  const anchoredClass = showAnchor ? ' tasks__head--anchored' : '';
+  const anchorHidden = showAnchor ? '' : ' hidden';
+  const anchorAnimClass = anchorAnimate ? ' tasks__head-anchor--drop' : '';
+
+  return `
+    <header class="tasks__head${anchoredClass}" data-tasks-head>
+      <h1 class="tasks__head-title">Tâches</h1>
+      <p class="tasks__head-meta">
+        <span class="tasks__head-count" data-tasks-count>${progress.completed}</span>
+        <span>sur <span data-tasks-total>${progress.total}</span> — <span data-tasks-tide>${escapeHtml(tideText)}</span></span>
+      </p>
+      <div class="tasks__water" data-tasks-water style="--level: ${levelPercent}">
+        ${WATER_BACK_SVG}
+        ${WATER_FRONT_SVG}
+        <div class="tasks__water-fill"></div>
+      </div>
+      <div class="tasks__head-anchor${anchorAnimClass}" data-tasks-anchor${anchorHidden}>
+        ${ANCHOR_SVG}
+        <span class="tasks__head-anchor-label">Ancre posée</span>
+      </div>
+    </header>
   `;
 }
 
@@ -410,13 +540,21 @@ function createTasksView(
     amnestyPendingCount = 0,
     showArchivesView = false,
     archiveEntries = [],
-    archivedTaskTotal = 0,
+    archivedDayCount = 0,
     amnestyToast = null,
-    emptyListFadeIn = false
+    emptyListFadeIn = false,
+    allTasks = tasks,
+    tideProgress = 0,
+    allDone = false,
+    showAnchor = false,
+    anchorAnimate = false
   } = ui;
 
-  const toastHtml = amnestyToast
-    ? `<p class="tasks__amnesty-toast animate-fade-in" role="status">${escapeHtml(amnestyToast)}</p>`
+  const tideText = tideLabel(tideProgress, allDone);
+  const levelPercent = tideLevelPercent(tideProgress);
+
+  const amnestyNote = amnestyToast
+    ? `<p class="tasks__amnesty-note tasks__empty--rise" role="status">Pardonné. Demain est une autre marée.</p>`
     : '';
 
   const mainHidden = showArchivesView ? ' hidden' : '';
@@ -424,39 +562,28 @@ function createTasksView(
   const formHidden = showArchivesView ? ' hidden' : '';
   const footHidden = showArchivesView ? ' hidden' : '';
 
-  const archiveLinkLabel =
-    archivedTaskTotal <= 1
-      ? `📦 Archives (${archivedTaskTotal} tâche archivée)`
-      : `📦 Archives (${archivedTaskTotal} tâches archivées)`;
-  const tagsToggleLabel = showFullTags ? 'Masquer les tags' : 'Afficher les tags';
+  const archiveDayWord = archivedDayCount <= 1 ? 'journée' : 'journées';
+  const archiveLinkLabel = `Voir les archives (${archivedDayCount} ${archiveDayWord})`;
 
   return `
-    <section class="tasks animate-fade-in">
-      <div class="tasks__card card animate-slide-up">
-        <header class="tasks__header">
-          <div class="tasks__header-top">
-            <div class="tasks__header-titles">
-              <h1 class="tasks__title">Tâches</h1>
-              <p class="tasks__subtitle">Une étape à la fois, sans surcharge.</p>
-            </div>
-            <div class="tasks__header-actions">
-              <span class="tasks__progress-inline tasks__progress">${progress.completed}/${progress.total} tâches complétées</span>
-              <button
-                type="button"
-                class="tasks__tags-toggle"
-                data-tasks-toggle-tags
-                aria-pressed="${showFullTags ? 'true' : 'false'}"
-              >
-                ${tagsToggleLabel}
-              </button>
-              <button type="button" class="tasks__amnesty-manual" data-tasks-amnesty-manual aria-label="Ouvrir l’amnistie des tâches">
-                🌿 Amnistie
-              </button>
-            </div>
-          </div>
-        </header>
+    <section class="tasks">
+      <div class="tasks__shell">
+        ${createTasksHead(progress, tideText, levelPercent, showAnchor, anchorAnimate)}
 
-        <div data-tasks-toast-wrap>${toastHtml}</div>
+        <div class="tasks__toolbar">
+          <button
+            type="button"
+            class="tasks__tags-toggle"
+            data-tasks-toggle-tags
+            aria-pressed="${showFullTags ? 'true' : 'false'}"
+            aria-label="${showFullTags ? 'Masquer les tags' : 'Afficher les tags'}"
+          >
+            🏷
+          </button>
+          <button type="button" class="tasks__amnesty-manual" data-tasks-amnesty-manual aria-label="Ouvrir l'amnistie des tâches">
+            🌿
+          </button>
+        </div>
 
         <form class="tasks__form${formHidden}" data-task-form>
           <input
@@ -464,11 +591,11 @@ function createTasksView(
             class="tasks__input"
             data-task-input
             type="text"
-            placeholder="Ajouter une tâche..."
+            placeholder="Ajouter une tâche…"
             maxlength="180"
             required
           />
-          <button type="submit" class="btn btn-primary">Ajouter</button>
+          <button type="submit" class="tasks__submit">Poser</button>
         </form>
 
         <div class="tasks__main-stack"${mainHidden} data-tasks-main-stack>
@@ -477,7 +604,7 @@ function createTasksView(
           </div>
 
           <div class="tasks__filters-wrap" data-tasks-filters>
-            ${createTasksFilterBar(listFilter)}
+            ${createTasksFilterBar(listFilter, allTasks)}
           </div>
 
           <div class="tasks__list-container" data-tasks-list>
@@ -491,13 +618,15 @@ function createTasksView(
               expandedTagTaskId,
               expandedTaskId,
               noTasksInStorage,
-              emptyListFadeIn
+              emptyListFadeIn,
+              listFilter !== 'all'
             )}
+            ${amnestyNote}
           </div>
         </div>
 
         <div class="tasks__archives-view"${archivesHidden} data-tasks-archives-view>
-          <button type="button" class="tasks__archives-back btn btn-secondary" data-tasks-archives-back>
+          <button type="button" class="tasks__archives-back" data-tasks-archives-back>
             ← Retour aux tâches
           </button>
           <div class="tasks__archives-groups" data-tasks-archives-groups>
@@ -505,11 +634,11 @@ function createTasksView(
           </div>
         </div>
 
-        <p class="tasks__archives-foot"${footHidden}>
+        <footer class="tasks__foot${footHidden}">
           <button type="button" class="tasks__archives-link" data-tasks-archives-toggle>
             ${escapeHtml(archiveLinkLabel)}
           </button>
-        </p>
+        </footer>
       </div>
     </section>
   `;
@@ -541,5 +670,8 @@ export {
   createTasksFilterBar,
   createTasksArchivesPanel,
   createAmnestyBannerMarkup,
+  computeTideProgress,
+  tideLabel,
+  tideLevelPercent,
   PREDEFINED_TAGS
 };

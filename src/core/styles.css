@@ -24,6 +24,9 @@
   --border: rgba(233, 241, 244, 0.08);
   --shadow: 0 4px 24px rgba(2, 8, 14, 0.5);
   --shadow-soft: 0 2px 12px rgba(2, 8, 14, 0.3);
+  --water-front: rgba(69, 224, 176, 0.30);
+  --water-back: rgba(69, 224, 176, 0.14);
+  --water-glow: rgba(69, 224, 176, 0.10);
 }
 
 /* ===== THÈME GARRIGUE (clair) — calcaire et olivier ===== */
@@ -50,6 +53,9 @@
   --border: rgba(38, 48, 31, 0.10);
   --shadow: 0 4px 24px rgba(90, 80, 60, 0.15);
   --shadow-soft: 0 2px 12px rgba(90, 80, 60, 0.08);
+  --water-front: rgba(77, 107, 60, 0.30);
+  --water-back: rgba(77, 107, 60, 0.14);
+  --water-glow: rgba(77, 107, 60, 0.08);
 }
 
 /* ===== THÈME CRÉPUSCULE (sombre chaud) — aubergine et ambre ===== */
@@ -76,6 +82,9 @@
   --border: rgba(244, 233, 228, 0.08);
   --shadow: 0 4px 24px rgba(10, 4, 10, 0.5);
   --shadow-soft: 0 2px 12px rgba(10, 4, 10, 0.3);
+  --water-front: rgba(240, 163, 94, 0.28);
+  --water-back: rgba(240, 163, 94, 0.13);
+  --water-glow: rgba(240, 163, 94, 0.09);
 }
 
 /* ===== THÈME MARÉE BASSE (clair frais) — écume du matin ===== */
@@ -102,6 +111,9 @@
   --border: rgba(29, 43, 45, 0.10);
   --shadow: 0 4px 24px rgba(60, 85, 82, 0.15);
   --shadow-soft: 0 2px 12px rgba(60, 85, 82, 0.08);
+  --water-front: rgba(20, 107, 102, 0.30);
+  --water-back: rgba(20, 107, 102, 0.14);
+  --water-glow: rgba(20, 107, 102, 0.07);
 }
 
 /* ===== TYPOGRAPHIE ===== */
