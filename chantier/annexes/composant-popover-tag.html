@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="encre">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Composant popover tag — référence M08b</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root, [data-theme="encre"] {
+  --bg-primary:#0a1017; --bg-secondary:#101a24; --bg-tertiary:#16232f; --bg-hover:#1c2c3b;
+  --text-primary:#e9f1f4; --text-secondary:#9db4c0; --text-muted:#8299a6;
+  --accent:#45e0b0; --accent-hover:#63eec2; --accent-soft:rgba(69,224,176,.15); --text-on-accent:#04241a;
+  --border:rgba(233,241,244,.08); --shadow:0 12px 40px rgba(2,8,14,.6);
+}
+[data-theme="garrigue"]{--bg-primary:#f2eee6;--bg-secondary:#faf7f0;--bg-tertiary:#eae4d8;--bg-hover:#e2dccd;--text-primary:#26301f;--text-secondary:#55614a;--text-muted:#5f6b53;--accent:#4d6b3c;--accent-hover:#3e5a2f;--accent-soft:rgba(77,107,60,.12);--text-on-accent:#f5f8ef;--border:rgba(38,48,31,.10);--shadow:0 12px 40px rgba(90,80,60,.22)}
+[data-theme="crepuscule"]{--bg-primary:#171015;--bg-secondary:#201620;--bg-tertiary:#291d29;--bg-hover:#322434;--text-primary:#f4e9e4;--text-secondary:#c3aaa4;--text-muted:#a89089;--accent:#f0a35e;--accent-hover:#f5b678;--accent-soft:rgba(240,163,94,.15);--text-on-accent:#2b1706;--border:rgba(244,233,228,.08);--shadow:0 12px 40px rgba(10,4,10,.6)}
+[data-theme="maree"]{--bg-primary:#e8edeb;--bg-secondary:#f4f7f6;--bg-tertiary:#dee6e3;--bg-hover:#d4dedb;--text-primary:#1d2b2d;--text-secondary:#48605f;--text-muted:#536c6a;--accent:#146b66;--accent-hover:#0f5752;--accent-soft:rgba(20,107,102,.10);--text-on-accent:#eaf5f3;--border:rgba(29,43,45,.10);--shadow:0 12px 40px rgba(60,85,82,.22)}
+:root{--font-family:'Atkinson Hyperlegible',system-ui,sans-serif;--font-display:'Bricolage Grotesque',var(--font-family);
+--radius-sm:6px;--radius-md:12px;--radius-lg:18px;--radius-full:9999px;
+--dfast:140ms;--ease-spring:cubic-bezier(.34,1.45,.64,1);--ease-out:cubic-bezier(.16,1,.3,1)}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-family);background:var(--bg-primary);color:var(--text-primary);
+padding:24px 14px;display:flex;flex-direction:column;align-items:center;gap:16px;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;color:inherit;background:none;border:none;cursor:pointer;font-size:inherit}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+
+.bar{width:min(420px,100%);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.bar__title{font-family:var(--font-display);font-weight:600;font-size:.9rem;color:var(--text-secondary);margin-right:auto}
+.chip{width:26px;height:26px;border-radius:50%;background:var(--pv);border:2px solid var(--border)}
+.chip[aria-pressed="true"]{border-color:var(--accent);transform:scale(1.12)}
+
+/* ---- La carte, volontairement avec overflow:hidden ET position pour PROUVER
+        que le popover s'en échappe quand même ---- */
+.card{width:min(420px,100%);background:var(--bg-secondary);border:1px solid var(--border);
+border-radius:22px;padding:20px;overflow:hidden;isolation:isolate;box-shadow:0 4px 24px rgba(0,0,0,.2)}
+.card h1{font-family:var(--font-display);font-weight:700;font-size:1.5rem}
+.card p{color:var(--text-secondary);font-size:.9rem;margin-top:4px}
+.field{margin-top:16px;display:flex;gap:8px;align-items:center}
+
+/* =========================================================
+   LE COMPOSANT — déclencheur + popover
+   Le popover utilise l'API native [popover] : il vit dans la
+   TOP LAYER, hors de tout overflow/stacking. Positionné en JS
+   sous (ou au-dessus) du déclencheur, borné à l'écran.
+   ========================================================= */
+.tag-trigger{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:10px 14px;border-radius:var(--radius-md);
+  background:var(--bg-tertiary);border:1px solid var(--border);
+  font-size:.86rem;color:var(--text-secondary);
+  transition:background var(--dfast),border-color var(--dfast),color var(--dfast);
+}
+.tag-trigger:hover{background:var(--bg-hover)}
+.tag-trigger.has-tag{border-color:var(--accent);color:var(--text-primary)}
+.tag-trigger__dot{width:10px;height:10px;border-radius:50%;background:var(--accent)}
+
+.capturer{margin-left:auto;padding:11px 20px;border-radius:var(--radius-md);
+background:var(--accent);color:var(--text-on-accent);font-weight:700;font-size:.92rem;
+transition:transform var(--dfast) var(--ease-spring),background var(--dfast)}
+.capturer:active{transform:scale(.96)}
+
+/* Le popover : reset de l'UA + notre style */
+.tag-pop{
+  margin:0;padding:6px;border:1px solid var(--border);
+  background:var(--bg-secondary);color:var(--text-primary);
+  border-radius:var(--radius-md);box-shadow:var(--shadow);
+  min-width:190px;max-width:min(280px,calc(100vw - 24px));
+  max-height:min(320px,60vh);overflow-y:auto;
+  /* position pilotée en JS via left/top ; on part en fixed */
+  position:fixed;inset:auto;
+}
+/* animation d'apparition */
+.tag-pop{opacity:0;transform:translateY(6px) scale(.98);
+  transition:opacity var(--dfast) var(--ease-out),transform var(--dfast) var(--ease-spring),overlay var(--dfast) allow-discrete,display var(--dfast) allow-discrete}
+.tag-pop:popover-open{opacity:1;transform:translateY(0) scale(1)}
+@starting-style{.tag-pop:popover-open{opacity:0;transform:translateY(6px) scale(.98)}}
+
+.tag-pop__item{display:flex;align-items:center;gap:10px;width:100%;text-align:left;
+padding:10px 12px;border-radius:var(--radius-sm);font-size:.9rem;color:var(--text-primary);
+transition:background var(--dfast)}
+.tag-pop__item:hover{background:var(--bg-hover)}
+.tag-pop__item[aria-checked="true"]{color:var(--accent);font-weight:700}
+.tag-pop__check{margin-left:auto;color:var(--accent);opacity:0}
+.tag-pop__item[aria-checked="true"] .tag-pop__check{opacity:1}
+.tag-pop__emoji{font-size:1.05rem}
+
+.reduce-motion .tag-pop{transition:none}
+@media (prefers-reduced-motion:reduce){.tag-pop{transition:none}}
+
+.note{width:min(420px,100%);font-size:.78rem;color:var(--text-muted);line-height:1.5;text-align:center}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <span class="bar__title">Popover tag — référence</span>
+  <button class="chip" data-t="encre" style="--pv:linear-gradient(135deg,#101a24 55%,#45e0b0 55%)" aria-pressed="true" aria-label="Encre"></button>
+  <button class="chip" data-t="garrigue" style="--pv:linear-gradient(135deg,#faf7f0 55%,#4d6b3c 55%)" aria-pressed="false" aria-label="Garrigue"></button>
+  <button class="chip" data-t="crepuscule" style="--pv:linear-gradient(135deg,#201620 55%,#f0a35e 55%)" aria-pressed="false" aria-label="Crépuscule"></button>
+  <button class="chip" data-t="maree" style="--pv:linear-gradient(135deg,#f4f7f6 55%,#146b66 55%)" aria-pressed="false" aria-label="Marée basse"></button>
+</div>
+
+<div class="card">
+  <h1>Capture</h1>
+  <p>La carte a <code>overflow:hidden</code> et <code>isolation:isolate</code> — le popover s'en échappe quand même.</p>
+  <div class="field">
+    <button type="button" class="tag-trigger" id="tagTrigger" aria-haspopup="true" aria-expanded="false">
+      <span id="tagTriggerLabel">🏷 Tag</span>
+    </button>
+    <button type="button" class="capturer">Capturer</button>
+  </div>
+</div>
+
+<!-- Le popover est en dehors de la carte, enfant du body : top layer garantie -->
+<div class="tag-pop" id="tagPop" popover="auto" role="menu" aria-label="Choisir un tag"></div>
+
+<p class="note">
+  Ouvre le menu depuis n'importe quelle position de scroll, teste les 4 thèmes,
+  et vérifie qu'il s'ancre toujours au bouton sans sortir de l'écran.
+  Ferme au clic dehors et à Échap (gérés par le navigateur).
+</p>
+
+<script>
+(function(){
+'use strict';
+const TAGS=[
+ {id:'maison',e:'🏠',l:'Maison'},{id:'boulot',e:'💼',l:'Boulot'},
+ {id:'jardin',e:'🌿',l:'Jardin'},{id:'sante',e:'🏥',l:'Santé'},
+ {id:'admin',e:'📋',l:'Admin'},{id:'personnel',e:'👤',l:'Personnel'}
+];
+let selected=null;
+const trigger=document.getElementById('tagTrigger');
+const label=document.getElementById('tagTriggerLabel');
+const pop=document.getElementById('tagPop');
+const supportsPopover = HTMLElement.prototype.hasOwnProperty('popover');
+
+/* Construire le contenu */
+function build(){
+  pop.innerHTML='';
+  const none=item(null,'Sans tag','');
+  pop.appendChild(none);
+  TAGS.forEach(t=>pop.appendChild(item(t.id,t.l,t.e)));
+}
+function item(id,text,emoji){
+  const b=document.createElement('button');
+  b.type='button';b.className='tag-pop__item';b.setAttribute('role','menuitemradio');
+  b.dataset.tag=id??'';
+  b.setAttribute('aria-checked',String((id??null)===selected));
+  b.innerHTML=(emoji?`<span class="tag-pop__emoji" aria-hidden="true">${emoji}</span>`:'')
+    +`<span>${text}</span><span class="tag-pop__check" aria-hidden="true">✓</span>`;
+  b.addEventListener('click',()=>{pick(id??null);hide()});
+  return b;
+}
+function pick(id){
+  selected=id;
+  const t=TAGS.find(x=>x.id===id);
+  label.textContent=t?`${t.e} ${t.l}`:'🏷 Tag';
+  trigger.classList.toggle('has-tag',!!t);
+  pop.querySelectorAll('.tag-pop__item').forEach(el=>
+    el.setAttribute('aria-checked',String((el.dataset.tag||null)===(selected||null))));
+}
+
+/* Positionnement : ancré au déclencheur, borné à l'écran */
+function place(){
+  const r=trigger.getBoundingClientRect();
+  const pr=pop.getBoundingClientRect();
+  const margin=8, vw=window.innerWidth, vh=window.innerHeight;
+  /* horizontal : aligné à gauche du bouton, repoussé si déborde à droite */
+  let left=r.left;
+  if(left+pr.width>vw-margin) left=vw-margin-pr.width;
+  if(left<margin) left=margin;
+  /* vertical : au-dessus si la place manque en dessous */
+  const below=r.bottom+6, above=r.top-6-pr.height;
+  let top;
+  if(below+pr.height<=vh-margin){ top=below; }
+  else if(above>=margin){ top=above; }
+  else { top=Math.max(margin, vh-margin-pr.height); }
+  pop.style.left=left+'px';
+  pop.style.top=top+'px';
+}
+
+function show(){
+  build();
+  if(supportsPopover){ pop.showPopover(); }
+  else { pop.setAttribute('data-open','1'); pop.style.display='block'; }
+  /* placer APRÈS affichage (dimensions connues) */
+  requestAnimationFrame(place);
+  trigger.setAttribute('aria-expanded','true');
+}
+function hide(){
+  if(supportsPopover){ if(pop.matches(':popover-open')) pop.hidePopover(); }
+  else { pop.removeAttribute('data-open'); pop.style.display='none'; }
+  trigger.setAttribute('aria-expanded','false');
+}
+function toggle(){
+  const open = supportsPopover ? pop.matches(':popover-open') : pop.hasAttribute('data-open');
+  if(open) hide(); else show();
+}
+
+trigger.addEventListener('click',toggle);
+
+/* API native : fermeture clic-dehors + Échap automatiques.
+   On synchronise juste aria-expanded et on replace au resize/scroll. */
+if(supportsPopover){
+  pop.addEventListener('toggle',e=>{
+    trigger.setAttribute('aria-expanded', e.newState==='open' ? 'true':'false');
+  });
+}else{
+  /* repli : fermeture manuelle */
+  document.addEventListener('pointerdown',e=>{
+    if(pop.hasAttribute('data-open') && !pop.contains(e.target) && e.target!==trigger)
+      hide();
+  });
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')hide()});
+  pop.style.display='none';
+}
+window.addEventListener('resize',()=>{ if(isOpen())place() });
+window.addEventListener('scroll',()=>{ if(isOpen())place() },true);
+function isOpen(){return supportsPopover?pop.matches(':popover-open'):pop.hasAttribute('data-open')}
+
+/* Thèmes + mouvement réduit */
+document.querySelectorAll('[data-t]').forEach(b=>b.addEventListener('click',()=>{
+  document.documentElement.dataset.theme=b.dataset.t;
+  document.querySelectorAll('[data-t]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+}));
+if(window.matchMedia('(prefers-reduced-motion:reduce)').matches) document.body.classList.add('reduce-motion');
+
+build();
+})();
+</script>
+</body>
+</html>
