@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="encre">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maquette M07 — Module Capture, la goutte</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   MAQUETTE M07 — Module Capture : la goutte
+   Philosophie : capturer n'est pas accomplir, c'est se délester.
+   L'eau ne monte pas (pas de progression ici) — c'est une surface
+   calme et constante. La pensée tombe en goutte, l'onde s'ouvre,
+   la surface se referme. L'onde EST la confirmation.
+   Tokens identiques à core/styles.css (M04) + tokens eau (M05).
+   ============================================================ */
+
+:root, [data-theme="encre"] {
+  --bg-primary:#0a1017; --bg-secondary:#101a24; --bg-tertiary:#16232f; --bg-hover:#1c2c3b;
+  --text-primary:#e9f1f4; --text-secondary:#9db4c0; --text-muted:#8299a6;
+  --accent:#45e0b0; --accent-hover:#63eec2; --accent-soft:rgba(69,224,176,.15); --text-on-accent:#04241a;
+  --danger:#ef7d93; --border:rgba(233,241,244,.08);
+  --shadow:0 4px 24px rgba(2,8,14,.5); --shadow-soft:0 2px 12px rgba(2,8,14,.3);
+  --water-front:rgba(69,224,176,.30); --water-back:rgba(69,224,176,.14); --water-glow:rgba(69,224,176,.10);
+}
+[data-theme="garrigue"] {
+  --bg-primary:#f2eee6; --bg-secondary:#faf7f0; --bg-tertiary:#eae4d8; --bg-hover:#e2dccd;
+  --text-primary:#26301f; --text-secondary:#55614a; --text-muted:#5f6b53;
+  --accent:#4d6b3c; --accent-hover:#3e5a2f; --accent-soft:rgba(77,107,60,.12); --text-on-accent:#f5f8ef;
+  --danger:#b3543f; --border:rgba(38,48,31,.10);
+  --shadow:0 4px 24px rgba(90,80,60,.15); --shadow-soft:0 2px 12px rgba(90,80,60,.08);
+  --water-front:rgba(77,107,60,.30); --water-back:rgba(77,107,60,.14); --water-glow:rgba(77,107,60,.08);
+}
+[data-theme="crepuscule"] {
+  --bg-primary:#171015; --bg-secondary:#201620; --bg-tertiary:#291d29; --bg-hover:#322434;
+  --text-primary:#f4e9e4; --text-secondary:#c3aaa4; --text-muted:#a89089;
+  --accent:#f0a35e; --accent-hover:#f5b678; --accent-soft:rgba(240,163,94,.15); --text-on-accent:#2b1706;
+  --danger:#ee7f8e; --border:rgba(244,233,228,.08);
+  --shadow:0 4px 24px rgba(10,4,10,.5); --shadow-soft:0 2px 12px rgba(10,4,10,.3);
+  --water-front:rgba(240,163,94,.28); --water-back:rgba(240,163,94,.13); --water-glow:rgba(240,163,94,.09);
+}
+[data-theme="maree"] {
+  --bg-primary:#e8edeb; --bg-secondary:#f4f7f6; --bg-tertiary:#dee6e3; --bg-hover:#d4dedb;
+  --text-primary:#1d2b2d; --text-secondary:#48605f; --text-muted:#536c6a;
+  --accent:#146b66; --accent-hover:#0f5752; --accent-soft:rgba(20,107,102,.10); --text-on-accent:#eaf5f3;
+  --danger:#b3543f; --border:rgba(29,43,45,.10);
+  --shadow:0 4px 24px rgba(60,85,82,.15); --shadow-soft:0 2px 12px rgba(60,85,82,.08);
+  --water-front:rgba(20,107,102,.30); --water-back:rgba(20,107,102,.14); --water-glow:rgba(20,107,102,.07);
+}
+:root {
+  --font-family:'Atkinson Hyperlegible',system-ui,sans-serif;
+  --font-display:'Bricolage Grotesque',var(--font-family);
+  --duration-fast:140ms; --duration-normal:320ms; --duration-slow:500ms; --duration-xslow:650ms;
+  --ease-default:cubic-bezier(.16,1,.3,1); --ease-spring:cubic-bezier(.34,1.45,.64,1); --ease-out:cubic-bezier(.16,1,.3,1);
+  --radius-sm:6px; --radius-md:12px; --radius-lg:18px; --radius-full:9999px;
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:var(--font-family); background:var(--bg-primary); color:var(--text-primary);
+  display:flex; flex-direction:column; align-items:center; padding:20px 12px 48px;
+  transition:background var(--duration-normal) var(--ease-default);
+  -webkit-font-smoothing:antialiased;
+}
+button{font-family:inherit;color:inherit;background:none;border:none;cursor:pointer;font-size:inherit}
+button:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+
+/* ---------- BANDEAU DÉMO ---------- */
+.demo-bar{width:min(420px,100%);display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.demo-bar__title{font-family:var(--font-display);font-weight:600;font-size:.9rem;color:var(--text-secondary)}
+.theme-chips{display:flex;gap:7px}
+.theme-chip{width:26px;height:26px;border-radius:50%;background:var(--pv);border:2px solid var(--border);transition:transform var(--duration-fast) var(--ease-spring),border-color var(--duration-fast)}
+.theme-chip[aria-pressed="true"]{border-color:var(--accent);transform:scale(1.15)}
+.motion-toggle{font-size:.74rem;color:var(--text-secondary);border:1px solid var(--border);background:var(--bg-secondary);padding:5px 10px;border-radius:var(--radius-full)}
+.motion-toggle[aria-pressed="true"]{background:var(--accent);color:var(--text-on-accent);border-color:transparent}
+
+/* ---------- MODULE ---------- */
+.module{width:min(420px,100%);display:flex;flex-direction:column;gap:14px}
+
+/* ---------- CARTE CAPTURE ---------- */
+.cap{
+  position:relative;
+  background:var(--bg-secondary); border:1px solid var(--border);
+  border-radius:24px; box-shadow:var(--shadow-soft);
+  padding:22px 20px 34px; overflow:visible;
+}
+.cap__title{font-family:var(--font-display);font-weight:700;font-size:1.6rem;letter-spacing:-.015em}
+.cap__subtitle{font-size:.9rem;color:var(--text-secondary);margin-top:4px}
+.cap__form{margin-top:16px;display:flex;flex-direction:column;gap:10px}
+.cap__input{
+  width:100%; min-height:96px; resize:vertical;
+  background:var(--bg-tertiary); border:1px solid var(--border);
+  border-radius:var(--radius-lg); padding:13px 15px;
+  color:var(--text-primary); font-family:inherit; font-size:.96rem; line-height:1.45;
+  transition:border-color var(--duration-fast), box-shadow var(--duration-fast);
+  outline:none;
+}
+.cap__input::placeholder{color:var(--text-muted)}
+.cap__input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--water-glow)}
+.cap__row{display:flex;align-items:center;gap:8px}
+.cap__counter{font-size:.74rem;color:var(--text-muted);font-variant-numeric:tabular-nums;margin-left:auto;opacity:0;transition:opacity var(--duration-fast)}
+.cap__counter.show{opacity:1}
+.cap__counter.warn{color:var(--danger)}
+
+/* Sélecteur de tag (même pattern que M06) */
+.tagpick{position:relative;z-index:35}
+.tagpick__btn{
+  display:flex;align-items:center;gap:6px;
+  padding:9px 13px;border-radius:var(--radius-md);
+  background:var(--bg-tertiary);border:1px solid var(--border);
+  font-size:.84rem;color:var(--text-secondary);
+  transition:background var(--duration-fast),border-color var(--duration-fast);
+}
+.tagpick__btn:hover{background:var(--bg-hover)}
+.tagpick__btn.has-tag{border-color:var(--accent);color:var(--text-primary)}
+.tagpick__menu{
+  position:absolute;bottom:calc(100% + 6px);left:0;min-width:170px;
+  max-height:min(300px,55vh);overflow-y:auto;
+  background:var(--bg-secondary);border:1px solid var(--border);
+  border-radius:var(--radius-md);box-shadow:var(--shadow);
+  padding:6px;display:flex;flex-direction:column;gap:2px;z-index:30;
+  visibility:hidden;opacity:0;transform:translateY(6px) scale(.97);
+  transform-origin:bottom left;pointer-events:none;
+  transition:opacity var(--duration-fast) var(--ease-out),
+             transform var(--duration-fast) var(--ease-spring),
+             visibility 0s linear var(--duration-fast);
+}
+.tagpick__menu.is-open{
+  visibility:visible;opacity:1;transform:translateY(0) scale(1);
+  pointer-events:auto;transition-delay:0s;
+}
+.tagpick__item{text-align:left;padding:8px 11px;border-radius:var(--radius-sm);font-size:.86rem;transition:background var(--duration-fast)}
+.tagpick__item:hover{background:var(--bg-hover)}
+.cap__submit{
+  padding:11px 18px;border-radius:var(--radius-md);
+  background:var(--accent);color:var(--text-on-accent);
+  font-weight:700;font-size:.92rem;
+  transition:transform var(--duration-fast) var(--ease-spring),background var(--duration-fast);
+}
+.cap__submit:hover{background:var(--accent-hover)}
+.cap__submit:active{transform:scale(.95)}
+
+/* ---------- LA SURFACE D'EAU (constante, calme) ---------- */
+.surface{position:absolute;left:0;right:0;bottom:0;height:18px;z-index:0;pointer-events:none;overflow:hidden;border-radius:0 0 23px 23px}
+.surface svg{position:absolute;bottom:0;left:0;width:200%;height:18px;display:block}
+.surface__back path{fill:var(--water-back)}
+.surface__front path{fill:var(--water-front)}
+.surface__back{animation:drift 16s linear infinite}
+.surface__front{animation:drift 11s linear infinite reverse}
+@keyframes drift{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.surface.bob svg{animation-name:drift,bob;animation-duration:11s,var(--duration-xslow);animation-iteration-count:infinite,1}
+@keyframes bob{0%{bottom:0}40%{bottom:3px}100%{bottom:0}}
+
+/* La goutte */
+.drop{
+  position:absolute;left:50%;width:10px;height:14px;z-index:5;pointer-events:none;
+  background:var(--accent);border-radius:50% 50% 60% 60%;
+  transform:translateX(-50%);
+  animation:drop-fall 420ms cubic-bezier(.5,0,.9,.6) forwards;
+}
+@keyframes drop-fall{
+  0%{opacity:0;transform:translateX(-50%) translateY(0) scale(.6)}
+  15%{opacity:1}
+  100%{opacity:1;transform:translateX(-50%) translateY(var(--fall,120px)) scale(1)}
+}
+/* L'onde d'impact sur la surface */
+.impact{
+  position:absolute;left:50%;bottom:12px;z-index:6;pointer-events:none;
+  width:22px;height:8px;border:2px solid var(--accent);border-radius:50%;
+  transform:translateX(-50%);opacity:0;
+  animation:impact-out var(--duration-xslow) var(--ease-out) forwards;
+}
+.impact--2{animation-delay:120ms}
+@keyframes impact-out{
+  0%{transform:translateX(-50%) scale(.4);opacity:.9}
+  100%{transform:translateX(-50%) scale(3.4);opacity:0}
+}
+/* Confirmation textuelle (accessibilité + douceur) */
+.cap__ack{
+  position:absolute;left:0;right:0;bottom:22px;text-align:center;z-index:4;pointer-events:none;
+  font-size:.8rem;color:var(--accent);font-weight:700;opacity:0;
+}
+.cap__ack.play{animation:ack var(--duration-xslow) var(--ease-out) 260ms both}
+@keyframes ack{0%{opacity:0;transform:translateY(6px)}30%{opacity:1;transform:translateY(0)}75%{opacity:1}100%{opacity:0;transform:translateY(-4px)}}
+
+/* ---------- CARTE RÉCENTES ---------- */
+.recent{
+  background:var(--bg-secondary);border:1px solid var(--border);
+  border-radius:24px;box-shadow:var(--shadow-soft);padding:18px 16px;
+}
+.recent__title{font-family:var(--font-display);font-weight:700;font-size:1.05rem}
+.filters{display:flex;gap:7px;padding:12px 0 4px;overflow-x:auto;scrollbar-width:none}
+.filters::-webkit-scrollbar{display:none}
+.chip{flex:none;padding:7px 13px;border-radius:var(--radius-full);font-size:.82rem;color:var(--text-secondary);background:var(--bg-tertiary);border:1px solid var(--border);transition:background var(--duration-fast),color var(--duration-fast),border-color var(--duration-fast)}
+.chip:hover{background:var(--bg-hover)}
+.chip.is-active{background:var(--accent-soft);color:var(--accent);border-color:var(--accent);font-weight:700}
+.chip__n{font-variant-numeric:tabular-nums;opacity:.65;margin-left:3px;font-size:.74rem}
+
+.items{list-style:none;display:flex;flex-direction:column;gap:8px;margin-top:8px}
+@keyframes surface-up{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.item{
+  background:var(--bg-tertiary);border:1px solid var(--border);
+  border-radius:var(--radius-lg);padding:12px 14px;
+  animation:surface-up var(--duration-normal) var(--ease-out) both;
+}
+.item__head{display:flex;align-items:center;gap:8px;min-height:18px}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:.72rem;font-weight:700;color:var(--text-secondary);background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-full);padding:3px 9px}
+.item__text{font-size:.94rem;line-height:1.45;margin-top:6px;overflow-wrap:break-word}
+.item__foot{display:flex;align-items:center;justify-content:space-between;margin-top:9px}
+.item__date{font-size:.74rem;color:var(--text-muted);font-variant-numeric:tabular-nums}
+.item__actions{display:flex;gap:4px}
+.iact{padding:6px 8px;border-radius:var(--radius-sm);color:var(--text-muted);font-size:.82rem;transition:background var(--duration-fast),color var(--duration-fast)}
+.iact:hover{background:var(--bg-hover);color:var(--text-primary)}
+.iact--danger:hover{color:var(--danger)}
+.item.leaving{animation:sink var(--duration-normal) var(--ease-default) forwards}
+@keyframes sink{to{opacity:0;transform:translateY(8px);max-height:0;padding-top:0;padding-bottom:0;margin-top:-8px;border-width:0}}
+
+.more{align-self:center;margin:10px auto 0;display:block;font-size:.8rem;color:var(--text-muted);text-decoration:underline;text-underline-offset:3px;transition:color var(--duration-fast)}
+.more:hover{color:var(--text-secondary)}
+
+.empty{text-align:center;padding:20px 12px 12px;animation:surface-up var(--duration-normal) var(--ease-out) both}
+.empty__title{font-family:var(--font-display);font-weight:700;font-size:1rem;color:var(--text-secondary)}
+.empty__hint{font-size:.83rem;color:var(--text-muted);margin-top:3px}
+
+/* ---------- MOUVEMENT RÉDUIT ---------- */
+.reduce-motion *,.reduce-motion *::before,.reduce-motion *::after{animation-duration:1ms!important;animation-delay:0ms!important;transition-duration:1ms!important}
+.reduce-motion .surface__back,.reduce-motion .surface__front{animation:none!important}
+.reduce-motion .drop{display:none}
+@media (prefers-reduced-motion:reduce){.surface__back,.surface__front{animation:none}}
+.demo-note{width:min(420px,100%);margin-top:14px;font-size:.76rem;line-height:1.5;color:var(--text-muted);text-align:center}
+</style>
+</head>
+<body>
+
+<div class="demo-bar">
+  <span class="demo-bar__title">M07 · Capture — maquette</span>
+  <div class="theme-chips" role="group" aria-label="Thèmes">
+    <button class="theme-chip" data-t="encre" style="--pv:linear-gradient(135deg,#101a24 55%,#45e0b0 55%)" aria-pressed="true" aria-label="Encre"></button>
+    <button class="theme-chip" data-t="garrigue" style="--pv:linear-gradient(135deg,#faf7f0 55%,#4d6b3c 55%)" aria-pressed="false" aria-label="Garrigue"></button>
+    <button class="theme-chip" data-t="crepuscule" style="--pv:linear-gradient(135deg,#201620 55%,#f0a35e 55%)" aria-pressed="false" aria-label="Crépuscule"></button>
+    <button class="theme-chip" data-t="maree" style="--pv:linear-gradient(135deg,#f4f7f6 55%,#146b66 55%)" aria-pressed="false" aria-label="Marée basse"></button>
+  </div>
+  <button class="motion-toggle" id="motion" aria-pressed="false">Réduire le mouvement</button>
+</div>
+
+<main class="module" aria-label="Module Capture — maquette">
+
+  <!-- Carte de capture : la pensée tombe dans l'eau -->
+  <section class="cap">
+    <h1 class="cap__title">Capture</h1>
+    <p class="cap__subtitle">Dépose la pensée. L'eau la garde, ta tête est libre.</p>
+
+    <div class="cap__form" id="form">
+      <textarea class="cap__input" id="input" placeholder="Capture une idée…" rows="4" aria-label="Nouvelle capture"></textarea>
+      <div class="cap__row">
+        <div class="tagpick" id="tagpick">
+          <button type="button" class="tagpick__btn" id="tagBtn" aria-haspopup="true" aria-expanded="false">🏷 <span id="tagLabel">Tag</span></button>
+          <div class="tagpick__menu" id="tagMenu" role="menu"></div>
+        </div>
+        <span class="cap__counter" id="counter" aria-live="polite"></span>
+        <button type="button" class="cap__submit" id="submitBtn">Capturer</button>
+      </div>
+    </div>
+
+    <div class="cap__ack" id="ack" aria-live="polite">Posée.</div>
+
+    <div class="surface" id="surface" aria-hidden="true">
+      <svg class="surface__back" viewBox="0 0 1200 18" preserveAspectRatio="none"><path d="M0,9 C75,3 150,15 300,9 C450,3 525,15 600,9 C675,3 750,15 900,9 C1050,3 1125,15 1200,9 L1200,18 L0,18 Z"/></svg>
+      <svg class="surface__front" viewBox="0 0 1200 18" preserveAspectRatio="none"><path d="M0,11 C100,6 200,14 300,11 C400,7 500,14 600,11 C700,6 800,14 900,11 C1000,7 1100,14 1200,11 L1200,18 L0,18 Z"/></svg>
+    </div>
+  </section>
+
+  <!-- Récentes : les pensées reposent sous la surface -->
+  <section class="recent">
+    <h2 class="recent__title">Sous la surface</h2>
+    <div class="filters" role="toolbar" aria-label="Filtrer les captures">
+      <button class="chip is-active" data-f="all">Toutes</button>
+      <button class="chip" data-f="maison">🏠 Maison</button>
+      <button class="chip" data-f="boulot">💼 Boulot</button>
+      <button class="chip" data-f="jardin">🌿 Jardin</button>
+      <button class="chip" data-f="sante">🏥 Santé</button>
+      <button class="chip" data-f="admin">📋 Admin</button>
+      <button class="chip" data-f="personnel">👤 Personnel</button>
+    </div>
+    <ul class="items" id="items"></ul>
+    <button class="more" id="more" hidden></button>
+  </section>
+
+</main>
+
+<p class="demo-note">
+  Écris une pensée et « Capturer » (ou Cmd+Entrée) : la goutte tombe,
+  l'onde s'ouvre, la surface se referme — l'onde est la confirmation.
+  Aucune limite de caractères : la capture ne refuse jamais une pensée.
+  Le compteur (informatif, après 200 caractères) ne juge pas.
+</p>
+
+<script>
+(function(){
+'use strict';
+const TAGS=[
+ {id:'maison',e:'🏠',l:'Maison'},{id:'boulot',e:'💼',l:'Boulot'},
+ {id:'jardin',e:'🌿',l:'Jardin'},{id:'sante',e:'🏥',l:'Santé'},
+ {id:'admin',e:'📋',l:'Admin'},{id:'personnel',e:'👤',l:'Personnel'}
+];
+let captures=[
+ {id:'c1',text:'Idée : proposer à Isabelle un point mensuel du collectif, format 30 min max.',tag:'boulot',at:Date.now()-3600e3},
+ {id:'c2',text:'Vérifier si le girdling du dernier ailante a pris — feuilles jaunies ?',tag:'jardin',at:Date.now()-26*3600e3},
+ {id:'c3',text:'Chapitre Dąbrowski : relier la désintégration positive au moment de la préfecture.',tag:'personnel',at:Date.now()-3*24*3600e3},
+ {id:'c4',text:'Racheter des croquettes pour Guimel',tag:'maison',at:Date.now()-4*24*3600e3},
+ {id:'c5',text:'Demander à Sandrine le calendrier des commissions de septembre',tag:'boulot',at:Date.now()-5*24*3600e3}
+];
+let filter='all', pendingTag=null, expanded=false;
+const COLLAPSED_COUNT=3;
+
+const form=document.getElementById('form'),input=document.getElementById('input'),
+counter=document.getElementById('counter'),itemsEl=document.getElementById('items'),
+moreBtn=document.getElementById('more'),surface=document.getElementById('surface'),
+cap=document.querySelector('.cap'),ack=document.getElementById('ack'),
+tagBtn=document.getElementById('tagBtn'),tagMenu=document.getElementById('tagMenu'),
+tagLabel=document.getElementById('tagLabel');
+
+/* ---------- Sélecteur de tag ---------- */
+function buildTagMenu(){
+  tagMenu.innerHTML='';
+  const none=document.createElement('button');
+  none.type='button';none.className='tagpick__item';none.textContent='Aucun tag';
+  none.addEventListener('click',()=>pickTag(null));
+  tagMenu.appendChild(none);
+  TAGS.forEach(t=>{
+    const b=document.createElement('button');
+    b.type='button';b.className='tagpick__item';b.textContent=t.e+' '+t.l;
+    b.addEventListener('click',()=>pickTag(t.id));
+    tagMenu.appendChild(b);
+  });
+}
+function pickTag(id){
+  pendingTag=id;
+  const t=TAGS.find(x=>x.id===id);
+  tagLabel.textContent=t?t.e+' '+t.l:'Tag';
+  tagBtn.classList.toggle('has-tag',!!t);
+  closeTagMenu();
+}
+function closeTagMenu(){tagMenu.classList.remove('is-open');tagBtn.setAttribute('aria-expanded','false')}
+tagBtn.addEventListener('click',e=>{
+  e.stopPropagation();
+  const open=tagMenu.classList.toggle('is-open');
+  tagBtn.setAttribute('aria-expanded',String(open));
+});
+document.addEventListener('pointerdown',e=>{
+  if(!e.target.closest('.tagpick'))closeTagMenu();
+});
+
+/* ---------- Compteur discret (après 200 caractères seulement) ---------- */
+input.addEventListener('input',()=>{
+  const n=input.value.length;
+  if(n>=200){counter.textContent=n+' caract\u00e8res';counter.classList.add('show')}
+  else{counter.classList.remove('show')}
+});
+
+/* ---------- La goutte ---------- */
+function dropAnimation(){
+  const reduced=document.body.classList.contains('reduce-motion')||
+    window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+  if(!reduced){
+    const rect=cap.getBoundingClientRect();
+    const inputRect=input.getBoundingClientRect();
+    const startY=inputRect.bottom-rect.top;
+    const fall=rect.height-startY-14;
+    const d=document.createElement('span');
+    d.className='drop';
+    d.style.top=startY+'px';
+    d.style.setProperty('--fall',fall+'px');
+    cap.appendChild(d);
+    d.addEventListener('animationend',()=>{
+      d.remove();
+      for(const cls of['impact','impact impact--2']){
+        const r=document.createElement('span');r.className=cls;
+        cap.appendChild(r);r.addEventListener('animationend',()=>r.remove());
+      }
+      surface.classList.remove('bob');void surface.offsetWidth;surface.classList.add('bob');
+    });
+  }
+  ack.classList.remove('play');void ack.offsetWidth;ack.classList.add('play');
+}
+
+/* ---------- Capture ---------- */
+function submitCapture(){
+  const text=input.value.trim();
+  if(!text){input.focus();return}
+  captures.unshift({id:'c'+Date.now(),text,tag:pendingTag,at:Date.now()});
+  input.value='';counter.classList.remove('show','warn');
+  pickTag(null);
+  dropAnimation();
+  setTimeout(renderList, 480); /* l'item fait surface après l'impact */
+  input.focus();
+}
+document.getElementById('submitBtn').addEventListener('click',submitCapture);
+input.addEventListener('keydown',e=>{
+  if((e.metaKey||e.ctrlKey)&&e.key==='Enter'){e.preventDefault();submitCapture()}
+});
+
+/* ---------- Liste ---------- */
+function fmtDate(ts){
+  const d=new Date(ts),now=new Date();
+  const days=Math.floor((now-d)/86400e3);
+  if(days===0)return "aujourd'hui \u00b7 "+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+  if(days===1)return 'hier';
+  return d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
+}
+function visible(){return filter==='all'?captures:captures.filter(c=>c.tag===filter)}
+function renderList(){
+  itemsEl.innerHTML='';
+  const vis=visible();
+  const shown=expanded?vis:vis.slice(0,COLLAPSED_COUNT);
+  shown.forEach((c,i)=>{
+    const li=document.createElement('li');li.className='item';li.style.animationDelay=(i*40)+'ms';
+    const t=TAGS.find(x=>x.id===c.tag);
+    const head=document.createElement('div');head.className='item__head';
+    if(t){const b=document.createElement('span');b.className='badge';b.textContent=t.e+' '+t.l;head.appendChild(b)}
+    const p=document.createElement('p');p.className='item__text';p.textContent=c.text;
+    const foot=document.createElement('div');foot.className='item__foot';
+    const date=document.createElement('time');date.className='item__date';date.textContent=fmtDate(c.at);
+    const acts=document.createElement('div');acts.className='item__actions';
+    const edit=document.createElement('button');edit.className='iact';edit.textContent='✎';edit.title='Modifier';edit.setAttribute('aria-label','Modifier la capture');
+    const del=document.createElement('button');del.className='iact iact--danger';del.textContent='✕';del.title='Supprimer';del.setAttribute('aria-label','Supprimer la capture');
+    del.addEventListener('click',()=>{
+      li.classList.add('leaving');
+      li.addEventListener('animationend',()=>{captures=captures.filter(x=>x.id!==c.id);renderList()});
+    });
+    acts.append(edit,del);foot.append(date,acts);
+    li.append(head,p,foot);itemsEl.appendChild(li);
+  });
+  document.querySelectorAll('.chip').forEach(ch=>{
+    const f=ch.dataset.f;
+    const n=f==='all'?captures.length:captures.filter(c=>c.tag===f).length;
+    let b=ch.querySelector('.chip__n');
+    if(n>0&&f!=='all'){if(!b){b=document.createElement('span');b.className='chip__n';ch.appendChild(b)}b.textContent=n}
+    else if(b){b.remove()}
+  });
+  const remaining=vis.length-shown.length;
+  if(remaining>0){moreBtn.hidden=false;moreBtn.textContent='Voir '+remaining+' de plus'}
+  else if(expanded&&vis.length>COLLAPSED_COUNT){moreBtn.hidden=false;moreBtn.textContent='Replier'}
+  else{moreBtn.hidden=true}
+  if(!vis.length){
+    const e=document.createElement('li');e.className='empty';
+    e.innerHTML='<div class="empty__title">Surface claire.</div><div class="empty__hint">Aucune pens\u00e9e ne t\u2019attend ici. C\u2019est une bonne nouvelle.</div>';
+    itemsEl.appendChild(e);
+  }
+}
+moreBtn.addEventListener('click',()=>{expanded=!expanded;renderList()});
+document.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>{
+  filter=c.dataset.f;expanded=false;
+  document.querySelectorAll('.chip').forEach(x=>x.classList.toggle('is-active',x===c));
+  renderList();
+}));
+
+/* ---------- Thèmes + mouvement ---------- */
+document.querySelectorAll('[data-t]').forEach(b=>b.addEventListener('click',()=>{
+  document.documentElement.dataset.theme=b.dataset.t;
+  document.querySelectorAll('[data-t]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+}));
+const motion=document.getElementById('motion');
+motion.addEventListener('click',()=>{
+  const on=motion.getAttribute('aria-pressed')!=='true';
+  motion.setAttribute('aria-pressed',String(on));
+  document.body.classList.toggle('reduce-motion',on);
+});
+if(window.matchMedia('(prefers-reduced-motion:reduce)').matches){
+  motion.setAttribute('aria-pressed','true');document.body.classList.add('reduce-motion');
+}
+
+buildTagMenu();
+renderList();
+})();
+</script>
+</body>
+</html>
