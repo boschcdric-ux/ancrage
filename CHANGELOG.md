@@ -132,3 +132,14 @@ Historique des modifications du chantier `chantier/redesign`.
 - Largeur standard `min(420px, 100%)` centrée posée — harmonisation autres modules à planifier.
 - `#a78bfa` et `!important` supprimés. `prefers-reduced-motion` : guide textuel uniquement.
 - Bundle JS entrée : −0,5 KB brut / +0,3 KB gzip (moteur audio). CSS entrée : −0,2 KB.
+
+### M09b — Corrections groupées Capture & Respiration
+
+- Capture : `font-size: max(1rem, 16px)` sur `.cap__input` — plus de zoom auto iOS.
+- Capture : `blur()` après capture sur pointeur grossier ; `focus()` conservé sur desktop et en édition.
+- Respiration : `applyPhaseToDom()` — zéro `innerHTML` entre phases en séance ; l'eau coule
+  au lieu de sauter (élément mer persistant).
+- Respiration : pilule de progression décollée des coins (piste + barre).
+- Règle notée pour mission balai : tous les champs de saisie app-wide ≥ 16 px.
+- Leçon architecture : animations CSS = élément DOM persistant, pas de re-render `innerHTML` en séance.
+- Bundle JS entrée : +1,4 KB brut / +0,24 KB gzip. CSS entrée : +0,12 KB. Validation groupée M09 + M09b attendue.
