@@ -91,11 +91,12 @@ function createBreathingView(state) {
         tabindex="0"
         aria-label="${escapeHtml(seaCardLabel)}"
       >
-        <div
-          class="breathing__session-line"
-          style="--session: ${sessionPct}%"
-          aria-hidden="true"
-        ></div>
+        <div class="breathing__session-track" aria-hidden="true">
+          <div
+            class="breathing__session-bar"
+            style="--session: ${sessionPct}%"
+          ></div>
+        </div>
         <div class="breathing__phase" aria-live="polite">
           <div class="breathing__phase-word">${escapeHtml(phaseWord)}</div>
           <div class="breathing__phase-count">${phaseCount > 0 ? `${phaseCount} s` : ''}</div>

@@ -338,24 +338,78 @@ function clearTick() {
   }
 }
 
+function updateSessionControls() {
+  const controls = rootContainer?.querySelector('.breathing__controls');
+  if (!(controls instanceof HTMLElement)) return;
+  const show = screen === 'running' || screen === 'paused';
+  if (show) controls.removeAttribute('hidden');
+  else controls.setAttribute('hidden', '');
+
+  if (!show) return;
+  controls.innerHTML =
+    screen === 'running'
+      ? '<button type="button" class="breathing__ctl" data-breathing-pause>Pause</button><button type="button" class="breathing__ctl" data-breathing-stop>Terminer</button>'
+      : '<button type="button" class="breathing__ctl breathing__ctl--primary" data-breathing-resume>Reprendre</button><button type="button" class="breathing__ctl" data-breathing-stop>Terminer</button>';
+}
+
+function updateSoundChips() {
+  rootContainer?.querySelectorAll('[data-breathing-toggle-sound]').forEach((btn) => {
+    if (!(btn instanceof HTMLElement)) return;
+    const on = btn.dataset.breathingToggleSound === '1';
+    btn.classList.toggle('is-active', on ? soundEnabled : !soundEnabled);
+  });
+}
+
+function applyPhaseToDom(opts = {}) {
+  const wordEl = rootContainer?.querySelector('.breathing__phase-word');
+  if (wordEl) wordEl.textContent = phaseDisplayText();
+
+  const countEl = rootContainer?.querySelector('.breathing__phase-count');
+  if (countEl) {
+    const n = countdownFromMs(phaseRemainingMs);
+    countEl.textContent =
+      (screen === 'running' || screen === 'paused') && n > 0 ? `${n} s` : '';
+  }
+
+  const cyclesEl = rootContainer?.querySelector('.breathing__cycles');
+  if (cyclesEl) {
+    cyclesEl.textContent =
+      screen === 'running' || screen === 'paused'
+        ? `cycle ${cycleIndex} / ${totalCycles}`
+        : '';
+  }
+
+  const barEl = rootContainer?.querySelector('.breathing__session-bar');
+  if (barEl instanceof HTMLElement) {
+    const pct = Math.min(100, Math.max(0, sessionProgressRatio() * 100));
+    barEl.style.setProperty('--session', `${pct}%`);
+  }
+
+  const card = rootContainer?.querySelector('[data-breathing-sea-card]');
+  if (card instanceof HTMLElement) {
+    card.classList.toggle('breathing__sea-card--holding', screen === 'running' && isHoldingPhase());
+    card.setAttribute('aria-label', seaCardAriaLabel());
+  }
+
+  updateSessionControls();
+  updateSoundChips();
+
+  if (opts.applyPhase && screen === 'running') {
+    const dur = opts.phaseDurSec ?? getPhaseDurationSec(phase);
+    onPhaseStart(phase, dur);
+  }
+}
+
 function updateLiveDom() {
   const countEl = rootContainer?.querySelector('.breathing__phase-count');
   if (countEl) {
     const n = countdownFromMs(phaseRemainingMs);
     countEl.textContent = n > 0 ? `${n} s` : '';
   }
-  const wordEl = rootContainer?.querySelector('.breathing__phase-word');
-  if (wordEl) wordEl.textContent = phaseDisplayText();
-  const cyclesEl = rootContainer?.querySelector('.breathing__cycles');
-  if (cyclesEl) cyclesEl.textContent = `cycle ${cycleIndex} / ${totalCycles}`;
-  const lineEl = rootContainer?.querySelector('.breathing__session-line');
-  if (lineEl instanceof HTMLElement) {
+  const barEl = rootContainer?.querySelector('.breathing__session-bar');
+  if (barEl instanceof HTMLElement) {
     const pct = Math.min(100, Math.max(0, sessionProgressRatio() * 100));
-    lineEl.style.setProperty('--session', `${pct}%`);
-  }
-  const card = rootContainer?.querySelector('[data-breathing-sea-card]');
-  if (card) {
-    card.classList.toggle('breathing__sea-card--holding', screen === 'running' && isHoldingPhase());
+    barEl.style.setProperty('--session', `${pct}%`);
   }
 }
 
@@ -368,7 +422,7 @@ function onPhaseBoundary() {
   if (nextPhase) {
     phase = nextPhase;
     phaseRemainingMs = getPhaseDurationSec(phase) * 1000;
-    render({ applyPhase: true });
+    applyPhaseToDom({ applyPhase: true });
     return;
   }
 
@@ -380,7 +434,7 @@ function onPhaseBoundary() {
   cycleIndex += 1;
   phase = phases[0];
   phaseRemainingMs = getPhaseDurationSec(phase) * 1000;
-  render({ applyPhase: true });
+  applyPhaseToDom({ applyPhase: true });
 }
 
 function tick() {
@@ -435,14 +489,14 @@ function pauseSession() {
   screen = 'paused';
   clearTick();
   stopSound();
-  render();
+  applyPhaseToDom();
 }
 
 function resumeSession() {
   if (screen !== 'paused') return;
   screen = 'running';
   const durSec = phaseRemainingMs / 1000;
-  render({ applyPhase: true, phaseDurSec: durSec });
+  applyPhaseToDom({ applyPhase: true, phaseDurSec: durSec });
   tickId = window.setInterval(tick, 250);
 }
 
@@ -552,9 +606,9 @@ function bindEvents() {
         stopSound();
       }
       if (screen === 'running' && soundEnabled) {
-        render({ applyPhase: true, phaseDurSec: phaseRemainingMs / 1000 });
+        applyPhaseToDom({ applyPhase: true, phaseDurSec: phaseRemainingMs / 1000 });
       } else {
-        render();
+        updateSoundChips();
       }
       return;
     }
