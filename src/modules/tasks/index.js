@@ -895,7 +895,11 @@ function bindEvents() {
     if (!(target instanceof Element)) return;
 
     if (openTagMenuTaskId) {
-      const insideTagUi = target.closest('.tasks__tag-wrap');
+      const insideTagUi =
+        target.closest('.tasks__tag-wrap') ||
+        target.closest('.tasks__tag-menu') ||
+        target.closest('[data-task-tag-toggle]') ||
+        target.closest('[data-task-tag-pick]');
       if (!insideTagUi) {
         openTagMenuTaskId = null;
         setTimeout(() => renderList(), 0);
@@ -907,7 +911,18 @@ function bindEvents() {
         target.closest('[data-task-expand]') ||
         target.closest('.tasks__item-actions') ||
         target.closest('[data-task-toggle]') ||
-        target.closest('.tasks__tag-menu');
+        target.closest('.tasks__tag-menu') ||
+        target.closest('.tasks__tag-wrap') ||
+        target.closest('.tasks__subtasks-list') ||
+        target.closest('.tasks__subtask-form') ||
+        target.closest('[data-subtask-toggle]') ||
+        target.closest('[data-subtask-edit]') ||
+        target.closest('[data-subtask-delete]') ||
+        target.closest('[data-subtask-edit-input]') ||
+        target.closest('[data-subtask-edit-save]') ||
+        target.closest('[data-subtask-edit-cancel]') ||
+        target.closest('[data-subtask-input]') ||
+        target.closest('[data-subtask-submit]');
       if (!keepExpanded) {
         expandedTaskId = null;
         setTimeout(() => renderList(), 0);
