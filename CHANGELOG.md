@@ -83,3 +83,14 @@ Historique des modifications du chantier `chantier/redesign`.
 - Accessibilité : `role="menu"`, `aria-expanded`, navigation clavier, focus rendu au déclencheur.
 - Zéro `!important`, zéro couleur en dur dans `capture/style.css`. M08 finalise Capture (validation groupée M07+M08).
 - Bundle JS entrée : +2,5 KB brut / +1,1 KB gzip (dans tolérance ±2 KB). CSS entrée : +1 KB.
+
+### M08b — Capture : aligner le popover tag sur le composant de référence
+
+- Correctif iOS/Safari : `positionTagPopover()` appelée après ouverture dans les deux chemins
+  (API native `showPopover` + repli), via `requestAnimationFrame`.
+- Placement unifié aligné sur `chantier/annexes/composant-popover-tag.html` : sous le déclencheur
+  si place, au-dessus sinon, borné au viewport ; repositionnement au resize/scroll.
+- CSS : retrait `anchor-name` / `position-anchor` ; `position: fixed` + `top`/`left` pilotés en JS.
+- `composant-popover-tag.html` = patron canonique pour tout futur menu flottant.
+- Saga Capture (M07 + M08 + M08b) prête pour validation groupée.
+- Bundle JS entrée : +0,35 KB brut / +0,13 KB gzip (dans tolérance ±2 KB). CSS entrée : −0,3 KB.
