@@ -193,6 +193,26 @@
   max-height: min(320px, 60vh);
   overflow-y: auto;
   gap: 2px;
+  opacity: 0;
+  transform: translateY(6px) scale(0.98);
+  transition:
+    opacity var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) var(--ease-spring),
+    overlay var(--duration-fast) allow-discrete,
+    display var(--duration-fast) allow-discrete;
+}
+
+.tagpick__popover:popover-open,
+.tagpick__popover.is-open {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+@starting-style {
+  .tagpick__popover:popover-open {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
 }
 
 .tagpick__popover:popover-open {
@@ -613,6 +633,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .tagpick__popover,
   .tagpick__popover--fallback {
     transition: none;
   }

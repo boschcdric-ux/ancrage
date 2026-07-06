@@ -209,7 +209,7 @@ function openTagPopover() {
   if (useNativePopover) {
     if (!popover.matches(':popover-open')) popover.showPopover();
     startPopoverTracking();
-    requestAnimationFrame(positionTagPopover);
+    positionTagPopover();
     return;
   }
 
@@ -218,7 +218,7 @@ function openTagPopover() {
     syncTagToggleExpanded(true);
     popover.classList.add('is-open');
     startPopoverTracking();
-    requestAnimationFrame(positionTagPopover);
+    positionTagPopover();
   }
 }
 
