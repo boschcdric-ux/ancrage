@@ -114,16 +114,23 @@
   color: var(--text-muted);
 }
 
-.breathing__session-line {
+.breathing__session-track {
   position: absolute;
-  top: 0;
-  left: 0;
-  height: 3px;
-  background: var(--accent);
-  width: var(--session, 0%);
-  transition: width 1s linear;
+  top: 10px;
+  left: 14px;
+  right: 14px;
+  height: 4px;
+  border-radius: var(--radius-full);
+  background: var(--bg-tertiary);
   z-index: 3;
-  border-radius: 0 2px 2px 0;
+}
+
+.breathing__session-bar {
+  height: 100%;
+  width: var(--session, 0%);
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width 1s linear;
 }
 
 .breathing__cycles {
@@ -334,7 +341,7 @@
     animation: none;
   }
 
-  .breathing__session-line {
+  .breathing__session-bar {
     transition: none;
   }
 }
