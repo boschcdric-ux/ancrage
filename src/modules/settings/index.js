@@ -3,7 +3,8 @@ import { save, syncFromPocketBase } from '../../core/storage.js';
 import {
   setThemeOverride,
   removeThemeOverride,
-  getThemeUiSelectionState
+  getThemeUiSelectionState,
+  THEMES
 } from '../../core/theme.js';
 import { createSettingsMarkup } from './view.js';
 import {
@@ -15,9 +16,10 @@ import {
 import { MODULES_META_FOR_SETTINGS, getModuleNavLabel } from '../registry.js';
 
 const THEME_OPTIONS = [
-  { id: 'light', icon: '☀️', label: 'Clair' },
-  { id: 'dark', icon: '🌙', label: 'Sombre' },
-  { id: 'warm', icon: '🔥', label: 'Chaud' },
+  { id: 'encre', icon: '🌊', label: 'Encre' },
+  { id: 'garrigue', icon: '🫒', label: 'Garrigue' },
+  { id: 'crepuscule', icon: '🌅', label: 'Crépuscule' },
+  { id: 'maree', icon: '🐚', label: 'Marée basse' },
   { id: 'auto', icon: '🔄', label: 'Automatique' }
 ];
 
@@ -264,7 +266,7 @@ function render() {
 function applyThemeChoice(themeId) {
   if (themeId === 'auto') {
     removeThemeOverride();
-  } else if (themeId === 'light' || themeId === 'dark' || themeId === 'warm') {
+  } else if (THEMES.includes(themeId)) {
     setThemeOverride(themeId);
   }
 }
