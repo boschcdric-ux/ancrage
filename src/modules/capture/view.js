@@ -9,6 +9,8 @@ const PREDEFINED_TAGS = [
   { id: 'personnel', emoji: '👤', label: 'Personnel' }
 ];
 
+const CAPTURE_TAG_POPOVER_ID = 'capture-tag-pop';
+
 const SURFACE_BACK_SVG =
   '<svg class="cap__surface-back" viewBox="0 0 1200 18" preserveAspectRatio="none" aria-hidden="true"><path d="M0,9 C75,3 150,15 300,9 C450,3 525,15 600,9 C675,3 750,15 900,9 C1050,3 1125,15 1200,9 L1200,18 L0,18 Z"/></svg>';
 
@@ -21,18 +23,52 @@ function renderTagBadge(tagId) {
   return `<span class="capture__badge"><span aria-hidden="true">${tag.emoji}</span> ${escapeHtml(tag.label)}</span>`;
 }
 
-function createCaptureTagPicker(formTagId = '', isOpen = false) {
+function renderTagPickCheck(isSelected) {
+  return isSelected ? '<span class="tagpick__check" aria-hidden="true">✓</span>' : '';
+}
+
+function createCaptureTagPopoverItems(formTagId = '') {
+  const noneSelected = !formTagId;
+  const noneItem = `
+    <button
+      type="button"
+      class="tagpick__item${noneSelected ? ' is-selected' : ''}"
+      role="menuitem"
+      data-capture-tag-pick
+      data-tag-id=""
+    >
+      Sans tag
+      ${renderTagPickCheck(noneSelected)}
+    </button>
+  `;
+
+  const tagItems = PREDEFINED_TAGS.map((t) => {
+    const isSelected = formTagId === t.id;
+    return `
+      <button
+        type="button"
+        class="tagpick__item${isSelected ? ' is-selected' : ''}"
+        role="menuitem"
+        data-capture-tag-pick
+        data-tag-id="${t.id}"
+      >
+        <span class="tagpick__dot" aria-hidden="true">${t.emoji}</span>
+        ${escapeHtml(t.label)}
+        ${renderTagPickCheck(isSelected)}
+      </button>
+    `;
+  }).join('');
+
+  return noneItem + tagItems;
+}
+
+function createCaptureTagTrigger(formTagId = '', useNativePopover = true) {
   const tag = formTagId ? PREDEFINED_TAGS.find((t) => t.id === formTagId) : null;
   const btnClass = tag ? 'tagpick__btn has-tag' : 'tagpick__btn';
-  const label = tag ? `${tag.emoji} ${tag.label}` : 'Tag';
-
-  const menuItems = [
-    `<button type="button" class="tagpick__item" data-capture-tag-pick data-tag-id="">Aucun tag</button>`,
-    ...PREDEFINED_TAGS.map(
-      (t) =>
-        `<button type="button" class="tagpick__item" data-capture-tag-pick data-tag-id="${t.id}">${t.emoji} ${escapeHtml(t.label)}</button>`
-    )
-  ].join('');
+  const popoverAttrs = useNativePopover ? `popovertarget="${CAPTURE_TAG_POPOVER_ID}"` : '';
+  const labelHtml = tag
+    ? `<span class="tagpick__dot" aria-hidden="true">${tag.emoji}</span><span data-capture-tag-label>${escapeHtml(tag.label)}</span>`
+    : `<span data-capture-tag-label>Tag</span>`;
 
   return `
     <div class="tagpick" data-capture-tag-wrap>
@@ -40,15 +76,29 @@ function createCaptureTagPicker(formTagId = '', isOpen = false) {
         type="button"
         class="${btnClass}"
         data-capture-tag-toggle
-        aria-haspopup="true"
-        aria-expanded="${isOpen ? 'true' : 'false'}"
+        ${popoverAttrs}
+        aria-haspopup="menu"
+        aria-expanded="false"
+        aria-controls="${CAPTURE_TAG_POPOVER_ID}"
         aria-label="${tag ? `Tag sélectionné : ${escapeHtml(tag.label)}` : 'Choisir un tag'}"
       >
-        🏷 <span data-capture-tag-label>${escapeHtml(label)}</span>
+        ${labelHtml}
       </button>
-      <div class="tagpick__menu ${isOpen ? 'is-open' : ''}" data-capture-tag-menu role="menu" aria-hidden="${isOpen ? 'false' : 'true'}">
-        ${menuItems}
-      </div>
+    </div>
+  `;
+}
+
+function createCaptureTagPopover(formTagId = '', useNativePopover = true) {
+  const popoverAttr = useNativePopover ? 'popover="auto"' : '';
+  return `
+    <div
+      id="${CAPTURE_TAG_POPOVER_ID}"
+      class="tagpick__popover"
+      ${popoverAttr}
+      role="menu"
+      aria-label="Choisir un tag"
+    >
+      ${createCaptureTagPopoverItems(formTagId)}
     </div>
   `;
 }
@@ -210,8 +260,8 @@ function createCaptureView(
   formTagId = '',
   allCaptures = [],
   listToggle = { remaining: 0, expanded: false, filteredTotal: 0, maxVisible: 5 },
-  openFormTagMenu = false,
-  inputAriaLabel = 'Nouvelle capture'
+  inputAriaLabel = 'Nouvelle capture',
+  useNativePopover = true
 ) {
   return `
     <section class="capture">
@@ -237,7 +287,7 @@ function createCaptureView(
             aria-label="${escapeHtml(inputAriaLabel)}"
           ></textarea>
           <div class="cap__row">
-            ${createCaptureTagPicker(formTagId, openFormTagMenu)}
+            ${createCaptureTagTrigger(formTagId, useNativePopover)}
             <span class="cap__counter" data-capture-counter aria-live="polite"></span>
             <button type="submit" class="cap__submit" data-capture-submit>Capturer</button>
           </div>
@@ -261,6 +311,8 @@ function createCaptureView(
           })}
         </div>
       </section>
+
+      ${createCaptureTagPopover(formTagId, useNativePopover)}
     </section>
   `;
 }
@@ -270,6 +322,9 @@ export {
   createCaptureList,
   createCaptureListBlock,
   createCaptureFilterBar,
-  createCaptureTagPicker,
+  createCaptureTagTrigger,
+  createCaptureTagPopover,
+  createCaptureTagPopoverItems,
+  CAPTURE_TAG_POPOVER_ID,
   PREDEFINED_TAGS
 };
