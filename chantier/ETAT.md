@@ -3,7 +3,7 @@
 > Ce fichier est la mémoire du chantier. L'agent le lit au début de chaque
 > mission et le met à jour à la fin. Il doit rester factuel et concis.
 
-**Dernière mise à jour :** 2026-07-06 — M08
+**Dernière mise à jour :** 2026-07-06 — M08b
 
 ---
 
@@ -21,6 +21,7 @@
 | M06 | Tâches : tag, bordure, tag à la création | ✅ faite (en attente validation Cédric) | 2026-07-06 |
 | M07 | Signature Capture : la goutte | ✅ faite (en attente validation Cédric) | 2026-07-06 |
 | M08 | Capture : popover tag + mise en page | ✅ faite (en attente validation Cédric) | 2026-07-06 |
+| M08b | Capture : aligner popover tag (référence) | ✅ faite (en attente validation Cédric) | 2026-07-06 |
 
 Statuts : ⬜ à faire · 🔶 en cours · ✅ faite et validée par Cédric · 🛑 bloquée
 
@@ -33,15 +34,15 @@ sans justification écrite.*
 
 | Métrique | Baseline (M00) | Dernière valeur | Mission |
 |---|---|---|---|
-| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M08 |
-| Tests unitaires | 22/22 passés (2 fichiers) | 44/44 passés (7 fichiers) | M08 |
-| Lint | 0 erreur | 0 erreur | M08 |
-| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 283 KB (`index-D2M2TGAQ.js`) | M08 |
-| JS initial (gzip) | 243 KB | 78 KB | M08 |
-| CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 117 KB (`index-Bb7kltXR.css`, entrée HTML) | M08 |
+| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M08b |
+| Tests unitaires | 22/22 passés (2 fichiers) | 44/44 passés (7 fichiers) | M08b |
+| Lint | 0 erreur | 0 erreur | M08b |
+| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 283 KB (`index-DWDgDJp3.js`) | M08b |
+| JS initial (gzip) | 243 KB | 78 KB | M08b |
+| CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 117 KB (`index-Bp4-FEnp.css`, entrée HTML) | M08b |
 | Nombre de chunks JS | 1 | 9 | M01 |
 | Polices woff2 (dist) | — | ~122 KB (7 fichiers) | M04 |
-| Precache PWA | — | 1079 KiB (23 entrées) | M08 |
+| Precache PWA | — | 1079 KiB (23 entrées) | M08b |
 
 Variation bundle M05 : +4,3 KB brut sur le chunk d'entrée JS (275 vs 270 M04) — hors tolérance ±2 KB
 mais +1,5 KB gzip seulement ; justifié par markup SVG inline (houle, ancre, coche) et fonctions tide
@@ -146,6 +147,27 @@ et zéro `#c9a227` dans `tasks/style.css`.
 - Grep contrôle : 0 `!important`, 0 couleur en dur, 0 `<select>` dans `capture/`
 - Commits : `feat:` popover tag top layer ; `chore:` clôture M08
 
+### Rituel AVANT M08b (2026-07-06)
+
+- Smoke : 20/20 modules, 4/4 shell
+- Unit : 44/44 (7 fichiers)
+- Lint : 0 erreur
+- Build entrée : 283 KB brut (`index-D2M2TGAQ.js`), 78 KB gzip
+- CSS entrée : 117 KB brut (`index-Bb7kltXR.css`), 19 KB gzip
+- Precache : 1079 KiB
+
+### Rituel APRÈS M08b (2026-07-06)
+
+- Smoke : 20/20 modules, 4/4 shell
+- Unit : 44/44 (7 fichiers)
+- Lint : 0 erreur
+- Build entrée : 283 KB brut (`index-DWDgDJp3.js`), 78 KB gzip (+0,35 KB brut, +0,13 KB gzip — placement unifié + écouteurs resize/scroll)
+- CSS entrée : 117 KB brut (`index-Bp4-FEnp.css`), 19 KB gzip (−0,3 KB, retrait anchor CSS)
+- Precache : 1079 KiB
+- Grep contrôle : 0 `!important`, 0 couleur en dur, 0 `<select>` dans `capture/`
+- `git diff --stat` : uniquement `capture/index.js` + `capture/style.css`
+- Commits : `feat:` positionnement popover natif + repli ; `chore:` clôture M08b
+
 ### Simulation quota plein (procédure dev, M02)
 
 1. `npm run preview`, ouvrir l'app dans le navigateur.
@@ -236,6 +258,12 @@ Vérification automatisée équivalente : `npm run test:unit` — tests `save() 
   repli `position: fixed` sur `body` si `showPopover` absent. Patron à réutiliser pour tout menu flottant.
 - M08 : mise en page carte — `box-sizing: border-box`, largeurs bornées à 100 %, ligne tag + « Capturer »
   sans `flex:1` mobile. M08 finalise Capture (validation groupée M07 + M08 attendue).
+- M08b : correctif positionnement popover — `positionTagPopover()` appelée après ouverture dans les deux
+  chemins (natif via `toggle` + `requestAnimationFrame`, repli identique) ; retrait anchor CSS au profit
+  de `position: fixed` + `top`/`left` JS, aligné sur `chantier/annexes/composant-popover-tag.html`.
+- M08b : écouteurs `resize` + `scroll` (capture) tant que le popover est ouvert — repositionnement dynamique.
+- M08b : `composant-popover-tag.html` devient le **patron canonique** de tout menu flottant du projet.
+  Saga Capture (M07 + M08 + M08b) prête pour validation groupée.
 
 ---
 
