@@ -58,7 +58,11 @@ ProseMirror absent du chunk d'entrée (`grep -c prosemirror` = 0 sur `index-BTqQ
 ## Décisions prises
 
 *Une ligne par décision : quoi, pourquoi, quelle mission.*
-
+- Hors mission (correctif manuel Cédric, après M01) : `test:unit` élargi
+  de `src/core/ src/modules/mood/` à `src/` pour couvrir `registry.test.js`,
+  créé en M01 mais non branché au filet automatique. Nouvelle règle ajoutée
+  à 00-REGLES.md §2 pour éviter que ça se reproduise. `.cursorrules` committé
+  à cette occasion.
 - M00 : chantier installé sur branche `chantier/redesign` dans le clone
   `ancrage-chantier` — baseline mesurée avant toute modification applicative.
 - M01 : `registry.js` expose `navLabel` en plus de `label` — les réglages
