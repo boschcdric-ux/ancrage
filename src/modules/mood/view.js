@@ -2,7 +2,7 @@ import { escapeHtml, truncate } from '../../core/format.js';
 
 const WEEKDAY_SHORT = ['dim', 'lun', 'mar', 'mer', 'jeu', 'ven', 'sam'];
 
-function formatDateFr(dateString) {
+function formatDateShortFr(dateString) {
   const date = new Date(`${dateString}T12:00:00`);
   return new Intl.DateTimeFormat('fr-FR', {
     weekday: 'long',
@@ -253,7 +253,7 @@ function createHistory(entries, { hasMore = false } = {}) {
           (entry) => `
             <li class="mood-history__item card">
               <div class="mood-history__meta">
-                <span class="mood-history__date">${formatDateFr(entry.date)}</span>
+                <span class="mood-history__date">${formatDateShortFr(entry.date)}</span>
                 <span class="mood-history__emojis">${entry.moodEmoji} · ${entry.energyEmoji}</span>
               </div>
               <p class="mood-history__note">${escapeHtml(truncate(entry.note || 'Sans note', 60))}</p>
@@ -397,4 +397,4 @@ function createDashboardMoodWidget({ todayEntry, chartDays = [], moodTrend = 'st
   };
 }
 
-export { WEEKDAY_SHORT, createMoodView, createDashboardMoodWidget, createHistory, formatDateFr };
+export { WEEKDAY_SHORT, createMoodView, createDashboardMoodWidget, createHistory, formatDateShortFr };
