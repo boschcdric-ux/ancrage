@@ -2,13 +2,7 @@
  * Marquage de la vue Réglages (page scrollable, pas de modale).
  */
 
-function escapeHtml(text) {
-  return String(text)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
+import { escapeHtml } from '../../core/format.js';
 
 /**
  * @param {Array<{ id: string; icon: string; label: string; locked: boolean; on: boolean }>} moduleRows
