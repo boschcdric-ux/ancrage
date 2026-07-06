@@ -17,3 +17,10 @@ Historique des modifications du chantier `chantier/redesign`.
 - `dashboard/index.js` : widgets lazy via `import()` dynamique avec placeholder.
 - `main.js` : journal passé en lazy (TipTap dans un chunk séparé).
 - Métriques après : 9 chunks JS, entrée 265 KB brut / 72 KB gzip, smoke 20/20, lint 0.
+
+### M02 — Fiabiliser la sauvegarde
+
+- `save()` : séquence de défense quota (purge backup ancien → retry → purge tous → retry).
+- Événement `ancrage:save-failed` + toast centralisé dans `main.js` (cooldown 10 s).
+- Rétention backups quotidiens : 7 → 3 snapshots.
+- Tests unitaires quota (+5 tests, total 27/27). Bundle entrée : +1,2 KB (dans tolérance).
