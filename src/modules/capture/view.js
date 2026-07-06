@@ -9,51 +9,81 @@ const PREDEFINED_TAGS = [
   { id: 'personnel', emoji: '👤', label: 'Personnel' }
 ];
 
+const SURFACE_BACK_SVG =
+  '<svg class="cap__surface-back" viewBox="0 0 1200 18" preserveAspectRatio="none" aria-hidden="true"><path d="M0,9 C75,3 150,15 300,9 C450,3 525,15 600,9 C675,3 750,15 900,9 C1050,3 1125,15 1200,9 L1200,18 L0,18 Z"/></svg>';
+
+const SURFACE_FRONT_SVG =
+  '<svg class="cap__surface-front" viewBox="0 0 1200 18" preserveAspectRatio="none" aria-hidden="true"><path d="M0,11 C100,6 200,14 300,11 C400,7 500,14 600,11 C700,6 800,14 900,11 C1000,7 1100,14 1200,11 L1200,18 L0,18 Z"/></svg>';
+
 function renderTagBadge(tagId) {
   const tag = PREDEFINED_TAGS.find((t) => t.id === tagId);
   if (!tag) return '';
-  return `<span class="shared-tag-badge shared-tag-badge--${tag.id}"><span class="shared-tag-badge__emoji" aria-hidden="true">${tag.emoji}</span><span class="shared-tag-badge__label">${escapeHtml(tag.label)}</span></span>`;
+  return `<span class="capture__badge"><span aria-hidden="true">${tag.emoji}</span> ${escapeHtml(tag.label)}</span>`;
 }
 
-function createCaptureTagField(selectedTagId = '') {
-  const options = [
-    `<option value="">Sans tag</option>`,
+function createCaptureTagPicker(formTagId = '', isOpen = false) {
+  const tag = formTagId ? PREDEFINED_TAGS.find((t) => t.id === formTagId) : null;
+  const btnClass = tag ? 'tagpick__btn has-tag' : 'tagpick__btn';
+  const label = tag ? `${tag.emoji} ${tag.label}` : 'Tag';
+
+  const menuItems = [
+    `<button type="button" class="tagpick__item" data-capture-tag-pick data-tag-id="">Aucun tag</button>`,
     ...PREDEFINED_TAGS.map(
       (t) =>
-        `<option value="${t.id}" ${selectedTagId === t.id ? 'selected' : ''}>${t.emoji} ${escapeHtml(t.label)}</option>`
+        `<button type="button" class="tagpick__item" data-capture-tag-pick data-tag-id="${t.id}">${t.emoji} ${escapeHtml(t.label)}</button>`
     )
   ].join('');
 
   return `
-    <div class="capture__tag-field">
-      <label class="capture__tag-label" for="capture-tag">Tag</label>
-      <select id="capture-tag" class="capture__tag-select" data-capture-tag aria-label="Tag de la capture">
-        ${options}
-      </select>
+    <div class="tagpick" data-capture-tag-wrap>
+      <button
+        type="button"
+        class="${btnClass}"
+        data-capture-tag-toggle
+        aria-haspopup="true"
+        aria-expanded="${isOpen ? 'true' : 'false'}"
+        aria-label="${tag ? `Tag sélectionné : ${escapeHtml(tag.label)}` : 'Choisir un tag'}"
+      >
+        🏷 <span data-capture-tag-label>${escapeHtml(label)}</span>
+      </button>
+      <div class="tagpick__menu ${isOpen ? 'is-open' : ''}" data-capture-tag-menu role="menu" aria-hidden="${isOpen ? 'false' : 'true'}">
+        ${menuItems}
+      </div>
     </div>
   `;
 }
 
-function createCaptureFilterBar(activeFilter = 'all') {
-  const tagButtons = PREDEFINED_TAGS.map(
-    (t) => `
+function getFilterChipCount(allCaptures, filterId) {
+  if (filterId === 'all') return allCaptures.length;
+  return allCaptures.filter((c) => c.tagId === filterId).length;
+}
+
+function renderChipCount(count) {
+  if (count <= 0) return '';
+  return `<span class="capture__chip-n">${count}</span>`;
+}
+
+function createCaptureFilterBar(activeFilter = 'all', allCaptures = []) {
+  const tagButtons = PREDEFINED_TAGS.map((t) => {
+    const count = getFilterChipCount(allCaptures, t.id);
+    return `
     <button
       type="button"
-      class="capture__filter-chip ${activeFilter === t.id ? 'is-active' : ''}"
+      class="capture__chip ${activeFilter === t.id ? 'is-active' : ''}"
       data-capture-filter="tag"
       data-capture-filter-tag="${t.id}"
       aria-pressed="${activeFilter === t.id ? 'true' : 'false'}"
     >
-      ${t.emoji} ${escapeHtml(t.label)}
+      ${t.emoji} ${escapeHtml(t.label)}${renderChipCount(count)}
     </button>
-  `
-  ).join('');
+  `;
+  }).join('');
 
   return `
     <div class="capture__filters" role="toolbar" aria-label="Filtrer les captures">
       <button
         type="button"
-        class="capture__filter-chip ${activeFilter === 'all' ? 'is-active' : ''}"
+        class="capture__chip ${activeFilter === 'all' ? 'is-active' : ''}"
         data-capture-filter="all"
         aria-pressed="${activeFilter === 'all' ? 'true' : 'false'}"
       >
@@ -65,43 +95,46 @@ function createCaptureFilterBar(activeFilter = 'all') {
 }
 
 function formatCaptureDate(timestamp) {
-  return new Intl.DateTimeFormat('fr-FR', {
-    day: '2-digit',
-    month: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit'
-  }).format(new Date(timestamp));
+  const date = new Date(timestamp);
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const dayDiff = Math.floor((startOfToday - startOfDate) / 86400000);
+
+  if (dayDiff === 0) {
+    const time = date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    return `aujourd'hui · ${time}`;
+  }
+  if (dayDiff === 1) return 'hier';
+  return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
 }
 
-function createCaptureItem(capture) {
+function createCaptureItem(capture, index = 0) {
   const badge = capture.tagId ? renderTagBadge(capture.tagId) : '';
 
   return `
-    <li class="capture__item animate-scale-in">
+    <li class="capture__item" data-capture-item="${capture.id}" style="animation-delay:${index * 40}ms">
       <div class="capture__item-head">
-        ${badge || '<span class="capture__item-head-spacer" aria-hidden="true"></span>'}
+        ${badge}
       </div>
       <p class="capture__item-text">${escapeHtml(capture.text)}</p>
-      <div class="capture__item-footer">
+      <div class="capture__item-foot">
         <time class="capture__item-date" datetime="${new Date(capture.createdAt).toISOString()}">
           ${formatCaptureDate(capture.createdAt)}
         </time>
         <div class="capture__item-actions">
           <button
             type="button"
-            class="capture__edit"
+            class="capture__iact"
             data-capture-edit="${capture.id}"
             aria-label="Modifier la capture"
             title="Modifier"
           >
-            <svg class="capture__edit-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-            </svg>
+            ✎
           </button>
           <button
             type="button"
-            class="capture__delete"
+            class="capture__iact capture__iact--danger"
             data-capture-delete="${capture.id}"
             aria-label="Supprimer la capture"
             title="Supprimer"
@@ -114,52 +147,60 @@ function createCaptureItem(capture) {
   `;
 }
 
+function createCaptureEmpty(noCapturesInStorage) {
+  if (noCapturesInStorage) {
+    return `
+      <li class="capture__empty">
+        <div class="capture__empty-title">Surface claire.</div>
+        <div class="capture__empty-hint">Aucune pensée ne t'attend ici. C'est une bonne nouvelle.</div>
+      </li>
+    `;
+  }
+  return `
+    <li class="capture__empty">
+      <div class="capture__empty-title">Rien ici pour ce tag.</div>
+      <div class="capture__empty-hint">Change de filtre ou capture une nouvelle pensée.</div>
+    </li>
+  `;
+}
+
 function createCaptureList(captures = [], noCapturesInStorage = false) {
   if (!captures.length) {
-    return `<p class="capture__empty">${noCapturesInStorage ? 'Aucune capture récente.' : 'Aucune capture pour ce tag.'}</p>`;
+    return `<ul class="capture__items">${createCaptureEmpty(noCapturesInStorage)}</ul>`;
   }
 
   return `
-    <ul class="capture__list">
-      ${captures.map(createCaptureItem).join('')}
+    <ul class="capture__items">
+      ${captures.map((c, i) => createCaptureItem(c, i)).join('')}
     </ul>
   `;
 }
 
-function createCaptureListToggle(remaining = 0, expanded = false) {
-  if (expanded) {
+function createCaptureListToggle(remaining = 0, expanded = false, filteredTotal = 0, maxVisible = 5) {
+  if (expanded && filteredTotal > maxVisible) {
     return `
-      <button
-        type="button"
-        class="capture__list-toggle btn"
-        data-capture-list-collapse
-      >
-        Réduire
+      <button type="button" class="capture__more" data-capture-list-collapse>
+        Replier
       </button>
     `;
   }
 
   if (remaining <= 0) return '';
 
-  const label = remaining === 1 ? 'restante' : 'restantes';
   return `
-    <button
-      type="button"
-      class="capture__list-toggle btn"
-      data-capture-list-expand
-    >
-      Voir plus (${remaining} ${label})
+    <button type="button" class="capture__more" data-capture-list-expand>
+      Voir ${remaining} de plus
     </button>
   `;
 }
 
 function createCaptureListBlock(
   captures = [],
-  { noCapturesInStorage = false, remaining = 0, expanded = false } = {}
+  { noCapturesInStorage = false, remaining = 0, expanded = false, filteredTotal = 0, maxVisible = 5 } = {}
 ) {
   return `
     ${createCaptureList(captures, noCapturesInStorage)}
-    ${createCaptureListToggle(remaining, expanded)}
+    ${createCaptureListToggle(remaining, expanded, filteredTotal, maxVisible)}
   `;
 }
 
@@ -167,50 +208,59 @@ function createCaptureView(
   captures = [],
   listFilter = 'all',
   formTagId = '',
-  storedCaptureCount = 0,
-  listToggle = { remaining: 0, expanded: false }
+  allCaptures = [],
+  listToggle = { remaining: 0, expanded: false, filteredTotal: 0, maxVisible: 5 },
+  openFormTagMenu = false,
+  inputAriaLabel = 'Nouvelle capture'
 ) {
   return `
-    <section class="capture animate-fade-in">
-      <div class="capture__card card animate-slide-up">
-        <header class="capture__header">
-          <h1 class="capture__title">Capture Rapide</h1>
-          <p class="capture__subtitle">Dépose ton idée en quelques mots et reprends ton focus.</p>
-        </header>
+    <section class="capture">
+      <div class="cap" data-cap-card>
+        <div class="cap__layer" data-cap-layer aria-hidden="true">
+          <div class="cap__surface" data-cap-surface>
+            ${SURFACE_BACK_SVG}
+            ${SURFACE_FRONT_SVG}
+          </div>
+        </div>
 
-        <form class="capture__form" data-capture-form>
-          <label class="capture__label" for="capture-input" data-capture-label>Nouvelle capture</label>
+        <h1 class="cap__title">Capture</h1>
+        <p class="cap__subtitle">Dépose la pensée. L'eau la garde, ta tête est libre.</p>
+
+        <form class="cap__form" data-capture-form>
           <textarea
             id="capture-input"
-            class="capture__input"
+            class="cap__input"
             data-capture-input
-            placeholder="Capture une idée..."
+            placeholder="Capture une idée…"
             rows="4"
-            maxlength="280"
             required
+            aria-label="${escapeHtml(inputAriaLabel)}"
           ></textarea>
-          <div class="capture__form-submit-row">
-            ${createCaptureTagField(formTagId)}
-            <div class="capture__actions">
-              <button type="submit" class="btn btn-primary" data-capture-submit>Capturer</button>
-            </div>
+          <div class="cap__row">
+            ${createCaptureTagPicker(formTagId, openFormTagMenu)}
+            <span class="cap__counter" data-capture-counter aria-live="polite"></span>
+            <button type="submit" class="cap__submit" data-capture-submit>Capturer</button>
           </div>
         </form>
+
+        <div class="cap__ack" data-capture-ack aria-live="polite">Posée.</div>
       </div>
 
-      <div class="capture__recent card animate-slide-up">
-        <h2 class="capture__recent-title">Captures récentes</h2>
+      <section class="capture__recent">
+        <h2 class="capture__recent-title">Sous la surface</h2>
         <div class="capture__filters-wrap" data-capture-filters>
-          ${createCaptureFilterBar(listFilter)}
+          ${createCaptureFilterBar(listFilter, allCaptures)}
         </div>
         <div class="capture__recent-content" data-capture-list>
           ${createCaptureListBlock(captures, {
-            noCapturesInStorage: storedCaptureCount === 0,
+            noCapturesInStorage: allCaptures.length === 0,
             remaining: listToggle.remaining,
-            expanded: listToggle.expanded
+            expanded: listToggle.expanded,
+            filteredTotal: listToggle.filteredTotal,
+            maxVisible: listToggle.maxVisible
           })}
         </div>
-      </div>
+      </section>
     </section>
   `;
 }
@@ -220,5 +270,6 @@ export {
   createCaptureList,
   createCaptureListBlock,
   createCaptureFilterBar,
+  createCaptureTagPicker,
   PREDEFINED_TAGS
 };
