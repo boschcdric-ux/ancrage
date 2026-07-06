@@ -50,6 +50,10 @@ et mettre à jour à la fin de chaque mission :
 ### Standards de code (identité technique du projet)
 - Aucun nouveau fichier > ~300 lignes. Si la mission produit plus, découper.
 - Tout nouveau fichier de logique métier non triviale reçoit un test.
+- Tout nouveau fichier de test doit être exécuté par `npm run test:unit`.
+  Si le script ne le couvre pas encore, l'y inclure fait partie de la
+  mission, et la modification de `package.json` est autorisée à cette
+  seule fin.
 - Commentaires uniquement sur la logique non évidente.
 - Commits atomiques, format `type: description courte` en français
   (`feat:`, `fix:`, `refactor:`, `chore:`, `docs:`).
