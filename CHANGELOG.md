@@ -112,3 +112,12 @@ Historique des modifications du chantier `chantier/redesign`.
 - Patron popover : règle « positionner de façon synchrone après showPopover(), jamais via rAF ».
 - Saga Capture (M07 → M08d) finalisée — validation groupée attendue.
 - Bundle JS entrée : −0,04 KB brut (inchangé gzip). CSS entrée : +0,45 KB.
+
+### M08e — Capture : un seul chemin d'ouverture pour le popover tag
+
+- Désenchevêtrement structurel : retrait `popovertarget` du bouton tag (`view.js`).
+- Ouverture pilotée uniquement par JS (`openTagPopover()` + positionnement synchrone) dans tous les modes.
+- `onTagPopoverToggle` simplifié : sync fermeture externe uniquement (plus de rAF à l'ouverture).
+- Leçon patron popover : jamais `popovertarget` ET handler JS sur le même déclencheur.
+- Saga Capture (M07 → M08e) finalisée — validation groupée attendue.
+- Bundle JS entrée : −0,12 KB brut / −0,05 KB gzip. CSS entrée : inchangé.
