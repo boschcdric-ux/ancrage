@@ -19,6 +19,7 @@
 | M05 | Signature Tâches : la ligne de flottaison | ✅ faite (en attente validation Cédric) | 2026-07-06 |
 | M05b | Correctif interactions sous-tâches/tag | ✅ faite (en attente validation Cédric) | 2026-07-06 |
 | M06 | Tâches : tag, bordure, tag à la création | ✅ faite (en attente validation Cédric) | 2026-07-06 |
+| M07 | Signature Capture : la goutte | 🔶 en cours | 2026-07-06 |
 
 Statuts : ⬜ à faire · 🔶 en cours · ✅ faite et validée par Cédric · 🛑 bloquée
 
