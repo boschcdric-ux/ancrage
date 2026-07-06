@@ -1,11 +1,4 @@
-function escapeHtml(value) {
-  return String(value)
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
-}
+import { escapeHtml } from '../../core/format.js';
 
 function formatTime(totalSeconds) {
   const safeValue = Math.max(0, Number(totalSeconds) || 0);
