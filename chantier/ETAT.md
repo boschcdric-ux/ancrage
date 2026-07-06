@@ -3,7 +3,7 @@
 > Ce fichier est la mémoire du chantier. L'agent le lit au début de chaque
 > mission et le met à jour à la fin. Il doit rester factuel et concis.
 
-**Dernière mise à jour :** 2026-07-06 — M04
+**Dernière mise à jour :** 2026-07-06 — M05
 
 ---
 
@@ -16,6 +16,7 @@
 | M02 | Fiabiliser la sauvegarde | ✅ faite et validée par Cédric | 2026-07-06 |
 | M03 | Ménage : code mort et duplications | ✅ faite (en attente validation Cédric) | 2026-07-06 |
 | M04 | Socle design : thèmes, mouvement, typographie | ✅ faite (en attente validation Cédric) | 2026-07-06 |
+| M05 | Signature Tâches : la ligne de flottaison | ✅ faite (en attente validation Cédric) | 2026-07-06 |
 
 Statuts : ⬜ à faire · 🔶 en cours · ✅ faite et validée par Cédric · 🛑 bloquée
 
@@ -28,36 +29,39 @@ sans justification écrite.*
 
 | Métrique | Baseline (M00) | Dernière valeur | Mission |
 |---|---|---|---|
-| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M04 |
-| Tests unitaires | 22/22 passés (2 fichiers) | 33/33 passés (5 fichiers) | M04 |
-| Lint | 0 erreur | 0 erreur | M04 |
-| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 270 KB (`index-BURE5voA.js`) | M04 |
-| JS initial (gzip) | 243 KB | 74 KB | M04 |
-| CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 109 KB (`index-GGyrk_Eq.css`, entrée HTML) | M04 |
+| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M05 |
+| Tests unitaires | 22/22 passés (2 fichiers) | 42/42 passés (6 fichiers) | M05 |
+| Lint | 0 erreur | 0 erreur | M05 |
+| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 275 KB (`index-BOvMyc0Q.js`) | M05 |
+| JS initial (gzip) | 243 KB | 75 KB | M05 |
+| CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 113 KB (`index-DZvOYv93.css`, entrée HTML) | M05 |
 | Nombre de chunks JS | 1 | 9 | M01 |
 | Polices woff2 (dist) | — | ~122 KB (7 fichiers) | M04 |
-| Precache PWA | — | 1058 KiB (23 entrées) | M04 |
+| Precache PWA | — | 1066 KiB (23 entrées) | M05 |
 
-Variation bundle M04 : +0,2 KB sur le chunk d'entrée JS (270 vs 270 M03) — dans la tolérance ±3 KB. Polices woff2 ~122 KB ajoutées au build (hors chunk JS).
+Variation bundle M05 : +4,3 KB brut sur le chunk d'entrée JS (275 vs 270 M04) — hors tolérance ±2 KB
+mais +1,5 KB gzip seulement ; justifié par markup SVG inline (houle, ancre, coche) et fonctions tide
+dans `view.js`. CSS entrée +4 KB (113 vs 109 M04) — styles signature module Tâches. Zéro `!important`
+et zéro `#c9a227` dans `tasks/style.css`.
 
-### Rituel AVANT M04 (2026-07-06)
-
-- Smoke : 20/20 modules, 4/4 shell
-- Unit : 29/29 (4 fichiers)
-- Lint : 0 erreur
-- Build entrée : 270 KB brut (`index-B472g6Nm.js`), 74 KB gzip
-- Precache : 1055 KiB
-
-### Rituel APRÈS M04 (2026-07-06)
+### Rituel AVANT M05 (2026-07-06)
 
 - Smoke : 20/20 modules, 4/4 shell
-- Unit : 33/33 (5 fichiers, +4 tests contraste WCAG)
+- Unit : 33/33 (5 fichiers)
 - Lint : 0 erreur
 - Build entrée : 270 KB brut (`index-BURE5voA.js`), 74 KB gzip
-- CSS entrée : 109 KB brut (`index-GGyrk_Eq.css`), 17 KB gzip
-- Polices woff2 : ~122 KB (Atkinson 4 + Bricolage 3)
+- CSS entrée : 109 KB brut (`index-GGyrk_Eq.css`)
 - Precache : 1058 KiB
-- Grep contrôle : 0 `fonts.googleapis` dans src/index.html/dist
+
+### Rituel APRÈS M05 (2026-07-06)
+
+- Smoke : 20/20 modules, 4/4 shell
+- Unit : 42/42 (6 fichiers, +9 tests tide)
+- Lint : 0 erreur
+- Build entrée : 275 KB brut (`index-BOvMyc0Q.js`), 75 KB gzip
+- CSS entrée : 113 KB brut (`index-DZvOYv93.css`), 18 KB gzip
+- Precache : 1066 KiB
+- Grep contrôle : 0 `!important` et 0 `#c9a227` dans `tasks/style.css`
 
 ### Simulation quota plein (procédure dev, M02)
 
@@ -121,6 +125,14 @@ Vérification automatisée équivalente : `npm run test:unit` — tests `save() 
 - M04 : mode auto jour (7 h–20 h) → garrigue, nuit → encre.
 - M04 : validation thèmes dans settings via `THEMES` importé de `theme.js` (fin des littéraux).
 - M04 : garde-fou `theme-contrast.test.js` — 20 assertions WCAG AA sur les 4 thèmes.
+- M05 : tokens `--water-front/back/glow` ajoutés aux 4 thèmes dans `core/styles.css`.
+- M05 : en-tête « ligne de flottaison » — houle SVG, compteur tabular-nums, libellés de marée
+  (`computeTideProgress` + `tideLabel`), ancre posée quand tout est fait.
+- M05 : animations de récompense via `tasks__item--just-done` / `highlightedTaskId` uniquement
+  (trait, anneaux ::before/::after, swell eau, tick compteur) — pas de rejeu au re-rendu.
+- M05 : chips filtre avec compteur du restant ; tâches faites en bas (tri affichage dans view.js).
+- M05 : amnistie — bannière pointillés, sortie `pardon` douce, message « Pardonné. Demain est une autre marée. »
+- M05 : 11 `!important` et `#c9a227` supprimés de `tasks/style.css`.
 
 ---
 
@@ -138,7 +150,8 @@ Vérification automatisée équivalente : `npm run test:unit` — tests `save() 
   ne suivent pas les tokens thème.
 - M04 : `journal/style.css` — surligneur jaune `#fef08a` en dur.
 - M04 : `notes/style.css` — palette papier sticky (`#1a1a1a`, `#fff`, etc.) en dur.
-- M04 : `tasks/style.css` — ombre dorée `#c9a227` sur badge priorité.
+- M04 : `tasks/style.css` — ombre dorée `#c9a227` sur badge priorité — **Résolu en M05.**
+- M05 : widget dashboard tâches (`createDashboardPreview`) non redessiné — mini-vague possible en mission future.
 
 ---
 
