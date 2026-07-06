@@ -143,3 +143,12 @@ Historique des modifications du chantier `chantier/redesign`.
 - Règle notée pour mission balai : tous les champs de saisie app-wide ≥ 16 px.
 - Leçon architecture : animations CSS = élément DOM persistant, pas de re-render `innerHTML` en séance.
 - Bundle JS entrée : +1,4 KB brut / +0,24 KB gzip. CSS entrée : +0,12 KB. Validation groupée M09 + M09b attendue.
+
+### M09c — Respiration : synchroniser l'eau avec l'état réel (démarrage + pause)
+
+- Démarrage : `render()` peint LOW, puis double `requestAnimationFrame` avant `onPhaseStart`
+  — l'eau monte visiblement depuis le bas (plus de saut à HIGH au premier instant).
+- Pause : `freezeWaterAtCurrentPosition()` fige la hauteur réellement peinte (`getComputedStyle`)
+  sans transition ; reprise inchangée (transition vers cible sur durée restante).
+- Un seul fichier (`breathing/index.js`, +26 lignes). Saga Respiration M09→M09c finalisée.
+- Bundle JS entrée : +0,5 KB brut / +0,12 KB gzip (dans tolérance). CSS entrée : inchangé.
