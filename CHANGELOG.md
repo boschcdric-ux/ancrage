@@ -64,3 +64,12 @@ Historique des modifications du chantier `chantier/redesign`.
 - Tag à la création : bouton 🏷 dans la barre, `createTask(text, tagId)`, reset après ajout.
 - Deux commits (`fix:` puis `feat:`). Bundle JS entrée : +1,8 KB brut / +0,4 KB gzip (dans tolérance).
 - CSS entrée : +1 KB (sélecteur création). Série Tâches M05–M06 prête pour validation groupée.
+
+### M07 — Signature Capture : la goutte
+
+- Module Capture redesigné selon maquette `chantier/annexes/maquette-M07-capture.html`.
+- Surface d'eau calme (pas de progression), goutte + ondes à la capture, « Posée. » en `aria-live`.
+- Sélecteur tag à la création (bouton 🏷 + menu vers le haut), filtres avec compteurs par tag.
+- Suppression de `maxlength` et de la troncature à 100 captures (`getCapturesToPersist`).
+- Test `capture.test.js` (+2 tests, total 44/44). Zéro `!important` dans `capture/style.css`.
+- Bundle JS entrée : +2,6 KB brut / +0,45 KB gzip (dans tolérance ±2 KB). CSS entrée : +2 KB.
