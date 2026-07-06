@@ -1,119 +1,124 @@
-# M09 — Signature du module Respiration : respirer avec la mer
+# M09b — Corrections groupées Capture & Respiration (4 points audités)
 
-**Prérequis :** saga Capture (M07 → M08e) ✅ validée dans ETAT.md.
-**Durée attendue :** une session (3–4 h).
-**Risque :** moyen. Présentation + câblage marée + moteur audio.
-Protocole v2 : tout ce qui est délicat est fourni en code à copier.
+**Prérequis :** M09 exécutée (⏳ — M09b la finalise ; validation groupée
+M09 + M09b ensuite). Protocole v2 : un audit, une mission, quatre correctifs.
+**Durée attendue :** ~1 h 30. **Risque :** faible à moyen (le point 3 est
+structurel mais bien délimité).
 
-> Avant de commencer : ajouter la ligne M09 au tableau de bord d'ETAT.md.
-
----
-
-## L'état cible : la maquette annexée
-
-**`chantier/annexes/maquette-M09-respiration.html`** — validée par Cédric
-(design ET son). L'utiliser AVANT de coder : lancer les 3 programmes aux
-rythmes différents (Calmer l'angoisse 4-6, Dormir 4-7-8, Concentration
-box), activer le « Son des vagues », tester pause/reprendre/terminer,
-les 4 thèmes, le mouvement réduit.
-
-**RÈGLE DE LECTURE :**
-- HTML/CSS = référence à transposer (structures, tokens, textes, timings).
-- JS = démonstration jetable, SAUF DEUX BLOCS À TRANSPLANTER TELS QUELS
-  (adapter uniquement les noms/intégration, pas la logique) :
-  1. **Le moteur audio** : `initAudio()`, `waveSound(phase, dur)`,
-     `stopSound()` — bruit adouci + lowpass + enveloppes par phase.
-  2. **La commande de marée** : `setWater(level, seconds, easing)` et les
-     variables CSS `--level`, `--breath-ms`, `--breath-ease` sur `.sea`,
-     avec LOW=22 / HIGH=82 et les easings exacts de la maquette.
-- Le module réel GARDE son moteur de phases existant (timers, ordre
-  inhale→hold→exhale→holdAfterExhale, calcul des cycles) : on branche la
-  marée et le son SUR ce moteur, on ne le réécrit pas.
+> Ajouter la ligne M09b au tableau de bord d'ETAT.md.
 
 ---
 
-## L'intention
+## Correctif 1 — Capture : zoom automatique iOS sur le champ
 
-L'orbe disparaît. **La mer devient le guide** : elle monte à l'inspiration
-(easing `cubic-bezier(.35,0,.35,1)`, durée = durée de la phase), se tient
-pendant la rétention (halo `--water-glow`, houle ralentie, classe
-`holding`), redescend à l'expiration (`cubic-bezier(.45,0,.55,1)`).
-Toucher l'eau démarre la séance ; toucher en cours = pause.
-Labels de phase : Inspire / Retiens / Expire / Poumons vides.
-Fine ligne de progression de session en haut. Compteur « cycle N / M ».
-Fin : **« Mer étale. »** + « Séance tenue. », l'eau redescend en ~3 s.
-Écran d'attente : « Respire avec la mer » / « Touche l'eau pour commencer ».
+**Cause (auditée) :** `capture/style.css` ligne ~80 : `.capture__input
+{ font-size: 0.96rem }` ≈ 15,4 px. Safari iOS zoome automatiquement sur
+tout champ de saisie dont la police est < 16 px.
+**Correctif :** `font-size: max(1rem, 16px);` sur `.capture__input`
+(et sur tout autre champ de saisie du module capture s'il en existe).
+On ne touche PAS au viewport (`user-scalable=no` interdit — accessibilité).
+**Note ETAT.md :** règle générale à consigner pour la mission balai
+d'harmonisation : TOUS les champs de saisie de l'app à ≥ 16 px.
 
-## Le son des vagues (remplace le son actuel)
+## Correctif 2 — Capture : fermer le clavier après capture sur mobile
 
-Le bip existant est remplacé par le moteur de la maquette : bruit filtré
-dont volume et clarté suivent la marée — la vague arrive à l'inspiration
-(gain→0.16, filtre→900 Hz sur la durée de la phase), se retire à
-l'expiration (descente vers 0.015, 240 Hz), nappe basse en rétention
-(0.05, 320 Hz). Le réglage existant Activé/Désactivé est CONSERVÉ
-(persistance actuelle incluse). Contraintes : `AudioContext` créé au
-premier geste utilisateur ; `resume()` si suspendu ; `stopSound()` en
-pause et en fin de séance.
+**Cause (auditée) :** `capture/index.js` ligne ~534 : `input.focus()`
+après l'ajout — voulu pour enchaîner au clavier sur desktop, mais sur
+iPhone il maintient le clavier ouvert et masque l'animation de la goutte.
+**Correctif :** différencier par type de pointeur :
+
+```js
+const coarsePointer = window.matchMedia('(pointer: coarse)').matches;
+if (coarsePointer) input.blur();
+else input.focus();
+```
+
+(Appliquer au chemin d'AJOUT ~l.534. Le chemin d'édition ~l.521 garde
+`input.focus()` tel quel : on reste dans le champ pour corriger.)
+
+## Correctif 3 — Respiration : l'eau saute au lieu de couler (structurel)
+
+**Cause (auditée, chemin d'exécution tracé) :** à chaque frontière de
+phase, `onPhaseBoundary()` (~l.362) appelle `render({applyPhase:true})`
+→ `rootContainer.innerHTML = createBreathingView(...)` (~l.328) : la
+carte-mer est DÉTRUITE et RECRÉÉE, puis `setWater()` pose le niveau sur
+l'élément neuf. Insertion + changement de style dans la même frame =
+aucune transition (le navigateur ne peint que l'état final). La maquette
+animait parce que l'élément mer PERSISTAIT.
+
+**Correctif structurel : zéro `innerHTML` pendant une session.**
+- `onPhaseBoundary()` ne doit PLUS appeler `render()`. À la place, une
+  fonction de mutation ciblée `applyPhaseToDom()` qui, sur le DOM
+  existant : met à jour le texte de phase (`.breathing__phase-word` ou
+  équivalent), le compte à rebours, le compteur de cycles, la classe
+  `breathing__sea-card--holding` (le toggle existe déjà ~l.358), puis
+  appelle `onPhaseStart(phase, dur)` (son + eau). `updateLiveDom()`
+  existant peut servir de base — l'étendre.
+- `render()` complet reste réservé aux CHANGEMENTS D'ÉCRAN
+  (idle→running→paused→complete) et aux réglages hors session.
+- Cas particulier déjà présent : le toggle du son en cours de session
+  (~l.554) appelle `render({applyPhase:true})` — le remplacer par la même
+  mutation ciblée (sinon il recasse la transition en pleine séance).
+- Vérifier que `setWater` cible bien l'élément persistant
+  (`[data-breathing-sea]`) et que la transition CSS `height` avec
+  `--breath-ms`/`--breath-ease` est en place dans style.css (acquis M09).
+
+**Anti-régression :** dérouler mentalement une session 4-7-8 complète :
+aucune ligne ne doit reconstruire le DOM entre `startSession()` et
+`finishSessionSuccess()`.
+
+## Correctif 4 — Respiration : la ligne de progression et les coins arrondis
+
+**Constat :** la ligne de session pleine largeur (`top:0`) bute dans les
+coins arrondis de la carte.
+**Correctif :** la transformer en pilule insérée avec piste :
+
+```css
+.breathing__session-track {
+  position: absolute; top: 10px; left: 14px; right: 14px;
+  height: 4px; border-radius: var(--radius-full);
+  background: var(--bg-tertiary); z-index: 3;
+}
+.breathing__session-bar {
+  height: 100%; width: var(--session, 0%);
+  border-radius: inherit; background: var(--accent);
+  transition: width 1s linear;
+}
+```
+
+Adapter le markup (la piste enveloppe la barre). En mouvement réduit, la
+transition de largeur peut rester (1 s linéaire, non vestibulaire) — pas
+d'exigence particulière.
 
 ---
 
 ## Périmètre
-
-**IN :**
-- `src/modules/breathing/view.js` : structure (carte-mer, phase, ligne de
-  session, cycles, programmes, réglages durée + son).
-- `src/modules/breathing/style.css` : réécriture vers la maquette.
-  Résorber la couleur en dur `#a78bfa` et toute autre → tokens. Zéro
-  `!important`. **Largeur standard `min(420px, 100%)` centrée** — première
-  brique de l'harmonisation des largeurs (mission balai à suivre).
-- `src/modules/breathing/index.js` : câblage marée + audio sur le moteur
-  de phases existant ; suppression de la logique de taille d'orbe
-  (`orbSizePx` etc.) devenue morte.
-
-**OUT (interdit) :**
-- Le moteur de phases/timers/calcul de cycles (il fonctionne).
-- Les 5 programmes (ids, libellés, rythmes, descriptions) et la
-  persistance des réglages/sessions.
-- Le widget dashboard du module (s'il existe) : ne pas le casser ;
-  adaptation minimale si des classes partagées changent.
-- Tout autre module, le shell.
-
----
-
-## Leçons appliquées d'office
-- Pas de menu flottant ici — aucun risque popover. Si un besoin de menu
-  apparaissait : patron canonique `composant-popover-tag.html`, jamais
-  `popovertarget` + handler JS ensemble.
-- `prefers-reduced-motion` ET le réglage interne éventuel : AUCUNE
-  animation d'eau ni houle ; le guide devient le compte à rebours textuel
-  (déjà présent dans la maquette : phase + « N s », affiché en toutes
-  circonstances). La fonction reste entière sans la mer.
-- La carte-mer est cliquable (`role="button"`, tabindex, Enter/Espace) —
-  reprendre les attributs de la maquette.
-- Couche décorative : l'eau vit DANS la carte (`overflow:hidden` sur la
-  carte est ici légitime, rien d'interactif ne doit en déborder).
+**IN :** `capture/style.css` (font-size), `capture/index.js` (blur/focus),
+`breathing/index.js` (mutations ciblées, fin des innerHTML en session),
+`breathing/view.js` + `breathing/style.css` (pilule de progression).
+**OUT :** moteur de phases/timers (les durées et l'ordre ne changent pas),
+son (fonctionne), programmes, persistance, tout autre module.
 
 ---
 
 ## Critères d'acceptation
-- [ ] Rituel de contrôle : smoke 20/20, unit tous verts, lint 0, build
-      stable (±3 KB gzip — l'audio ajoute un peu).
-- [ ] `git diff` relu : breathing/ uniquement ; moteur de phases intact.
-- [ ] `grep -n "a78bfa" src/modules/breathing/` → aucune occurrence.
+- [ ] Rituel de contrôle : tout vert, build stable.
 - [ ] Test manuel (Cédric, iPhone + Mac, 4 thèmes) :
-  - 3 programmes aux rythmes distincts : la mer suit fidèlement les durées
-    (montée 4 s, tenue 7 s, descente 8 s sur le programme Dormir) ;
-  - toucher l'eau : démarre ; re-toucher : pause ; Reprendre ; Terminer ;
-  - « Mer étale. Séance tenue. » en fin de session complète ;
-  - son des vagues : arrive/se retire avec la marée, réglage on/off
-    conservé entre sessions, aucun son si désactivé ;
-  - largeur du module alignée (420 px max, centré) ;
-  - mouvement réduit : aucune animation, compte à rebours textuel guide
-    la séance de bout en bout.
+  - **iPhone :** taper dans le champ capture (popover ouvert ou non) →
+    AUCUN zoom automatique ; capturer → le clavier SE FERME et la goutte
+    est visible ; **Mac :** le focus reste dans le champ après capture ;
+  - **Respiration :** programme Dormir 4-7-8 → l'eau MONTE en 4 s
+    (fluide), SE TIENT 7 s (halo), DESCEND en 8 s (fluide) — aucune
+    téléportation, y compris après bascule du son en pleine séance ;
+  - la pilule de progression est décollée des bords, piste visible,
+    remplissage régulier ;
+  - pause/reprendre/terminer, « Mer étale. », mouvement réduit
+    (compte à rebours textuel) : intacts.
 
 ## Note ETAT.md
-Consigner : Respiration = 3e signature (l'eau qui mesure → l'eau qui
-accueille → l'eau qui guide). Largeur standard posée — planifier la
-mission balai d'harmonisation des largeurs de TOUS les modules juste
-après. Protocole v2 en vigueur (audit avant correctif, code à copier,
-correctifs groupés, rapports allégés).
+Consigner : (a) règle app-wide « champs de saisie ≥ 16 px » pour la
+mission balai ; (b) leçon d'architecture pour les futures signatures
+animées : **une animation CSS exige un élément persistant — tout module
+dont le moteur re-rend par `innerHTML` doit passer aux mutations ciblées
+pendant les états animés** (à vérifier dans l'audit pré-mission des
+prochaines signatures, Habitudes notamment).
