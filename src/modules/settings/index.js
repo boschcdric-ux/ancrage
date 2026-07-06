@@ -12,78 +12,13 @@ import {
   persistDisabledModuleIds,
   MODULE_IDS_NAV_LOCKED
 } from '../../shell/nav-modules.js';
-
-import nowModule from '../now/index.js';
-import dashboard from '../dashboard/index.js';
-import weather from '../weather/index.js';
-import capture from '../capture/index.js';
-import shopping from '../shopping/index.js';
-import recipes from '../recipes/index.js';
-import budget from '../budget/index.js';
-import calendar from '../calendar/index.js';
-import tasks from '../tasks/index.js';
-import habits from '../habits/index.js';
-import mood from '../mood/index.js';
-import journal from '../journal/index.js';
-import memo from '../memo/index.js';
-import notes from '../notes/index.js';
-import pomodoro from '../pomodoro/index.js';
-import focus from '../focus/index.js';
-import breathing from '../breathing/index.js';
-import planningBoulot from '../planning-boulot/index.js';
-import medications from '../medications/index.js';
-
-const SHORT_LABELS_BY_MODULE_ID = {
-  dashboard: 'Accueil',
-  now: 'Que faire ?',
-  weather: 'Météo',
-  capture: 'Capture',
-  shopping: 'Courses',
-  recipes: 'Recettes',
-  budget: 'Budget',
-  calendar: 'Agenda',
-  tasks: 'Tâches',
-  memo: 'Mémo',
-  pomodoro: 'Pomodoro',
-  mood: 'Humeur',
-  habits: 'Habitudes',
-  medications: 'Médocs',
-  journal: 'Journal',
-  notes: 'Post-its',
-  focus: 'Focus',
-  breathing: 'Respiration',
-  'planning-boulot': 'Planning',
-  settings: 'Réglages'
-};
+import { MODULES_META_FOR_SETTINGS, getModuleNavLabel } from '../registry.js';
 
 const THEME_OPTIONS = [
   { id: 'light', icon: '☀️', label: 'Clair' },
   { id: 'dark', icon: '🌙', label: 'Sombre' },
   { id: 'warm', icon: '🔥', label: 'Chaud' },
   { id: 'auto', icon: '🔄', label: 'Automatique' }
-];
-
-/** Ordre aligné sur main.js (sans le module settings). */
-const APP_MODULES_FOR_TOGGLES = [
-  nowModule,
-  dashboard,
-  weather,
-  capture,
-  shopping,
-  recipes,
-  budget,
-  calendar,
-  tasks,
-  habits,
-  medications,
-  mood,
-  journal,
-  memo,
-  notes,
-  pomodoro,
-  focus,
-  breathing,
-  planningBoulot
 ];
 
 const SETTINGS_ROW = {
@@ -287,14 +222,14 @@ function getNotificationUiState() {
 }
 
 function buildModuleRows() {
-  const rows = APP_MODULES_FOR_TOGGLES.map((module) => {
-    const locked = MODULE_IDS_NAV_LOCKED.has(module.id);
+  const rows = MODULES_META_FOR_SETTINGS.map((meta) => {
+    const locked = MODULE_IDS_NAV_LOCKED.has(meta.id);
     return {
-      id: module.id,
-      icon: module.icon || '•',
-      label: SHORT_LABELS_BY_MODULE_ID[module.id] || module.label || module.id,
+      id: meta.id,
+      icon: meta.icon || '•',
+      label: getModuleNavLabel(meta),
       locked,
-      on: isModuleEnabledForNav(module.id)
+      on: isModuleEnabledForNav(meta.id)
     };
   });
   rows.push({
