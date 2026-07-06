@@ -3,7 +3,7 @@
 > Ce fichier est la mémoire du chantier. L'agent le lit au début de chaque
 > mission et le met à jour à la fin. Il doit rester factuel et concis.
 
-**Dernière mise à jour :** 2026-07-06 — M03
+**Dernière mise à jour :** 2026-07-06 — M04
 
 ---
 
@@ -15,6 +15,7 @@
 | M01 | Restaurer le code-splitting (registry) | ✅ faite et validée par Cédric | 2026-07-06 |
 | M02 | Fiabiliser la sauvegarde | ✅ faite et validée par Cédric | 2026-07-06 |
 | M03 | Ménage : code mort et duplications | ✅ faite (en attente validation Cédric) | 2026-07-06 |
+| M04 | Socle design : thèmes, mouvement, typographie | ✅ faite (en attente validation Cédric) | 2026-07-06 |
 
 Statuts : ⬜ à faire · 🔶 en cours · ✅ faite et validée par Cédric · 🛑 bloquée
 
@@ -27,30 +28,36 @@ sans justification écrite.*
 
 | Métrique | Baseline (M00) | Dernière valeur | Mission |
 |---|---|---|---|
-| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M03 |
-| Tests unitaires | 22/22 passés (2 fichiers) | 29/29 passés (4 fichiers) | M03 |
-| Lint | 0 erreur | 0 erreur | M03 |
-| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 270 KB (`index-B472g6Nm.js`) | M03 |
-| JS initial (gzip) | 243 KB | 74 KB | M03 |
-| CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 106 KB (`index-DuW-ywyn.css`, entrée HTML) | M01 |
+| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M04 |
+| Tests unitaires | 22/22 passés (2 fichiers) | 33/33 passés (5 fichiers) | M04 |
+| Lint | 0 erreur | 0 erreur | M04 |
+| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 270 KB (`index-BURE5voA.js`) | M04 |
+| JS initial (gzip) | 243 KB | 74 KB | M04 |
+| CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 109 KB (`index-GGyrk_Eq.css`, entrée HTML) | M04 |
 | Nombre de chunks JS | 1 | 9 | M01 |
+| Polices woff2 (dist) | — | ~122 KB (7 fichiers) | M04 |
+| Precache PWA | — | 1058 KiB (23 entrées) | M04 |
 
-Variation bundle M03 : −0,9 KB sur le chunk d'entrée (270 vs 271 KB M02) — dans la tolérance ±2 KB.
+Variation bundle M04 : +0,2 KB sur le chunk d'entrée JS (270 vs 270 M03) — dans la tolérance ±3 KB. Polices woff2 ~122 KB ajoutées au build (hors chunk JS).
 
-### Rituel AVANT M03 (2026-07-06)
-
-- Smoke : 20/20 modules, 4/4 shell
-- Unit : 27/27 (3 fichiers)
-- Lint : 0 erreur
-- Build entrée : 271 KB brut (`index-DrIUZi_X.js`), 74 KB gzip
-
-### Rituel APRÈS M03 (2026-07-06)
+### Rituel AVANT M04 (2026-07-06)
 
 - Smoke : 20/20 modules, 4/4 shell
-- Unit : 29/29 (4 fichiers, +2 tests `localDateString`)
+- Unit : 29/29 (4 fichiers)
 - Lint : 0 erreur
 - Build entrée : 270 KB brut (`index-B472g6Nm.js`), 74 KB gzip
-- Grep contrôle : 0 `function escapeHtml` dans `src/modules`, 0 `function localDateString` dans `src/modules`
+- Precache : 1055 KiB
+
+### Rituel APRÈS M04 (2026-07-06)
+
+- Smoke : 20/20 modules, 4/4 shell
+- Unit : 33/33 (5 fichiers, +4 tests contraste WCAG)
+- Lint : 0 erreur
+- Build entrée : 270 KB brut (`index-BURE5voA.js`), 74 KB gzip
+- CSS entrée : 109 KB brut (`index-GGyrk_Eq.css`), 17 KB gzip
+- Polices woff2 : ~122 KB (Atkinson 4 + Bricolage 3)
+- Precache : 1058 KiB
+- Grep contrôle : 0 `fonts.googleapis` dans src/index.html/dist
 
 ### Simulation quota plein (procédure dev, M02)
 
@@ -107,6 +114,13 @@ Vérification automatisée équivalente : `npm run test:unit` — tests `save() 
   journal → `formatDateFullFr` (Intl long + année) ; budget `formatDateLongFr` inchangé
   (format manuel « d mois y »).
 - M03 : `localDateString` identique tasks/dashboard → `core/format.js` + 2 tests.
+- M04 : 4 thèmes Ancrage (encre, garrigue, crepuscule, maree) remplacent dark/light/warm ;
+  migration auto localStorage (`dark→encre`, `light→garrigue`, `warm→crepuscule`).
+- M04 : polices Atkinson Hyperlegible (corps) + Bricolage Grotesque (titres) auto-hébergées
+  via npm — plus de Google Fonts CDN.
+- M04 : mode auto jour (7 h–20 h) → garrigue, nuit → encre.
+- M04 : validation thèmes dans settings via `THEMES` importé de `theme.js` (fin des littéraux).
+- M04 : garde-fou `theme-contrast.test.js` — 20 assertions WCAG AA sur les 4 thèmes.
 
 ---
 
@@ -119,6 +133,12 @@ Vérification automatisée équivalente : `npm run test:unit` — tests `save() 
 - M00 : chunk JS unique > 500 kB — **Résolu en M01.**
 - M01 : `npm run test:unit` n'incluait pas `registry.test.js` —
   **Corrigé hors mission par Cédric** (script élargi à `src/`).
+- M04 : `breathing/style.css` — cercle actif utilise `#a78bfa` (violet legacy) en dur.
+- M04 : `focus/style.css` — fonds d'ambiance (`#0a0a0f`, `#0a1628`, etc.) codés en dur,
+  ne suivent pas les tokens thème.
+- M04 : `journal/style.css` — surligneur jaune `#fef08a` en dur.
+- M04 : `notes/style.css` — palette papier sticky (`#1a1a1a`, `#fff`, etc.) en dur.
+- M04 : `tasks/style.css` — ombre dorée `#c9a227` sur badge priorité.
 
 ---
 
