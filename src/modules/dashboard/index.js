@@ -1,6 +1,6 @@
 import './style.css';
 import { createDashboardView, formatCurrentDate, formatCurrentTime } from './view.js';
-import { escapeHtml } from '../../core/format.js';
+import { escapeHtml, localDateString } from '../../core/format.js';
 import { navigate } from '../../core/router.js';
 import { load, save } from '../../core/storage.js';
 import { getDisabledModuleIdsSet } from '../../shell/nav-modules.js';
@@ -166,14 +166,6 @@ function filterWidgetsByEnabledModules(config) {
     const moduleId = DASHBOARD_WIDGET_MODULE_BY_ID[widget.id];
     return !moduleId || !disabledModuleIds.has(moduleId);
   });
-}
-
-function localDateString(ts = Date.now()) {
-  const d = new Date(ts);
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
 }
 
 /**
