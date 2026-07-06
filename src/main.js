@@ -28,7 +28,6 @@ import memo from './modules/memo/index.js';
 import pomodoro from './modules/pomodoro/index.js';
 import weather from './modules/weather/index.js';
 import mood from './modules/mood/index.js';
-import journal from './modules/journal/index.js';
 import focus from './modules/focus/index.js';
 import breathing from './modules/breathing/index.js';
 import settingsModule from './modules/settings/index.js';
@@ -40,7 +39,8 @@ const MODULE_LOADERS = {
   shopping: () => import('./modules/shopping/index.js'),
   'planning-boulot': () => import('./modules/planning-boulot/index.js'),
   notes: () => import('./modules/notes/index.js'),
-  medications: () => import('./modules/medications/index.js')
+  medications: () => import('./modules/medications/index.js'),
+  journal: () => import('./modules/journal/index.js')
 };
 
 const MODULE_LOADING_HTML = `
@@ -233,7 +233,7 @@ const modules = [
   habits,
   createLazyModuleProxy({ id: 'medications', label: 'Médocs', icon: '💊', loaderKey: 'medications' }),
   mood,
-  journal,
+  createLazyModuleProxy({ id: 'journal', label: 'Journal', icon: '📔', loaderKey: 'journal' }),
   memo,
   createLazyModuleProxy({ id: 'notes', label: 'Bloc-notes', icon: '🗒️', loaderKey: 'notes' }),
   pomodoro,

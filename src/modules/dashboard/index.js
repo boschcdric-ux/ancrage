@@ -8,11 +8,67 @@ import pomodoroModule from '../pomodoro/index.js';
 import weatherModule from '../weather/index.js';
 import moodModule from '../mood/index.js';
 import habitsModule from '../habits/index.js';
-import medicationsModule from '../medications/index.js';
-import journalModule from '../journal/index.js';
-import calendarModule from '../calendar/index.js';
-import recipesModule from '../recipes/index.js';
 import nowModule from '../now/index.js';
+
+const LAZY_DASHBOARD_WIDGET_LOADERS = {
+  medications: () => import('../medications/index.js'),
+  journal: () => import('../journal/index.js'),
+  calendar: () => import('../calendar/index.js'),
+  recipes: () => import('../recipes/index.js')
+};
+
+const lazyDashboardWidgetCache = {
+  medications: undefined,
+  journal: undefined,
+  calendar: undefined,
+  recipes: undefined
+};
+
+let lazyWidgetsLoadToken = 0;
+
+function widgetLoadingContent(moduleId) {
+  return `<p class="dashboard__muted" data-dashboard-lazy-host="${moduleId}">Chargement…</p>`;
+}
+
+function getLazyWidgetPresentation(moduleId) {
+  if (lazyDashboardWidgetCache[moduleId] !== undefined) {
+    return lazyDashboardWidgetCache[moduleId];
+  }
+  return { content: widgetLoadingContent(moduleId) };
+}
+
+function hydrateLazyDashboardWidgets() {
+  const pendingIds = Object.keys(LAZY_DASHBOARD_WIDGET_LOADERS).filter(
+    (moduleId) => lazyDashboardWidgetCache[moduleId] === undefined
+  );
+  if (!pendingIds.length || !rootContainer) return;
+
+  const token = lazyWidgetsLoadToken;
+  void Promise.all(
+    pendingIds.map(async (moduleId) => {
+      const loader = LAZY_DASHBOARD_WIDGET_LOADERS[moduleId];
+      if (!loader) return;
+      try {
+        const mod = await loader();
+        if (token !== lazyWidgetsLoadToken || !rootContainer) return;
+        lazyDashboardWidgetCache[moduleId] = mod.default.getDashboardWidget?.() ?? null;
+      } catch {
+        if (token !== lazyWidgetsLoadToken || !rootContainer) return;
+        lazyDashboardWidgetCache[moduleId] = null;
+      }
+    })
+  ).then(() => {
+    if (token !== lazyWidgetsLoadToken || !rootContainer) return;
+    renderDashboard();
+  });
+}
+
+function resetLazyDashboardWidgetCache() {
+  lazyWidgetsLoadToken += 1;
+  for (const moduleId of Object.keys(lazyDashboardWidgetCache)) {
+    lazyDashboardWidgetCache[moduleId] = undefined;
+  }
+}
 
 let rootContainer = null;
 let refreshTimer = null;
@@ -272,10 +328,10 @@ function collectWidgetsData(now = new Date()) {
   const weatherWidget = weatherModule.getDashboardWidget?.();
   const moodWidget = moodModule.getDashboardWidget?.();
   const habitsWidget = habitsModule.getDashboardWidget?.();
-  const medicationsWidget = medicationsModule.getDashboardWidget?.();
-  const journalWidget = journalModule.getDashboardWidget?.();
-  const calendarWidget = calendarModule.getDashboardWidget?.();
-  const recipesWidget = recipesModule.getDashboardWidget?.();
+  const medicationsWidget = getLazyWidgetPresentation('medications');
+  const journalWidget = getLazyWidgetPresentation('journal');
+  const calendarWidget = getLazyWidgetPresentation('calendar');
+  const recipesWidget = getLazyWidgetPresentation('recipes');
   const nowWidget = nowModule.getDashboardWidget?.();
 
   return {
@@ -475,6 +531,7 @@ function renderDashboard() {
   }
   mountNowWelcomeBlock(widgetsData.now);
   window.dispatchEvent(new CustomEvent('adhd:dashboard-rendered'));
+  hydrateLazyDashboardWidgets();
 }
 
 function updatePomodoroWidgetOnly() {
@@ -569,6 +626,7 @@ const dashboard = {
   destroy() {
     closeCustomizeSheet();
     document.querySelector('.dashboard-customize-sheet')?.remove();
+    resetLazyDashboardWidgetCache();
 
     if (refreshTimer) {
       clearInterval(refreshTimer);
