@@ -8,8 +8,10 @@ import {
   createTasksFilterBar,
   createTasksArchivesPanel,
   createAmnestyBannerMarkup,
-  escapeHtml,
-  PREDEFINED_TAGS
+  PREDEFINED_TAGS,
+  computeTideProgress,
+  tideLabel,
+  tideLevelPercent
 } from './view.js';
 
 const STORAGE_KEY = 'tasks:items';
@@ -48,6 +50,75 @@ let showFullTags = false;
 let expandedTagTaskId = null;
 let expandedTagTimer = null;
 let expandedTaskId = null;
+let wasAllDone = false;
+
+function prefersReducedMotion() {
+  return typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+}
+
+function triggerWaterSwell() {
+  if (!rootContainer || prefersReducedMotion()) return;
+  const water = rootContainer.querySelector('[data-tasks-water]');
+  if (!water) return;
+  water.classList.remove('tasks__water--swell');
+  void water.offsetWidth;
+  water.classList.add('tasks__water--swell');
+}
+
+function triggerCountTick() {
+  if (!rootContainer || prefersReducedMotion()) return;
+  const countEl = rootContainer.querySelector('[data-tasks-count]');
+  if (!countEl) return;
+  countEl.classList.remove('tasks__head-count--tick');
+  void countEl.offsetWidth;
+  countEl.classList.add('tasks__head-count--tick');
+}
+
+function updateTidePresentation() {
+  if (!rootContainer) return;
+
+  const progress = getProgress();
+  const tideProgress = computeTideProgress(tasks);
+  const allDone = tasks.length > 0 && tasks.every((t) => t.completed);
+  const reduced = prefersReducedMotion();
+
+  const countEl = rootContainer.querySelector('[data-tasks-count]');
+  const totalEl = rootContainer.querySelector('[data-tasks-total]');
+  const tideEl = rootContainer.querySelector('[data-tasks-tide]');
+  const waterEl = rootContainer.querySelector('[data-tasks-water]');
+  const headEl = rootContainer.querySelector('[data-tasks-head]');
+  const anchorEl = rootContainer.querySelector('[data-tasks-anchor]');
+
+  if (countEl) countEl.textContent = String(progress.completed);
+  if (totalEl) totalEl.textContent = String(progress.total);
+  if (tideEl) tideEl.textContent = tideLabel(tideProgress, allDone);
+  if (waterEl) waterEl.style.setProperty('--level', tideLevelPercent(tideProgress));
+
+  if (headEl) headEl.classList.toggle('tasks__head--anchored', allDone);
+
+  if (anchorEl) {
+    if (allDone) {
+      anchorEl.hidden = false;
+      if (!wasAllDone && !reduced) {
+        anchorEl.classList.add('tasks__head-anchor--drop');
+        anchorEl.addEventListener(
+          'animationend',
+          () => {
+            anchorEl.classList.remove('tasks__head-anchor--drop');
+          },
+          { once: true }
+        );
+      } else {
+        anchorEl.classList.remove('tasks__head-anchor--drop');
+      }
+    } else {
+      anchorEl.hidden = true;
+      anchorEl.classList.remove('tasks__head-anchor--drop');
+    }
+  }
+
+  wasAllDone = allDone;
+}
 
 function normalizeSubtask(subtask) {
   if (!subtask || subtask.id == null || subtask.text == null) return null;
@@ -140,38 +211,51 @@ function performAmnesty() {
     return;
   }
 
-  const archive = readArchive();
-  const entry = {
-    archivedAt: now,
-    archivedDate,
-    tasks: toArchive.map((t) => normalizeTask(t)).filter(Boolean)
-  };
-  archive.unshift(entry);
-  persistArchive(archive);
+  const runArchive = () => {
+    const archive = readArchive();
+    const entry = {
+      archivedAt: now,
+      archivedDate,
+      tasks: toArchive.map((t) => normalizeTask(t)).filter(Boolean)
+    };
+    archive.unshift(entry);
+    persistArchive(archive);
 
-  tasks = tasks.filter((t) => t.completed && isCompletedToday(t));
-  if (highlightedTaskId && !tasks.some((t) => t.id === highlightedTaskId)) highlightedTaskId = null;
-  if (openTagMenuTaskId && !tasks.some((t) => t.id === openTagMenuTaskId)) openTagMenuTaskId = null;
-  if (expandedTaskId && !tasks.some((t) => t.id === expandedTaskId)) expandedTaskId = null;
-  if (editingTaskId && !tasks.some((t) => t.id === editingTaskId)) editingTaskId = null;
-  editingSubtaskId = null;
+    tasks = tasks.filter((t) => t.completed && isCompletedToday(t));
+    if (highlightedTaskId && !tasks.some((t) => t.id === highlightedTaskId)) highlightedTaskId = null;
+    if (openTagMenuTaskId && !tasks.some((t) => t.id === openTagMenuTaskId)) openTagMenuTaskId = null;
+    if (expandedTaskId && !tasks.some((t) => t.id === expandedTaskId)) expandedTaskId = null;
+    if (editingTaskId && !tasks.some((t) => t.id === editingTaskId)) editingTaskId = null;
+    editingSubtaskId = null;
 
-  persistTasks();
-  showAmnestyBanner = false;
-  emptyListFadeInAfterAmnesty = tasks.length === 0;
+    persistTasks();
+    showAmnestyBanner = false;
+    emptyListFadeInAfterAmnesty = tasks.length === 0;
 
-  if (amnestyToastTimer) {
-    clearTimeout(amnestyToastTimer);
-    amnestyToastTimer = null;
-  }
-  amnestyToast = "C'est reparti ! ✨ Tableau blanc.";
-  amnestyToastTimer = setTimeout(() => {
-    amnestyToastTimer = null;
-    amnestyToast = null;
+    if (amnestyToastTimer) {
+      clearTimeout(amnestyToastTimer);
+      amnestyToastTimer = null;
+    }
+    amnestyToast = true;
+    amnestyToastTimer = setTimeout(() => {
+      amnestyToastTimer = null;
+      amnestyToast = null;
+      renderList();
+    }, 4200);
+
     renderList();
-  }, 4200);
+  };
 
-  renderList();
+  if (!prefersReducedMotion() && rootContainer && incomplete.length) {
+    for (const t of incomplete) {
+      const row = rootContainer.querySelector(`[data-task-id="${t.id}"]`);
+      if (row) row.classList.add('tasks__item--pardoned');
+    }
+    setTimeout(runArchive, 680);
+    return;
+  }
+
+  runArchive();
 }
 
 function restoreArchiveGroup(index) {
@@ -220,49 +304,46 @@ function renderList() {
   if (!rootContainer) return;
 
   const archiveEntries = readArchive();
-  const archivedTaskTotal = getArchivedTaskTotal(archiveEntries);
 
-  const progressNode = rootContainer.querySelector('.tasks__progress');
   const filtersNode = rootContainer.querySelector('[data-tasks-filters]');
   const listNode = rootContainer.querySelector('[data-tasks-list]');
-  const toastWrap = rootContainer.querySelector('[data-tasks-toast-wrap]');
   const amnestySlot = rootContainer.querySelector('[data-tasks-amnesty-slot]');
   const mainStack = rootContainer.querySelector('[data-tasks-main-stack]');
   const archivesView = rootContainer.querySelector('[data-tasks-archives-view]');
   const archivesGroups = rootContainer.querySelector('[data-tasks-archives-groups]');
   const form = rootContainer.querySelector('[data-task-form]');
-  const archivesFoot = rootContainer.querySelector('.tasks__archives-foot');
+  const archivesFoot = rootContainer.querySelector('.tasks__foot');
   const archivesToggle = rootContainer.querySelector('[data-tasks-archives-toggle]');
 
-  if (!listNode || !progressNode) return;
+  if (!listNode) return;
 
   const filtered = filterTasksForList(tasks);
   const sortedTasks = sortTasksForDisplay(filtered);
-  const progress = getProgress();
-  progressNode.textContent = `${progress.completed}/${progress.total} tâches complétées`;
-  if (filtersNode) filtersNode.innerHTML = createTasksFilterBar(listFilter);
+  if (filtersNode) filtersNode.innerHTML = createTasksFilterBar(listFilter, tasks);
 
   const useEmptyFadeIn = emptyListFadeInAfterAmnesty;
   if (emptyListFadeInAfterAmnesty) emptyListFadeInAfterAmnesty = false;
 
-  listNode.innerHTML = createTasksList(
-    sortedTasks,
-    highlightedTaskId,
-    editingTaskId,
-    editingSubtaskId,
-    openTagMenuTaskId,
-    showFullTags,
-    expandedTagTaskId,
-    expandedTaskId,
-    tasks.length === 0,
-    useEmptyFadeIn
-  );
+  const amnestyNote = amnestyToast
+    ? '<p class="tasks__amnesty-note tasks__empty--rise" role="status">Pardonné. Demain est une autre marée.</p>'
+    : '';
 
-  if (toastWrap) {
-    toastWrap.innerHTML = amnestyToast
-      ? `<p class="tasks__amnesty-toast animate-fade-in" role="status">${escapeHtml(amnestyToast)}</p>`
-      : '';
-  }
+  listNode.innerHTML =
+    createTasksList(
+      sortedTasks,
+      highlightedTaskId,
+      editingTaskId,
+      editingSubtaskId,
+      openTagMenuTaskId,
+      showFullTags,
+      expandedTagTaskId,
+      expandedTaskId,
+      tasks.length === 0,
+      useEmptyFadeIn,
+      listFilter !== 'all'
+    ) + amnestyNote;
+
+  updateTidePresentation();
 
   if (amnestySlot) {
     const pending = getPendingIncompleteCount();
@@ -276,10 +357,14 @@ function renderList() {
   if (archivesGroups) archivesGroups.innerHTML = createTasksArchivesPanel(archiveEntries);
 
   if (archivesToggle && !showArchivesView) {
-    archivesToggle.textContent =
-      archivedTaskTotal <= 1
-        ? `📦 Archives (${archivedTaskTotal} tâche archivée)`
-        : `📦 Archives (${archivedTaskTotal} tâches archivées)`;
+    const dayCount = archiveEntries.length;
+    const dayWord = dayCount <= 1 ? 'journée' : 'journées';
+    const archivedTaskTotal = getArchivedTaskTotal(archiveEntries);
+    archivesToggle.textContent = `Voir les archives (${dayCount} ${dayWord})`;
+    archivesToggle.setAttribute(
+      'aria-label',
+      `Voir les archives, ${dayCount} ${dayWord}, ${archivedTaskTotal} tâches au total`
+    );
   }
 
   if (editingTaskId) {
@@ -323,7 +408,17 @@ function toggleTask(taskId) {
 
   const nextCompletedState = !task.completed;
   markTaskCompletion(task, nextCompletedState);
-  if (nextCompletedState) highlightedTaskId = task.id;
+  if (nextCompletedState) {
+    highlightedTaskId = task.id;
+    triggerWaterSwell();
+    triggerCountTick();
+    const doneId = task.id;
+    setTimeout(() => {
+      if (highlightedTaskId === doneId) highlightedTaskId = null;
+    }, 650);
+  } else {
+    highlightedTaskId = null;
+  }
   persistTasks();
   renderList();
 }
@@ -334,6 +429,7 @@ function toggleSubtask(subtaskId) {
     if (!subtask) continue;
     subtask.completed = !subtask.completed;
     subtask.completedAt = subtask.completed ? Date.now() : null;
+    if (subtask.completed) triggerWaterSwell();
     persistTasks();
     renderList();
     return;
@@ -916,7 +1012,10 @@ const tasksModule = {
 
     const filtered = filterTasksForList(tasks);
     const archiveEntries = readArchive();
-    const archivedTaskTotal = getArchivedTaskTotal(archiveEntries);
+    const tideProgress = computeTideProgress(tasks);
+    const allDone = tasks.length > 0 && tasks.every((t) => t.completed);
+    wasAllDone = allDone;
+
     rootContainer.innerHTML = createTasksView(
       sortTasksForDisplay(filtered),
       getProgress(),
@@ -934,9 +1033,14 @@ const tasksModule = {
         amnestyPendingCount: pendingIncomplete,
         showArchivesView,
         archiveEntries,
-        archivedTaskTotal,
+        archivedDayCount: archiveEntries.length,
         amnestyToast,
-        emptyListFadeIn: false
+        emptyListFadeIn: false,
+        allTasks: tasks,
+        tideProgress,
+        allDone,
+        showAnchor: allDone,
+        anchorAnimate: false
       }
     );
     bindEvents();
@@ -977,6 +1081,7 @@ const tasksModule = {
     listFilter = 'all';
     openTagMenuTaskId = null;
     expandedTaskId = null;
+    wasAllDone = false;
     tasks = [];
     showAmnestyBanner = false;
     showArchivesView = false;
