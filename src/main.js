@@ -217,6 +217,20 @@ function showUndoToast(message, onUndo, delay = 4000) {
 
 window.showUndoToast = showUndoToast;
 
+let lastSaveFailedToastAt = 0;
+const SAVE_FAILED_TOAST_COOLDOWN_MS = 10_000;
+
+document.addEventListener('ancrage:save-failed', () => {
+  const now = Date.now();
+  if (now - lastSaveFailedToastAt < SAVE_FAILED_TOAST_COOLDOWN_MS) return;
+  lastSaveFailedToastAt = now;
+  showUndoToast(
+    "La sauvegarde a échoué — l'espace local est plein. Tes données récentes sont à risque : fais un export depuis Réglages.",
+    () => {},
+    8000
+  );
+});
+
 // Initialisation du thème automatique
 initTheme();
 
