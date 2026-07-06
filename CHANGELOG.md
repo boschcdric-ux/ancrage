@@ -41,3 +41,11 @@ Historique des modifications du chantier `chantier/redesign`.
 - Typographie display sur h1–h3, grammaire de mouvement mise à jour.
 - Test garde-fou contraste WCAG AA (+4 tests, total 33/33).
 - Bundle JS entrée : +0,2 KB (dans tolérance ±3 KB). Polices woff2 ~122 KB.
+
+### M05 — Signature Tâches : la ligne de flottaison
+
+- En-tête redesigné : houle animée, progression de marée, ancre posée quand tout est fait.
+- Tokens eau (`--water-front/back/glow`) dans les 4 thèmes.
+- Cases à cocher custom (trait SVG, anneaux), chips filtre avec compteurs, états vides verbatim.
+- Tests `tide.test.js` (+9 tests, total 42/42). Zéro `!important` dans `tasks/style.css`.
+- Bundle JS entrée : +4,3 KB brut (+1,5 KB gzip) — SVG inline + fonctions tide. CSS entrée : +4 KB.
