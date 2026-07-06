@@ -3,7 +3,7 @@
 > Ce fichier est la mémoire du chantier. L'agent le lit au début de chaque
 > mission et le met à jour à la fin. Il doit rester factuel et concis.
 
-**Dernière mise à jour :** 2026-07-06 — M08d
+**Dernière mise à jour :** 2026-07-06 — M08e
 
 ---
 
@@ -24,6 +24,7 @@
 | M08b | Capture : aligner popover tag (référence) | ✅ faite (en attente validation Cédric) | 2026-07-06 |
 | M08c | Capture : popover tag fantôme (display) | ✅ faite (en attente validation Cédric) | 2026-07-06 |
 | M08d | Capture : flash popover à l'ouverture | ✅ faite (en attente validation Cédric) | 2026-07-06 |
+| M08e | Capture : un seul chemin d'ouverture popover | ✅ faite (en attente validation Cédric) | 2026-07-06 |
 
 Statuts : ⬜ à faire · 🔶 en cours · ✅ faite et validée par Cédric · 🛑 bloquée
 
@@ -36,15 +37,15 @@ sans justification écrite.*
 
 | Métrique | Baseline (M00) | Dernière valeur | Mission |
 |---|---|---|---|
-| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M08d |
-| Tests unitaires | 22/22 passés (2 fichiers) | 44/44 passés (7 fichiers) | M08d |
-| Lint | 0 erreur | 0 erreur | M08d |
-| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 283 KB (`index-CB6Id2oM.js`) | M08d |
-| JS initial (gzip) | 243 KB | 78 KB | M08d |
-| CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 117 KB (`index-DKelf_h_.css`, entrée HTML) | M08d |
+| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M08e |
+| Tests unitaires | 22/22 passés (2 fichiers) | 44/44 passés (7 fichiers) | M08e |
+| Lint | 0 erreur | 0 erreur | M08e |
+| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 283 KB (`index-y54b0APg.js`) | M08e |
+| JS initial (gzip) | 243 KB | 78 KB | M08e |
+| CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 117 KB (`index-DKelf_h_.css`, entrée HTML) | M08e |
 | Nombre de chunks JS | 1 | 9 | M01 |
 | Polices woff2 (dist) | — | ~122 KB (7 fichiers) | M04 |
-| Precache PWA | — | 1079 KiB (23 entrées) | M08d |
+| Precache PWA | — | 1079 KiB (23 entrées) | M08e |
 
 Variation bundle M05 : +4,3 KB brut sur le chunk d'entrée JS (275 vs 270 M04) — hors tolérance ±2 KB
 mais +1,5 KB gzip seulement ; justifié par markup SVG inline (houle, ancre, coche) et fonctions tide
@@ -212,6 +213,27 @@ et zéro `#c9a227` dans `tasks/style.css`.
 - `git diff --stat` : uniquement `capture/index.js` + `capture/style.css`
 - Commits : `fix:` positionnement synchrone + animation naissance ; `chore:` clôture M08d
 
+### Rituel AVANT M08e (2026-07-06)
+
+- Smoke : 20/20 modules, 4/4 shell
+- Unit : 44/44 (7 fichiers)
+- Lint : 0 erreur
+- Build entrée : 283 KB brut (`index-CB6Id2oM.js`), 78 KB gzip
+- CSS entrée : 117 KB brut (`index-DKelf_h_.css`), 19 KB gzip
+- Precache : 1079 KiB
+
+### Rituel APRÈS M08e (2026-07-06)
+
+- Smoke : 20/20 modules, 4/4 shell
+- Unit : 44/44 (7 fichiers)
+- Lint : 0 erreur
+- Build entrée : 283 KB brut (`index-y54b0APg.js`), 78 KB gzip (−0,12 KB brut, −0,05 KB gzip — retrait popovertarget + rAF toggle)
+- CSS entrée : 117 KB brut (`index-DKelf_h_.css`), 19 KB gzip (inchangé)
+- Precache : 1079 KiB
+- Grep contrôle : 0 `popovertarget` dans `capture/view.js`, 0 `requestAnimationFrame(positionTagPopover)` dans `capture/index.js`
+- `git diff --stat` : uniquement `capture/index.js` + `capture/view.js`
+- Commits : `refactor:` un seul chemin ouverture popover ; `chore:` clôture M08e
+
 ### Simulation quota plein (procédure dev, M02)
 
 1. `npm run preview`, ouvrir l'app dans le navigateur.
@@ -319,6 +341,12 @@ Vérification automatisée équivalente : `npm run test:unit` — tests `save() 
   — naissance transparente masque toute frame mal positionnée ; `prefers-reduced-motion` couvre
   le sélecteur natif en plus du repli.
 - M08d : saga Capture finalisée (M07 → M08d) — validation groupée Cédric attendue.
+- M08e : retrait `popovertarget` du bouton tag — le JS pilote seul l'ouverture via `openTagPopover()`
+  (positionnement synchrone M08d), `popover="auto"` ne sert que top layer + fermeture native.
+- M08e : `onTagPopoverToggle` ne gère plus l'ouverture (plus de rAF) — uniquement sync fermeture
+  externe (clic-dehors, Échap). Leçon patron : **jamais `popovertarget` ET handler JS sur le même
+  déclencheur** — un seul maître à bord.
+- M08e : saga Capture finalisée (M07 → M08e) — validation groupée Cédric attendue.
 
 ---
 
@@ -343,7 +371,8 @@ Vérification automatisée équivalente : `npm run test:unit` — tests `save() 
   candidat mission shell future, hors périmètre M08.
 - M08d : chemin d'ouverture natif via `popovertarget` passe par `onTagPopoverToggle` (l.388)
   qui conserve un `requestAnimationFrame` — hors périmètre strict M08d ; la ceinture CSS
-  compense. Si flash persiste sur iPhone, micro-correctif sur cette ligne.
+  compense. Si flash persiste sur iPhone, micro-correctif sur cette ligne. **Résolu en M08e**
+  (retrait `popovertarget`, ouverture 100 % JS).
 
 ---
 
