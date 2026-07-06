@@ -3,7 +3,7 @@
 > Ce fichier est la mémoire du chantier. L'agent le lit au début de chaque
 > mission et le met à jour à la fin. Il doit rester factuel et concis.
 
-**Dernière mise à jour :** 2026-07-06 — M05b
+**Dernière mise à jour :** 2026-07-06 — M06
 
 ---
 
@@ -18,6 +18,7 @@
 | M04 | Socle design : thèmes, mouvement, typographie | ✅ faite (en attente validation Cédric) | 2026-07-06 |
 | M05 | Signature Tâches : la ligne de flottaison | ✅ faite (en attente validation Cédric) | 2026-07-06 |
 | M05b | Correctif interactions sous-tâches/tag | ✅ faite (en attente validation Cédric) | 2026-07-06 |
+| M06 | Tâches : tag, bordure, tag à la création | ✅ faite (en attente validation Cédric) | 2026-07-06 |
 
 Statuts : ⬜ à faire · 🔶 en cours · ✅ faite et validée par Cédric · 🛑 bloquée
 
@@ -30,15 +31,15 @@ sans justification écrite.*
 
 | Métrique | Baseline (M00) | Dernière valeur | Mission |
 |---|---|---|---|
-| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M05b |
-| Tests unitaires | 22/22 passés (2 fichiers) | 42/42 passés (6 fichiers) | M05b |
-| Lint | 0 erreur | 0 erreur | M05b |
-| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 275 KB (`index-DTE4qdCO.js`) | M05b |
-| JS initial (gzip) | 243 KB | 76 KB | M05b |
-| CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 113 KB (`index-DZvOYv93.css`, entrée HTML) | M05b |
+| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M06 |
+| Tests unitaires | 22/22 passés (2 fichiers) | 42/42 passés (6 fichiers) | M06 |
+| Lint | 0 erreur | 0 erreur | M06 |
+| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 277 KB (`index-_jHHsfBn.js`) | M06 |
+| JS initial (gzip) | 243 KB | 76 KB | M06 |
+| CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 114 KB (`index-Ds6OK8cE.css`, entrée HTML) | M06 |
 | Nombre de chunks JS | 1 | 9 | M01 |
 | Polices woff2 (dist) | — | ~122 KB (7 fichiers) | M04 |
-| Precache PWA | — | 1067 KiB (23 entrées) | M05b |
+| Precache PWA | — | 1070 KiB (23 entrées) | M06 |
 
 Variation bundle M05 : +4,3 KB brut sur le chunk d'entrée JS (275 vs 270 M04) — hors tolérance ±2 KB
 mais +1,5 KB gzip seulement ; justifié par markup SVG inline (houle, ancre, coche) et fonctions tide
@@ -82,6 +83,26 @@ et zéro `#c9a227` dans `tasks/style.css`.
 - CSS entrée : 113 KB brut (`index-DZvOYv93.css`), 18 KB gzip (inchangé)
 - Precache : 1067 KiB
 - `git diff --stat` : uniquement `src/modules/tasks/index.js` (handler `onPointerDown`)
+
+### Rituel AVANT M06 (2026-07-06)
+
+- Smoke : 20/20 modules, 4/4 shell
+- Unit : 42/42 (6 fichiers)
+- Lint : 0 erreur
+- Build entrée : 275 KB brut (`index-DTE4qdCO.js`), 76 KB gzip
+- CSS entrée : 113 KB brut (`index-DZvOYv93.css`), 18 KB gzip
+- Precache : 1067 KiB
+
+### Rituel APRÈS M06 (2026-07-06)
+
+- Smoke : 20/20 modules, 4/4 shell
+- Unit : 42/42 (6 fichiers)
+- Lint : 0 erreur
+- Build entrée : 277 KB brut (`index-_jHHsfBn.js`), 76 KB gzip (+1,8 KB brut, +0,4 KB gzip — sélecteur tag création)
+- CSS entrée : 114 KB brut (`index-Ds6OK8cE.css`), 18 KB gzip (+1 KB, styles sélecteur création)
+- Precache : 1070 KiB
+- Commits : `fix:` menu tag overflow + bordure form ; `feat:` tag à la création
+- `git diff --stat` index.js : câblage tag création + signature `createTask(text, tagId)` uniquement
 
 ### Simulation quota plein (procédure dev, M02)
 
@@ -157,6 +178,12 @@ Vérification automatisée équivalente : `npm run test:unit` — tests `save() 
   (pas `.tasks__subtasks`, absent du view.js), formulaire sous-tâches, zones tag, édition sous-tâche.
 - M05b : leçon — une mission « présentation seule » doit inclure les handlers `closest(...)` qui
   dépendent des enveloppes/classes HTML modifiées.
+- M06 : menu tag — classe `tasks__item--tag-open` lève `overflow:hidden` sur `.tasks__item-detail`
+  quand le menu est ouvert (animation dépliement déjà terminée).
+- M06 : barre d'ajout — bordure unique sur `.tasks__form`, input nu (`appearance: none`).
+- M06 : tag à la création — `pendingCreateTagId` réinitialisé après chaque `createTask` ;
+  sélecteur réutilise `PREDEFINED_TAGS` et le rendu du menu tag existant.
+- M06 : clôture série Tâches (M05 + M05b + M06) — validation humaine groupée attendue.
 
 ---
 
