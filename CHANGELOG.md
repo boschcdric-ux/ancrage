@@ -121,3 +121,14 @@ Historique des modifications du chantier `chantier/redesign`.
 - Leçon patron popover : jamais `popovertarget` ET handler JS sur le même déclencheur.
 - Saga Capture (M07 → M08e) finalisée — validation groupée attendue.
 - Bundle JS entrée : −0,12 KB brut / −0,05 KB gzip. CSS entrée : inchangé.
+
+### M09 — Signature Respiration : respirer avec la mer
+
+- L'orbe disparaît : la mer devient le guide respiratoire (montée inspiration, halo rétention,
+  descente expiration) — câblé sur le moteur de phases existant, non réécrit.
+- Moteur audio vagues (bruit filtré lowpass) remplace les bips ; réglage son conservé.
+- Carte-mer cliquable (démarrage/pause), ligne de session, compteur cycles, programmes visibles.
+- Fin de séance : « Mer étale. » + « Séance tenue. » ; eau redescend en ~3 s.
+- Largeur standard `min(420px, 100%)` centrée posée — harmonisation autres modules à planifier.
+- `#a78bfa` et `!important` supprimés. `prefers-reduced-motion` : guide textuel uniquement.
+- Bundle JS entrée : −0,5 KB brut / +0,3 KB gzip (moteur audio). CSS entrée : −0,2 KB.
