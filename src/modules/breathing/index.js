@@ -462,6 +462,21 @@ function finishSessionSuccess() {
   if (!reducedMotion) setWater(WATER_LOW, 3, 'ease-out');
 }
 
+function freezeWaterAtCurrentPosition() {
+  const sea = rootContainer?.querySelector('[data-breathing-sea]');
+  if (!(sea instanceof HTMLElement)) return;
+  const card = sea.closest('[data-breathing-sea-card]');
+  if (!(card instanceof HTMLElement)) return;
+  const currentPx = parseFloat(getComputedStyle(sea).height);
+  const cardPx = card.getBoundingClientRect().height;
+  const pct = cardPx > 0 ? (currentPx / cardPx) * 100 : waterLevel;
+  sea.style.transition = 'none';
+  sea.style.setProperty('--level', `${pct}%`);
+  waterLevel = pct;
+  void sea.offsetHeight;
+  sea.style.transition = '';
+}
+
 function startSession() {
   if (soundEnabled) {
     initAudio();
@@ -479,7 +494,16 @@ function startSession() {
   phaseRemainingMs = getPhaseDurationSec(phase) * 1000;
   screen = 'running';
   waterLevel = WATER_LOW;
-  render({ applyPhase: true });
+
+  render();
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      if (screen !== 'running') return;
+      onPhaseStart(phase, phaseRemainingMs / 1000);
+      updateLiveDom();
+    });
+  });
+
   clearTick();
   tickId = window.setInterval(tick, 250);
 }
@@ -489,6 +513,7 @@ function pauseSession() {
   screen = 'paused';
   clearTick();
   stopSound();
+  if (!reducedMotion) freezeWaterAtCurrentPosition();
   applyPhaseToDom();
 }
 
