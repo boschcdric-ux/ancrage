@@ -3,7 +3,7 @@
 > Ce fichier est la mémoire du chantier. L'agent le lit au début de chaque
 > mission et le met à jour à la fin. Il doit rester factuel et concis.
 
-**Dernière mise à jour :** 2026-07-06 — M09b
+**Dernière mise à jour :** 2026-07-06 — M09c
 
 ---
 
@@ -27,6 +27,7 @@
 | M08e | Capture : un seul chemin d'ouverture popover | ✅ faite (en attente validation Cédric) | 2026-07-06 |
 | M09 | Signature Respiration : respirer avec la mer | ✅ faite (en attente validation Cédric) | 2026-07-06 |
 | M09b | Corrections groupées Capture & Respiration | ✅ faite (en attente validation Cédric) | 2026-07-06 |
+| M09c | Respiration : sync eau démarrage + pause | ✅ faite (en attente validation Cédric) | 2026-07-06 |
 
 Statuts : ⬜ à faire · 🔶 en cours · ✅ faite et validée par Cédric · 🛑 bloquée
 
@@ -39,15 +40,15 @@ sans justification écrite.*
 
 | Métrique | Baseline (M00) | Dernière valeur | Mission |
 |---|---|---|---|
-| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M09b |
-| Tests unitaires | 22/22 passés (2 fichiers) | 44/44 passés (7 fichiers) | M09b |
-| Lint | 0 erreur | 0 erreur | M09b |
-| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 284 KB (`index-Vv4XTdsz.js`) | M09b |
-| JS initial (gzip) | 243 KB | 78 KB | M09b |
-| CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 117 KB (`index-DNCpuRtL.css`, entrée HTML) | M09b |
+| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M09c |
+| Tests unitaires | 22/22 passés (2 fichiers) | 44/44 passés (7 fichiers) | M09c |
+| Lint | 0 erreur | 0 erreur | M09c |
+| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 285 KB (`index-YgXT2QBw.js`) | M09c |
+| JS initial (gzip) | 243 KB | 78 KB | M09c |
+| CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 117 KB (`index-DNCpuRtL.css`, entrée HTML) | M09c |
 | Nombre de chunks JS | 1 | 9 | M01 |
 | Polices woff2 (dist) | — | ~122 KB (7 fichiers) | M04 |
-| Precache PWA | — | 1080 KiB (23 entrées) | M09b |
+| Precache PWA | — | 1080 KiB (23 entrées) | M09c |
 
 Variation bundle M05 : +4,3 KB brut sur le chunk d'entrée JS (275 vs 270 M04) — hors tolérance ±2 KB
 mais +1,5 KB gzip seulement ; justifié par markup SVG inline (houle, ancre, coche) et fonctions tide
@@ -278,6 +279,26 @@ et zéro `#c9a227` dans `tasks/style.css`.
 - `git diff --stat` : uniquement `capture/` + `breathing/` (5 fichiers)
 - Commits : `fix:` capture iOS ; `fix:` respiration DOM persistant + pilule ; `chore:` clôture M09b
 
+### Rituel AVANT M09c (2026-07-06)
+
+- Smoke : 20/20 modules, 4/4 shell
+- Unit : 44/44 (7 fichiers)
+- Lint : 0 erreur
+- Build entrée : 284 KB brut (`index-Vv4XTdsz.js`), 78 KB gzip
+- CSS entrée : 117 KB brut (`index-DNCpuRtL.css`), 19 KB gzip
+- Precache : 1080 KiB
+
+### Rituel APRÈS M09c (2026-07-06)
+
+- Smoke : 20/20 modules, 4/4 shell
+- Unit : 44/44 (7 fichiers)
+- Lint : 0 erreur
+- Build entrée : 285 KB brut (`index-YgXT2QBw.js`), 78 KB gzip (+0,5 KB brut, +0,12 KB gzip — double rAF démarrage + gel pause)
+- CSS entrée : 117 KB brut (`index-DNCpuRtL.css`), 19 KB gzip (inchangé)
+- Precache : 1080 KiB
+- `git diff --stat` : uniquement `breathing/index.js` (+26 lignes)
+- Commits : `fix:` sync eau démarrage + pause ; `chore:` clôture M09c
+
 ### Simulation quota plein (procédure dev, M02)
 
 1. `npm run preview`, ouvrir l'app dans le navigateur.
@@ -413,6 +434,13 @@ Vérification automatisée équivalente : `npm run test:unit` — tests `save() 
   mutations ciblées** (à vérifier en audit pré-mission Habitudes et prochaines signatures).
 - M09b : pilule de progression — piste `.breathing__session-track` décollée des coins arrondis
   (top 10px, inset 14px). Validation groupée M09 + M09b attendue.
+- M09c : démarrage séance — `render()` LOW puis double `requestAnimationFrame` avant
+  `onPhaseStart` (l'eau part visiblement du bas, plus de saut à HIGH au premier instant).
+- M09c : pause — `freezeWaterAtCurrentPosition()` lit `getComputedStyle(sea).height`,
+  fige `--level` sans transition ; reprise via `applyPhaseToDom` existant (durée restante).
+- M09c : leçon — toute transition CSS doit être reprise en main à la pause (geler la valeur
+  réellement peinte) ; laisser un état initial se peindre (rAF) avant la transition suivante
+  sur un élément neuf (même règle que flash popover M08d). Saga Respiration M09→M09c finalisée.
 
 ---
 
