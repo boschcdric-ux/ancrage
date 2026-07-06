@@ -145,6 +145,43 @@ function createTagMenu(taskId, isOpen) {
   `;
 }
 
+function createCreateTagSelector(pendingTagId, isOpen) {
+  const tag = pendingTagId ? PREDEFINED_TAGS.find((t) => t.id === pendingTagId) : null;
+  const ariaLabel = tag
+    ? `Tag sélectionné : ${tag.label}. Ouvrir le sélecteur de tag`
+    : 'Choisir un tag pour la nouvelle tâche';
+
+  const triggerContent = tag
+    ? `<span class="tasks__create-tag-badge">${renderTagBadge(pendingTagId)}</span>`
+    : `<span class="tasks__create-tag-icon" aria-hidden="true">🏷</span>`;
+
+  const menuItems = [
+    `<button type="button" class="tasks__tag-menu-item" data-create-tag-pick data-tag-id="">Aucun tag</button>`,
+    ...PREDEFINED_TAGS.map(
+      (t) =>
+        `<button type="button" class="tasks__tag-menu-item" data-create-tag-pick data-tag-id="${t.id}">${t.emoji} ${escapeHtml(t.label)}</button>`
+    )
+  ].join('');
+
+  return `
+    <div class="tasks__create-tag-wrap" data-task-create-tag>
+      <button
+        type="button"
+        class="tasks__create-tag-toggle"
+        data-create-tag-toggle
+        aria-label="${escapeHtml(ariaLabel)}"
+        aria-expanded="${isOpen ? 'true' : 'false'}"
+        aria-haspopup="true"
+      >
+        ${triggerContent}
+      </button>
+      <div class="tasks__tag-menu tasks__tag-menu--create ${isOpen ? 'is-open' : ''}" data-create-tag-menu role="menu" aria-hidden="${isOpen ? 'false' : 'true'}">
+        ${menuItems}
+      </div>
+    </div>
+  `;
+}
+
 function createTaskCheck(taskId, completed, isSubtask = false, justDone = false) {
   const subClass = isSubtask ? ' tasks__check--sub' : '';
   const justClass = justDone ? ' tasks__check--just-done' : '';
@@ -534,7 +571,9 @@ function createTasksView(
   expandedTagTaskId = null,
   expandedTaskId = null,
   noTasksInStorage = false,
-  ui = {}
+  ui = {},
+  pendingCreateTagId = null,
+  openCreateTagMenu = false
 ) {
   const {
     showAmnestyBanner = false,
@@ -587,6 +626,7 @@ function createTasksView(
         </div>
 
         <form class="tasks__form${formHidden}" data-task-form>
+          ${createCreateTagSelector(pendingCreateTagId, openCreateTagMenu)}
           <input
             id="task-input"
             class="tasks__input"
@@ -671,6 +711,7 @@ export {
   createTasksFilterBar,
   createTasksArchivesPanel,
   createAmnestyBannerMarkup,
+  createCreateTagSelector,
   computeTideProgress,
   tideLabel,
   tideLevelPercent,

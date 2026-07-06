@@ -994,6 +994,60 @@
   background: var(--bg-hover);
 }
 
+.tasks__create-tag-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.tasks__create-tag-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 4px;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-family: inherit;
+}
+
+.tasks__create-tag-toggle:hover {
+  background: var(--bg-hover);
+}
+
+.tasks__create-tag-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.tasks__create-tag-icon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.tasks__create-tag-badge .shared-tag-badge {
+  max-width: 7rem;
+}
+
+.tasks__create-tag-badge .shared-tag-badge__label {
+  max-width: 4.5rem;
+}
+
+.tasks__tag-menu--create {
+  left: 0;
+  right: auto;
+}
+
+@media (max-width: 380px) {
+  .tasks__tag-menu--create {
+    min-width: min(168px, calc(100vw - 28px));
+    max-width: calc(100vw - 28px);
+  }
+}
+
 /* ----- Widget dashboard (inchangé fonctionnellement) ----- */
 .tasks-widget__list {
   list-style: none;
