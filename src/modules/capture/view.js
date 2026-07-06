@@ -62,10 +62,9 @@ function createCaptureTagPopoverItems(formTagId = '') {
   return noneItem + tagItems;
 }
 
-function createCaptureTagTrigger(formTagId = '', useNativePopover = true) {
+function createCaptureTagTrigger(formTagId = '') {
   const tag = formTagId ? PREDEFINED_TAGS.find((t) => t.id === formTagId) : null;
   const btnClass = tag ? 'tagpick__btn has-tag' : 'tagpick__btn';
-  const popoverAttrs = useNativePopover ? `popovertarget="${CAPTURE_TAG_POPOVER_ID}"` : '';
   const labelHtml = tag
     ? `<span class="tagpick__dot" aria-hidden="true">${tag.emoji}</span><span data-capture-tag-label>${escapeHtml(tag.label)}</span>`
     : `<span data-capture-tag-label>Tag</span>`;
@@ -76,7 +75,6 @@ function createCaptureTagTrigger(formTagId = '', useNativePopover = true) {
         type="button"
         class="${btnClass}"
         data-capture-tag-toggle
-        ${popoverAttrs}
         aria-haspopup="menu"
         aria-expanded="false"
         aria-controls="${CAPTURE_TAG_POPOVER_ID}"
@@ -287,7 +285,7 @@ function createCaptureView(
             aria-label="${escapeHtml(inputAriaLabel)}"
           ></textarea>
           <div class="cap__row">
-            ${createCaptureTagTrigger(formTagId, useNativePopover)}
+            ${createCaptureTagTrigger(formTagId)}
             <span class="cap__counter" data-capture-counter aria-live="polite"></span>
             <button type="submit" class="cap__submit" data-capture-submit>Capturer</button>
           </div>

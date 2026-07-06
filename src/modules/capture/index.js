@@ -189,7 +189,7 @@ function clearTagPopoverPosition() {
 function startPopoverTracking() {
   if (onPopoverReposition) return;
   onPopoverReposition = () => {
-    if (isTagPopoverOpen()) requestAnimationFrame(positionTagPopover);
+    if (isTagPopoverOpen()) positionTagPopover();
   };
   window.addEventListener('resize', onPopoverReposition);
   window.addEventListener('scroll', onPopoverReposition, true);
@@ -250,7 +250,7 @@ function refreshCaptureTagPicker() {
   if (!rootContainer) return;
 
   const wrap = rootContainer.querySelector('[data-capture-tag-wrap]');
-  if (wrap) wrap.outerHTML = createCaptureTagTrigger(formTagId || '', useNativePopover);
+  if (wrap) wrap.outerHTML = createCaptureTagTrigger(formTagId || '');
 
   const popover = getTagPopoverElement();
   if (popover) popover.innerHTML = createCaptureTagPopoverItems(formTagId || '');
@@ -382,10 +382,7 @@ function setupTagPopover() {
       clearTagPopoverPosition();
       const toggle = getTagToggleButton();
       if (toggle instanceof HTMLElement) toggle.focus();
-      return;
     }
-    startPopoverTracking();
-    requestAnimationFrame(positionTagPopover);
   };
 
   onTagPopoverKeyDown = (event) => {
@@ -555,7 +552,7 @@ function bindEvents() {
     if (!origin) return;
 
     const tagToggle = origin.closest('[data-capture-tag-toggle]');
-    if (tagToggle instanceof HTMLButtonElement && !useNativePopover) {
+    if (tagToggle instanceof HTMLButtonElement) {
       event.preventDefault();
       if (isTagPopoverOpen()) closeTagPopover();
       else openTagPopover();
