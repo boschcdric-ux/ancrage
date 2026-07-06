@@ -9,3 +9,11 @@ Historique des modifications du chantier `chantier/redesign`.
 - Création de la branche `chantier/redesign`.
 - Installation de l'infrastructure documentaire (`chantier/`).
 - Baseline mesurée : smoke 20/20, unit 22/22, lint 0 erreur, 1 chunk JS (~856 KB brut / ~243 KB gzip), CSS ~219 KB.
+
+### M01 — Restaurer le code-splitting (registry)
+
+- Ajout de `src/modules/registry.js` (métadonnées des 20 modules, sans import de module).
+- `settings/index.js` : liste activable construite depuis le registry (plus d'imports statiques des 19 modules).
+- `dashboard/index.js` : widgets lazy via `import()` dynamique avec placeholder.
+- `main.js` : journal passé en lazy (TipTap dans un chunk séparé).
+- Métriques après : 9 chunks JS, entrée 265 KB brut / 72 KB gzip, smoke 20/20, lint 0.
