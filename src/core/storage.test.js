@@ -20,6 +20,16 @@ function clearAdhdStorage() {
   keys.forEach((key) => localStorage.removeItem(key));
 }
 
+function makeQuotaExceededError() {
+  const error = new Error('Quota exceeded');
+  error.name = 'QuotaExceededError';
+  return error;
+}
+
+function getNativeLocalStorageSetItem() {
+  return Object.getOwnPropertyDescriptor(Object.getPrototypeOf(localStorage), 'setItem').value;
+}
+
 describe('storage.js', () => {
   beforeEach(() => {
     clearAdhdStorage();
@@ -30,6 +40,67 @@ describe('storage.js', () => {
     const payload = { id: 'a1', text: 'Tâche test', done: false };
     expect(save('tasks:items', payload)).toBe(true);
     expect(load('tasks:items')).toEqual(payload);
+  });
+
+  it('save() réussit — retourne true et met à jour la méta', () => {
+    const atBefore = Date.now();
+    expect(save('memo:data', { sections: [] })).toBe(true);
+    const meta = JSON.parse(localStorage.getItem(`${PREFIX}__storage_sync_meta__`));
+    expect(meta[`${PREFIX}memo:data`]?.at).toBeGreaterThanOrEqual(atBefore);
+  });
+
+  describe('save() — gestion du quota', () => {
+    let setItemSpy;
+
+    afterEach(() => {
+      setItemSpy?.mockRestore();
+      setItemSpy = undefined;
+    });
+
+    it('quota plein — purge des backups, retry, ancrage:save-failed si échec final', () => {
+      localStorage.setItem(`${PREFIX}backup:2026-05-01`, '{}');
+      localStorage.setItem(`${PREFIX}backup:2026-05-02`, '{}');
+
+      const targetKey = `${PREFIX}tasks:items`;
+      const nativeSetItem = getNativeLocalStorageSetItem();
+      setItemSpy = vi.spyOn(localStorage, 'setItem').mockImplementation((key, value) => {
+        if (key === targetKey) {
+          throw makeQuotaExceededError();
+        }
+        return nativeSetItem.call(localStorage, key, value);
+      });
+
+      const events = [];
+      const onFailed = (event) => events.push(event.detail);
+      document.addEventListener('ancrage:save-failed', onFailed);
+
+      expect(save('tasks:items', { id: 'blocked' })).toBe(false);
+      expect(events).toHaveLength(1);
+      expect(events[0]).toMatchObject({ key: 'tasks:items', reason: 'QuotaExceededError' });
+      expect(getBackupKeys()).toHaveLength(0);
+
+      document.removeEventListener('ancrage:save-failed', onFailed);
+    });
+
+    it('quota plein — purge du backup le plus ancien puis réussit', () => {
+      localStorage.setItem(`${PREFIX}backup:2026-05-01`, '{}');
+      localStorage.setItem(`${PREFIX}backup:2026-05-02`, '{}');
+
+      const targetKey = `${PREFIX}tasks:items`;
+      let remainingFailures = 1;
+      const nativeSetItem = getNativeLocalStorageSetItem();
+      setItemSpy = vi.spyOn(localStorage, 'setItem').mockImplementation((key, value) => {
+        if (key === targetKey && remainingFailures > 0) {
+          remainingFailures -= 1;
+          throw makeQuotaExceededError();
+        }
+        return nativeSetItem.call(localStorage, key, value);
+      });
+
+      expect(save('tasks:items', { id: 'recovered' })).toBe(true);
+      expect(localStorage.getItem(`${PREFIX}backup:2026-05-01`)).toBeNull();
+      expect(localStorage.getItem(targetKey)).toBe(JSON.stringify({ id: 'recovered' }));
+    });
   });
 
   it('normalizeLogicalKey() — préfixe adhd-app: unifié', () => {
@@ -216,14 +287,14 @@ describe('runDailyAutoBackupIfNeeded', () => {
     expect(localStorage.getItem(backupKey)).toBeNull();
   });
 
-  test('garde seulement les 7 derniers backups', () => {
-    for (let i = 1; i <= 8; i += 1) {
+  test('garde seulement les 3 derniers backups', () => {
+    for (let i = 1; i <= 5; i += 1) {
       const date = `2026-05-${String(i).padStart(2, '0')}`;
       localStorage.setItem(`${PREFIX}backup:${date}`, JSON.stringify({ old: true }));
     }
     localStorage.setItem(`${PREFIX}last-auto-backup`, '2026-01-01');
     runDailyAutoBackupIfNeeded();
-    expect(getBackupKeys().length).toBeLessThanOrEqual(7);
+    expect(getBackupKeys().length).toBeLessThanOrEqual(3);
   });
 });
 
