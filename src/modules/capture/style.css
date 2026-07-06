@@ -148,7 +148,6 @@
 }
 
 .tagpick__btn {
-  anchor-name: --capture-tag-anchor;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -190,8 +189,8 @@
   background: var(--bg-secondary);
   box-shadow: var(--shadow);
   min-width: 170px;
-  max-width: min(260px, calc(100vw - 24px));
-  max-height: min(300px, 55vh);
+  max-width: min(280px, calc(100vw - 16px));
+  max-height: min(320px, 60vh);
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -199,22 +198,8 @@
 }
 
 .tagpick__popover:popover-open {
-  position-anchor: --capture-tag-anchor;
+  position: fixed;
   inset: auto;
-  bottom: anchor(top);
-  left: anchor(left);
-  margin-bottom: 6px;
-}
-
-@supports not (position-anchor: --capture-tag-anchor) {
-  .tagpick__popover:popover-open {
-    position: fixed;
-    left: 50%;
-    bottom: max(16px, env(safe-area-inset-bottom, 0px));
-    top: auto;
-    transform: translateX(-50%);
-    margin-bottom: 0;
-  }
 }
 
 .tagpick__popover--fallback {

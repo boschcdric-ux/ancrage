@@ -12,7 +12,8 @@ import {
 
 const STORAGE_KEY = 'capture:items';
 const MAX_VISIBLE_CAPTURES = 5;
-const VIEWPORT_MARGIN = 12;
+const POPOVER_MARGIN = 8;
+const POPOVER_MAX_WIDTH = 280;
 
 const TAG_ID_SET = new Set(PREDEFINED_TAGS.map((t) => t.id));
 
@@ -37,6 +38,7 @@ let onKeyDown = null;
 let onPointerDown = null;
 let onTagPopoverToggle = null;
 let onTagPopoverKeyDown = null;
+let onPopoverReposition = null;
 
 /** Export test : la persistance ne tronque plus la liste. */
 export function getCapturesToPersist(items) {
@@ -144,35 +146,60 @@ function syncTagToggleExpanded(isOpen) {
   if (toggle) toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
 }
 
-function positionFallbackPopover() {
+function positionTagPopover() {
   const toggle = getTagToggleButton();
   const menu = getTagPopoverElement();
   if (!(toggle instanceof HTMLElement) || !(menu instanceof HTMLElement)) return;
 
   const rect = toggle.getBoundingClientRect();
-  const maxWidth = Math.min(260, window.innerWidth - VIEWPORT_MARGIN * 2);
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const maxWidth = Math.min(POPOVER_MAX_WIDTH, vw - POPOVER_MARGIN * 2);
   menu.style.width = `${maxWidth}px`;
 
+  const menuWidth = menu.offsetWidth;
   let left = rect.left;
-  if (left + maxWidth > window.innerWidth - VIEWPORT_MARGIN) {
-    left = window.innerWidth - VIEWPORT_MARGIN - maxWidth;
-  }
-  if (left < VIEWPORT_MARGIN) left = VIEWPORT_MARGIN;
-
-  menu.style.left = `${left}px`;
-  menu.style.visibility = 'hidden';
-  menu.classList.add('is-open');
+  if (left + menuWidth > vw - POPOVER_MARGIN) left = vw - POPOVER_MARGIN - menuWidth;
+  if (left < POPOVER_MARGIN) left = POPOVER_MARGIN;
 
   const menuHeight = menu.offsetHeight;
-  let top = rect.top - menuHeight - 6;
-  if (top < VIEWPORT_MARGIN) {
-    top = rect.bottom + 6;
-    const maxTop = window.innerHeight - menuHeight - VIEWPORT_MARGIN;
-    if (top > maxTop) top = Math.max(VIEWPORT_MARGIN, maxTop);
+  const below = rect.bottom + 6;
+  const above = rect.top - 6 - menuHeight;
+  let top;
+  if (below + menuHeight <= vh - POPOVER_MARGIN) {
+    top = below;
+  } else if (above >= POPOVER_MARGIN) {
+    top = above;
+  } else {
+    top = Math.max(POPOVER_MARGIN, vh - POPOVER_MARGIN - menuHeight);
   }
 
+  menu.style.left = `${left}px`;
   menu.style.top = `${top}px`;
-  menu.style.visibility = '';
+}
+
+function clearTagPopoverPosition() {
+  const menu = getTagPopoverElement();
+  if (!(menu instanceof HTMLElement)) return;
+  menu.style.top = '';
+  menu.style.left = '';
+  menu.style.width = '';
+}
+
+function startPopoverTracking() {
+  if (onPopoverReposition) return;
+  onPopoverReposition = () => {
+    if (isTagPopoverOpen()) requestAnimationFrame(positionTagPopover);
+  };
+  window.addEventListener('resize', onPopoverReposition);
+  window.addEventListener('scroll', onPopoverReposition, true);
+}
+
+function stopPopoverTracking() {
+  if (!onPopoverReposition) return;
+  window.removeEventListener('resize', onPopoverReposition);
+  window.removeEventListener('scroll', onPopoverReposition, true);
+  onPopoverReposition = null;
 }
 
 function openTagPopover() {
@@ -181,13 +208,17 @@ function openTagPopover() {
 
   if (useNativePopover) {
     if (!popover.matches(':popover-open')) popover.showPopover();
+    startPopoverTracking();
+    requestAnimationFrame(positionTagPopover);
     return;
   }
 
   if (!fallbackTagMenuOpen) {
     fallbackTagMenuOpen = true;
     syncTagToggleExpanded(true);
-    positionFallbackPopover();
+    popover.classList.add('is-open');
+    startPopoverTracking();
+    requestAnimationFrame(positionTagPopover);
   }
 }
 
@@ -195,10 +226,13 @@ function closeTagPopover({ restoreFocus = true } = {}) {
   const popover = getTagPopoverElement();
   const toggle = getTagToggleButton();
 
+  stopPopoverTracking();
+
   if (useNativePopover) {
     if (popover instanceof HTMLElement && popover.matches(':popover-open')) {
       popover.hidePopover();
     }
+    clearTagPopoverPosition();
     return;
   }
 
@@ -206,10 +240,7 @@ function closeTagPopover({ restoreFocus = true } = {}) {
   fallbackTagMenuOpen = false;
   if (popover instanceof HTMLElement) {
     popover.classList.remove('is-open');
-    popover.style.top = '';
-    popover.style.left = '';
-    popover.style.width = '';
-    popover.style.visibility = '';
+    clearTagPopoverPosition();
   }
   syncTagToggleExpanded(false);
   if (restoreFocus && toggle instanceof HTMLElement) toggle.focus();
@@ -347,11 +378,14 @@ function setupTagPopover() {
     const isOpen = event.newState === 'open';
     syncTagToggleExpanded(isOpen);
     if (!isOpen) {
+      stopPopoverTracking();
+      clearTagPopoverPosition();
       const toggle = getTagToggleButton();
       if (toggle instanceof HTMLElement) toggle.focus();
       return;
     }
-    if (!useNativePopover) positionFallbackPopover();
+    startPopoverTracking();
+    requestAnimationFrame(positionTagPopover);
   };
 
   onTagPopoverKeyDown = (event) => {
@@ -385,6 +419,8 @@ function setupTagPopover() {
 }
 
 function teardownTagPopover() {
+  stopPopoverTracking();
+
   if (tagPopoverEl instanceof HTMLElement && onTagPopoverToggle) {
     tagPopoverEl.removeEventListener('toggle', onTagPopoverToggle);
   }
