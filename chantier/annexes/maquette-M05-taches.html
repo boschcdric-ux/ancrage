@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="encre">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maquette M05 — Module Tâches, la ligne de flottaison</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   MAQUETTE M05 — Module Tâches redessiné
+   Utilise les MÊMES noms de tokens que core/styles.css (M04),
+   plus 3 nouveaux tokens signature : --water-front / --water-back
+   / --water-glow, que M05 ajoutera aux 4 thèmes.
+   (Polices via CDN ici uniquement — l'app les a en local.)
+   ============================================================ */
+
+/* ---------- TOKENS (identiques à M04) + tokens eau ---------- */
+:root, [data-theme="encre"] {
+  --bg-primary:#0a1017; --bg-secondary:#101a24; --bg-tertiary:#16232f; --bg-hover:#1c2c3b;
+  --text-primary:#e9f1f4; --text-secondary:#9db4c0; --text-muted:#8299a6;
+  --accent:#45e0b0; --accent-hover:#63eec2; --accent-soft:rgba(69,224,176,.15); --text-on-accent:#04241a;
+  --success:#5fd39a; --warning:#f0b35e; --danger:#ef7d93; --info:#5ab4f0;
+  --border:rgba(233,241,244,.08);
+  --shadow:0 4px 24px rgba(2,8,14,.5); --shadow-soft:0 2px 12px rgba(2,8,14,.3);
+  --water-front:rgba(69,224,176,.30); --water-back:rgba(69,224,176,.14); --water-glow:rgba(69,224,176,.10);
+}
+[data-theme="garrigue"] {
+  --bg-primary:#f2eee6; --bg-secondary:#faf7f0; --bg-tertiary:#eae4d8; --bg-hover:#e2dccd;
+  --text-primary:#26301f; --text-secondary:#55614a; --text-muted:#5f6b53;
+  --accent:#4d6b3c; --accent-hover:#3e5a2f; --accent-soft:rgba(77,107,60,.12); --text-on-accent:#f5f8ef;
+  --success:#3d7d4f; --warning:#a86f24; --danger:#b3543f; --info:#2f6f8f;
+  --border:rgba(38,48,31,.10);
+  --shadow:0 4px 24px rgba(90,80,60,.15); --shadow-soft:0 2px 12px rgba(90,80,60,.08);
+  --water-front:rgba(77,107,60,.30); --water-back:rgba(77,107,60,.14); --water-glow:rgba(77,107,60,.08);
+}
+[data-theme="crepuscule"] {
+  --bg-primary:#171015; --bg-secondary:#201620; --bg-tertiary:#291d29; --bg-hover:#322434;
+  --text-primary:#f4e9e4; --text-secondary:#c3aaa4; --text-muted:#a89089;
+  --accent:#f0a35e; --accent-hover:#f5b678; --accent-soft:rgba(240,163,94,.15); --text-on-accent:#2b1706;
+  --success:#7fc48f; --warning:#f0c05e; --danger:#ee7f8e; --info:#8fb4e8;
+  --border:rgba(244,233,228,.08);
+  --shadow:0 4px 24px rgba(10,4,10,.5); --shadow-soft:0 2px 12px rgba(10,4,10,.3);
+  --water-front:rgba(240,163,94,.28); --water-back:rgba(240,163,94,.13); --water-glow:rgba(240,163,94,.09);
+}
+[data-theme="maree"] {
+  --bg-primary:#e8edeb; --bg-secondary:#f4f7f6; --bg-tertiary:#dee6e3; --bg-hover:#d4dedb;
+  --text-primary:#1d2b2d; --text-secondary:#48605f; --text-muted:#536c6a;
+  --accent:#146b66; --accent-hover:#0f5752; --accent-soft:rgba(20,107,102,.10); --text-on-accent:#eaf5f3;
+  --success:#2f7d54; --warning:#a86f24; --danger:#b3543f; --info:#2f6f8f;
+  --border:rgba(29,43,45,.10);
+  --shadow:0 4px 24px rgba(60,85,82,.15); --shadow-soft:0 2px 12px rgba(60,85,82,.08);
+  --water-front:rgba(20,107,102,.30); --water-back:rgba(20,107,102,.14); --water-glow:rgba(20,107,102,.07);
+}
+:root {
+  --font-family:'Atkinson Hyperlegible',system-ui,sans-serif;
+  --font-display:'Bricolage Grotesque',var(--font-family);
+  --duration-fast:140ms; --duration-normal:320ms; --duration-slow:500ms; --duration-xslow:650ms;
+  --ease-default:cubic-bezier(.16,1,.3,1); --ease-spring:cubic-bezier(.34,1.45,.64,1); --ease-out:cubic-bezier(.16,1,.3,1);
+  --radius-sm:6px; --radius-md:12px; --radius-lg:18px; --radius-full:9999px;
+}
+
+/* ---------- BASE ---------- */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:var(--font-family); background:var(--bg-primary); color:var(--text-primary);
+  display:flex; flex-direction:column; align-items:center; padding:20px 12px 48px;
+  transition:background var(--duration-normal) var(--ease-default);
+  -webkit-font-smoothing:antialiased;
+}
+button{font-family:inherit;color:inherit;background:none;border:none;cursor:pointer;font-size:inherit}
+button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+
+/* ---------- BANDEAU DÉMO ---------- */
+.demo-bar{width:min(420px,100%);display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.demo-bar__title{font-family:var(--font-display);font-weight:600;font-size:.9rem;color:var(--text-secondary)}
+.theme-chips{display:flex;gap:7px}
+.theme-chip{width:26px;height:26px;border-radius:50%;background:var(--pv);border:2px solid var(--border);transition:transform var(--duration-fast) var(--ease-spring),border-color var(--duration-fast)}
+.theme-chip[aria-pressed="true"]{border-color:var(--accent);transform:scale(1.15)}
+.motion-toggle{font-size:.74rem;color:var(--text-secondary);border:1px solid var(--border);background:var(--bg-secondary);padding:5px 10px;border-radius:var(--radius-full)}
+.motion-toggle[aria-pressed="true"]{background:var(--accent);color:var(--text-on-accent);border-color:transparent}
+
+/* ---------- CADRE MODULE ---------- */
+.module{
+  width:min(420px,100%); background:var(--bg-primary);
+  border:1px solid var(--border); border-radius:24px; box-shadow:var(--shadow);
+  overflow:hidden; display:flex; flex-direction:column;
+}
+
+/* ---------- EN-TÊTE : LA LIGNE DE FLOTTAISON ---------- */
+.tasks-head{position:relative;padding:22px 20px 26px;overflow:hidden;isolation:isolate;border-bottom:1px solid var(--border);min-height:120px}
+.tasks-head__title{font-family:var(--font-display);font-weight:700;font-size:1.7rem;letter-spacing:-.015em;line-height:1.1}
+.tasks-head__meta{margin-top:6px;font-size:.9rem;color:var(--text-secondary);display:flex;align-items:baseline;gap:5px}
+.tasks-head__count{font-family:var(--font-display);font-weight:700;font-variant-numeric:tabular-nums;color:var(--accent);display:inline-block}
+.tasks-head__count.tick{animation:count-tick var(--duration-normal) var(--ease-spring)}
+@keyframes count-tick{0%{transform:scale(1)}40%{transform:scale(1.35)}100%{transform:scale(1)}}
+
+.water{position:absolute;left:0;right:0;bottom:0;height:var(--level,8%);z-index:-1;transition:height var(--duration-xslow) var(--ease-spring);background:var(--water-glow)}
+.water svg{position:absolute;top:-20px;left:0;width:200%;height:24px;display:block}
+.water__back path{fill:var(--water-back)}
+.water__front path{fill:var(--water-front)}
+.water__back{animation:drift 14s linear infinite}
+.water__front{animation:drift 9s linear infinite reverse}
+@keyframes drift{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.water.swell svg{animation-name:drift,swell;animation-duration:9s,var(--duration-xslow);animation-iteration-count:infinite,1}
+@keyframes swell{0%{top:-20px}45%{top:-27px}100%{top:-20px}}
+.water__fill{position:absolute;inset:0;background:linear-gradient(to bottom,var(--water-front),var(--water-back));opacity:.5}
+
+/* ---------- CAPTURE RAPIDE ---------- */
+.add{display:flex;gap:8px;margin:14px 14px 4px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:var(--radius-lg);padding:5px 5px 5px 14px;transition:border-color var(--duration-fast),box-shadow var(--duration-fast)}
+.add:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--water-glow)}
+.add input{flex:1;border:none;background:none;color:var(--text-primary);font-family:inherit;font-size:.94rem;outline:none;min-width:0}
+.add input::placeholder{color:var(--text-muted)}
+.add button{padding:9px 15px;border-radius:var(--radius-md);background:var(--accent);color:var(--text-on-accent);font-weight:700;font-size:.86rem;transition:transform var(--duration-fast) var(--ease-spring),background var(--duration-fast)}
+.add button:hover{background:var(--accent-hover)}
+.add button:active{transform:scale(.94)}
+
+/* ---------- FILTRES ---------- */
+.filters{display:flex;gap:7px;padding:12px 14px 4px;overflow-x:auto;scrollbar-width:none}
+.filters::-webkit-scrollbar{display:none}
+.chip{flex:none;padding:7px 13px;border-radius:var(--radius-full);font-size:.82rem;color:var(--text-secondary);background:var(--bg-secondary);border:1px solid var(--border);transition:background var(--duration-fast),color var(--duration-fast),border-color var(--duration-fast)}
+.chip:hover{background:var(--bg-hover)}
+.chip.is-active{background:var(--accent-soft);color:var(--accent);border-color:var(--accent);font-weight:700}
+.chip__n{font-variant-numeric:tabular-nums;opacity:.65;margin-left:3px;font-size:.74rem}
+
+/* ---------- BANNIÈRE AMNISTIE ---------- */
+.amnesty{margin:12px 14px 0;padding:13px 15px;background:var(--bg-secondary);border:1px dashed var(--border);border-radius:var(--radius-lg);display:flex;align-items:center;gap:12px;animation:rise var(--duration-normal) var(--ease-out) both}
+.amnesty__text{flex:1;font-size:.86rem;color:var(--text-secondary);line-height:1.4}
+.amnesty__text strong{color:var(--text-primary);font-weight:700}
+.amnesty__btn{flex:none;padding:8px 13px;border-radius:var(--radius-md);font-size:.82rem;font-weight:700;color:var(--accent);background:var(--accent-soft);transition:transform var(--duration-fast) var(--ease-spring)}
+.amnesty__btn:active{transform:scale(.95)}
+
+/* ---------- LISTE ---------- */
+.list{padding:12px 14px 6px;display:flex;flex-direction:column;gap:8px}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.task{background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-lg);transition:background var(--duration-fast),opacity var(--duration-normal),border-color var(--duration-normal);animation:rise var(--duration-normal) var(--ease-out) both}
+.task__row{display:flex;align-items:center;gap:12px;padding:12px 13px}
+.task__text{flex:1;font-size:.95rem;line-height:1.35;transition:color var(--duration-normal);cursor:pointer;min-width:0;overflow-wrap:break-word}
+.task__dot{flex:none;width:9px;height:9px;border-radius:50%;background:var(--tag,var(--text-muted))}
+.task__star{flex:none;font-size:.95rem;opacity:.35;transition:opacity var(--duration-fast),transform var(--duration-fast) var(--ease-spring);padding:4px}
+.task__star.is-active{opacity:1;transform:scale(1.12)}
+.task.done .task__text{color:var(--text-muted);text-decoration:line-through;text-decoration-thickness:1.5px;text-decoration-color:var(--text-muted)}
+.task.done{opacity:.72}
+
+/* La case — cœur de la récompense */
+.check{position:relative;width:27px;height:27px;flex:none;border-radius:50%;border:2px solid var(--text-muted);display:grid;place-items:center;transition:border-color var(--duration-fast),background var(--duration-normal) var(--ease-spring),transform var(--duration-fast) var(--ease-spring)}
+.check:hover{border-color:var(--accent);transform:scale(1.08)}
+.check svg{width:14px;height:14px}
+.check svg path{stroke:var(--text-on-accent);stroke-width:3.4;fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:22;stroke-dashoffset:22}
+.task.done .check{background:var(--accent);border-color:var(--accent)}
+.task.done .check svg path{animation:draw 240ms var(--ease-out) 60ms forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+.ring{position:absolute;inset:-6px;border-radius:50%;border:2px solid var(--accent);pointer-events:none;animation:ring-out var(--duration-xslow) var(--ease-out) forwards}
+.ring--2{animation-delay:110ms}
+@keyframes ring-out{0%{transform:scale(.5);opacity:.9}100%{transform:scale(2.3);opacity:0}}
+
+/* Détail déplié : sous-tâches + actions */
+.task__detail{max-height:0;overflow:hidden;transition:max-height var(--duration-normal) var(--ease-default)}
+.task.open .task__detail{max-height:280px}
+.subs{padding:2px 13px 4px 52px;display:flex;flex-direction:column;gap:2px}
+.sub{display:flex;align-items:center;gap:10px;padding:7px 0;font-size:.88rem;color:var(--text-secondary)}
+.sub .check{width:20px;height:20px;border-width:1.5px}
+.sub .check svg{width:11px;height:11px}
+.sub.done span{color:var(--text-muted);text-decoration:line-through}
+.subs__progress{font-size:.74rem;color:var(--text-muted);padding:2px 0 4px;font-variant-numeric:tabular-nums}
+.task__actions{display:flex;gap:6px;padding:6px 13px 12px 52px}
+.act{padding:7px 11px;border-radius:var(--radius-md);font-size:.78rem;color:var(--text-secondary);background:var(--bg-tertiary);border:1px solid var(--border);transition:background var(--duration-fast),color var(--duration-fast)}
+.act:hover{background:var(--bg-hover);color:var(--text-primary)}
+.act--danger:hover{color:var(--danger)}
+
+/* Amnistie : sortie douce, sans onde */
+.task.pardoned{animation:pardon var(--duration-xslow) var(--ease-out) forwards}
+@keyframes pardon{to{opacity:0;transform:translateY(5px) scale(.98);max-height:0;margin-bottom:-8px;border-width:0}}
+.amnesty-note{text-align:center;font-size:.86rem;color:var(--text-secondary);padding:8px 0 4px;animation:rise var(--duration-normal) var(--ease-out) both}
+
+/* ---------- PIED : ARCHIVES ---------- */
+.foot{padding:8px 14px 18px;display:flex;justify-content:center}
+.archives-link{font-size:.8rem;color:var(--text-muted);text-decoration:underline;text-underline-offset:3px;transition:color var(--duration-fast)}
+.archives-link:hover{color:var(--text-secondary)}
+
+/* ---------- ANCRE POSÉE (dans l'en-tête, dans l'eau) ---------- */
+.head-anchor{position:absolute;right:20px;bottom:10px;display:flex;flex-direction:column;align-items:center;gap:2px;pointer-events:none}
+.head-anchor[hidden]{display:none}
+.splash{position:absolute;left:50%;bottom:-4px;width:30px;height:30px;transform:translateX(-50%);border:2px solid var(--accent);border-radius:50%;opacity:0;animation:splash-out var(--duration-xslow) var(--ease-out) 380ms forwards}
+@keyframes splash-out{0%{transform:translateX(-50%) scale(.3);opacity:.85}100%{transform:translateX(-50%) scale(2.6);opacity:0}}
+.head-anchor svg{width:34px;height:34px;color:var(--accent);filter:drop-shadow(0 2px 6px var(--water-glow));animation:anchor-drop var(--duration-xslow) var(--ease-spring) both}
+@keyframes anchor-drop{0%{transform:translateY(-34px);opacity:0}55%{transform:translateY(4px);opacity:1}75%{transform:translateY(-2px)}100%{transform:translateY(0)}}
+.head-anchor__label{font-size:.7rem;font-weight:700;letter-spacing:.06em;color:var(--accent);text-transform:uppercase;animation:rise var(--duration-normal) var(--ease-out) 300ms both}
+.tasks-head.is-anchored .tasks-head__meta{color:var(--text-primary)}
+.empty{text-align:center;padding:26px 16px 14px;animation:rise var(--duration-normal) var(--ease-out) both}
+.empty__title{font-family:var(--font-display);font-weight:700;font-size:1.05rem;color:var(--text-secondary)}
+.empty__hint{font-size:.84rem;color:var(--text-muted);margin-top:3px}
+
+/* ---------- MOUVEMENT RÉDUIT ---------- */
+.reduce-motion *,.reduce-motion *::before,.reduce-motion *::after{animation-duration:1ms!important;animation-delay:0ms!important;transition-duration:1ms!important}
+.reduce-motion .water__back,.reduce-motion .water__front{animation:none!important}
+@media (prefers-reduced-motion:reduce){
+  .water__back,.water__front{animation:none}
+}
+.demo-note{width:min(420px,100%);margin-top:14px;font-size:.76rem;line-height:1.5;color:var(--text-muted);text-align:center}
+</style>
+</head>
+<body>
+
+<div class="demo-bar">
+  <span class="demo-bar__title">M05 · Tâches — maquette</span>
+  <div class="theme-chips" role="group" aria-label="Thèmes">
+    <button class="theme-chip" data-t="encre" style="--pv:linear-gradient(135deg,#101a24 55%,#45e0b0 55%)" aria-pressed="true" aria-label="Encre"></button>
+    <button class="theme-chip" data-t="garrigue" style="--pv:linear-gradient(135deg,#faf7f0 55%,#4d6b3c 55%)" aria-pressed="false" aria-label="Garrigue"></button>
+    <button class="theme-chip" data-t="crepuscule" style="--pv:linear-gradient(135deg,#201620 55%,#f0a35e 55%)" aria-pressed="false" aria-label="Crépuscule"></button>
+    <button class="theme-chip" data-t="maree" style="--pv:linear-gradient(135deg,#f4f7f6 55%,#146b66 55%)" aria-pressed="false" aria-label="Marée basse"></button>
+  </div>
+  <button class="motion-toggle" id="motion" aria-pressed="false">Réduire le mouvement</button>
+</div>
+
+<main class="module" aria-label="Module Tâches — maquette">
+
+  <header class="tasks-head">
+    <h1 class="tasks-head__title">Tâches</h1>
+    <p class="tasks-head__meta">
+      <span class="tasks-head__count" id="count">1</span>
+      <span>sur <span id="total">6</span> — <span id="tide">mer étale</span></span>
+    </p>
+    <div class="water" id="water" style="--level:16%">
+      <svg class="water__back" viewBox="0 0 1200 24" preserveAspectRatio="none" aria-hidden="true"><path d="M0,13 C75,4 150,22 300,13 C450,4 525,22 600,13 C675,4 750,22 900,13 C1050,4 1125,22 1200,13 L1200,24 L0,24 Z"/></svg>
+      <svg class="water__front" viewBox="0 0 1200 24" preserveAspectRatio="none" aria-hidden="true"><path d="M0,15 C100,8 200,20 300,15 C400,10 500,20 600,15 C700,8 800,20 900,15 C1000,10 1100,20 1200,15 L1200,24 L0,24 Z"/></svg>
+      <div class="water__fill"></div>
+    </div>
+    <div class="head-anchor" id="headAnchor" hidden>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="5" r="2.4"/><path d="M12 7.4V21M12 21c-4.4 0-8-3.2-8-7.4M12 21c4.4 0 8-3.2 8-7.4M2.8 13.6H6M18 13.6h3.2"/></svg>
+      <span class="head-anchor__label">Ancre posée</span>
+    </div>
+  </header>
+
+  <div class="add">
+    <input type="text" id="addInput" placeholder="Ajouter une tâche…" aria-label="Ajouter une tâche">
+    <button id="addBtn">Poser</button>
+  </div>
+
+  <div class="filters" role="toolbar" aria-label="Filtrer les tâches">
+    <button class="chip is-active" data-f="all">Toutes</button>
+    <button class="chip" data-f="maison">🏠 Maison</button>
+    <button class="chip" data-f="boulot">💼 Boulot</button>
+    <button class="chip" data-f="jardin">🌿 Jardin</button>
+    <button class="chip" data-f="sante">🏥 Santé</button>
+    <button class="chip" data-f="admin">📋 Admin</button>
+    <button class="chip" data-f="personnel">👤 Personnel</button>
+    <button class="chip" data-f="priority">⭐ Prioritaires</button>
+  </div>
+
+  <div class="amnesty" id="amnesty">
+    <p class="amnesty__text"><strong>2 tâches</strong> attendent depuis plus d'une semaine. Les pardonner&nbsp;?</p>
+    <button class="amnesty__btn" id="amnestyBtn">Amnistie</button>
+  </div>
+
+  <section class="list" id="list" aria-label="Liste des tâches"></section>
+
+  <footer class="foot">
+    <button class="archives-link">Voir les archives (12 journées)</button>
+  </footer>
+
+</main>
+
+<p class="demo-note">
+  Coche une tâche : le trait se dessine, l'onde part, la mer monte.
+  Touche le texte d'une tâche pour la déplier (sous-tâches + actions).
+  Termine tout : l'ancre se pose. L'amnistie a sa sortie douce, sans onde.
+</p>
+
+<script>
+(function(){
+'use strict';
+const TAGS={maison:{c:'#e0a05a',e:'🏠'},boulot:{c:'#5ab4f0',e:'💼'},jardin:{c:'#5fd39a',e:'🌿'},sante:{c:'#ef7d93',e:'🏥'},admin:{c:'#b49af5',e:'📋'},personnel:{c:'#8299a6',e:'👤'}};
+let tasks=[
+ {id:'t1',text:'Arroser les semis avant 9h',tag:'jardin',prio:false,done:false,old:false,subs:[]},
+ {id:'t2',text:'Demande de nationalité française pour maman',tag:'admin',prio:true,done:false,old:true,subs:[
+   {id:'s1',text:'Télécharger le formulaire Cerfa',done:true},
+   {id:'s2',text:'Trouver un traducteur agréé (acte portugais)',done:false},
+   {id:'s3',text:'Prendre RDV à la préfecture',done:false}]},
+ {id:'t3',text:'Répondre à Isabelle (collectif)',tag:'boulot',prio:false,done:false,old:false,subs:[]},
+ {id:'t4',text:'Renouveler l\u2019ordonnance de Vola',tag:'sante',prio:false,done:false,old:true,subs:[]},
+ {id:'t5',text:'Relire la note pour Denis Lanoy',tag:'boulot',prio:true,done:false,old:false,subs:[]},
+ {id:'t6',text:'Ranger le plan de travail',tag:'maison',prio:false,done:true,old:false,subs:[]}
+];
+let filter='all', expanded='t2';
+const list=document.getElementById('list'),water=document.getElementById('water'),
+count=document.getElementById('count'),total=document.getElementById('total'),
+amnesty=document.getElementById('amnesty');
+
+function checkSvg(){return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>'}
+
+function taskNode(t){
+  const el=document.createElement('article');
+  el.className='task'+(t.done?' done':'')+(expanded===t.id?' open':'');
+  el.dataset.id=t.id;
+  const row=document.createElement('div');row.className='task__row';
+  const chk=document.createElement('button');
+  chk.className='check';chk.setAttribute('role','checkbox');
+  chk.setAttribute('aria-checked',String(t.done));
+  chk.setAttribute('aria-label',(t.done?'Fait : ':'Marquer fait : ')+t.text);
+  chk.innerHTML=checkSvg();
+  chk.addEventListener('click',e=>{e.stopPropagation();toggle(t.id,chk)});
+  const txt=document.createElement('span');
+  txt.className='task__text';txt.textContent=t.text;
+  txt.addEventListener('click',()=>{expanded=(expanded===t.id?null:t.id);render()});
+  const star=document.createElement('button');
+  star.className='task__star'+(t.prio?' is-active':'');star.textContent='⭐';
+  star.setAttribute('aria-pressed',String(t.prio));
+  star.setAttribute('aria-label',t.prio?'Retirer la priorité':'Marquer prioritaire');
+  star.addEventListener('click',e=>{e.stopPropagation();t.prio=!t.prio;render()});
+  const dot=document.createElement('span');
+  dot.className='task__dot';dot.style.setProperty('--tag',TAGS[t.tag]?.c||'');
+  dot.title=t.tag;
+  row.append(chk,txt,star,dot);
+  el.appendChild(row);
+
+  const detail=document.createElement('div');detail.className='task__detail';
+  if(t.subs.length){
+    const subs=document.createElement('div');subs.className='subs';
+    const doneN=t.subs.filter(s=>s.done).length;
+    const prog=document.createElement('div');prog.className='subs__progress';
+    prog.textContent=doneN+' / '+t.subs.length+' étapes';
+    subs.appendChild(prog);
+    t.subs.forEach(s=>{
+      const line=document.createElement('div');line.className='sub'+(s.done?' done':'');
+      const sc=document.createElement('button');sc.className='check';
+      sc.setAttribute('role','checkbox');sc.setAttribute('aria-checked',String(s.done));
+      sc.setAttribute('aria-label',s.text);sc.innerHTML=checkSvg();
+      if(s.done){line.classList.add('done')}
+      sc.addEventListener('click',e=>{e.stopPropagation();s.done=!s.done;
+        if(s.done){ripple(sc);water.classList.remove('swell');void water.offsetWidth;water.classList.add('swell')}
+        render(true)});
+      const st=document.createElement('span');st.textContent=s.text;
+      line.append(sc,st);
+      if(s.done){line.querySelector('svg path').style.strokeDashoffset='0';
+        sc.style.background='var(--accent)';sc.style.borderColor='var(--accent)'}
+      subs.appendChild(line);
+    });
+    detail.appendChild(subs);
+  }
+  const acts=document.createElement('div');acts.className='task__actions';
+  acts.innerHTML='<button class="act">🏷 Tag</button><button class="act">✎ Modifier</button><button class="act">＋ Étape</button><button class="act act--danger">Supprimer</button>';
+  detail.appendChild(acts);
+  el.appendChild(detail);
+  if(t.done){el.querySelector('.task__row .check svg path').style.strokeDashoffset='0'}
+  return el;
+}
+
+function visible(){
+  if(filter==='all')return tasks;
+  if(filter==='priority')return tasks.filter(t=>t.prio);
+  return tasks.filter(t=>t.tag===filter);
+}
+
+function progressValue(){
+  /* Commencer compte : une tache non finie mais dont des etapes sont
+     cochees contribue partiellement a la maree (60% du poids max). */
+  if(!tasks.length)return 0;
+  let sum=0;
+  for(const t of tasks){
+    if(t.done){sum+=1;continue}
+    if(t.subs.length){sum+=(t.subs.filter(s=>s.done).length/t.subs.length)*0.6}
+  }
+  return sum/tasks.length;
+}
+function tideLabel(p,doneN){
+  if(tasks.length&&tasks.every(t=>t.done))return 'ancre pos\u00e9e';
+  if(p<=0.02)return 'mer \u00e9tale';
+  if(p<0.45)return 'la mer monte';
+  if(p<0.85)return 'la mar\u00e9e est belle';
+  return 'presque mar\u00e9e haute';
+}
+function render(keepExpandedScroll){
+  list.querySelectorAll('.task,.amnesty-note,.empty').forEach(n=>n.remove());
+  const vis=visible();
+  const sorted=[...vis].sort((a,b)=>Number(a.done)-Number(b.done));
+  sorted.forEach((t,i)=>{const n=taskNode(t);if(!keepExpandedScroll)n.style.animationDelay=(i*40)+'ms';list.appendChild(n)});
+  const doneN=tasks.filter(t=>t.done).length;
+  count.textContent=doneN;total.textContent=tasks.length;
+  const p=progressValue();
+  water.style.setProperty('--level',(8+p*74).toFixed(1)+'%');
+  document.getElementById('tide').textContent=tideLabel(p,doneN);
+  document.querySelectorAll('.chip').forEach(c=>{
+    const f=c.dataset.f;let n;
+    if(f==='all'){n=tasks.filter(t=>!t.done).length}
+    else if(f==='priority'){n=tasks.filter(t=>t.prio&&!t.done).length}
+    else{n=tasks.filter(t=>t.tag===f&&!t.done).length}
+    let b=c.querySelector('.chip__n');
+    if(n>0){if(!b){b=document.createElement('span');b.className='chip__n';c.appendChild(b)}b.textContent=n}
+    else if(b){b.remove()}
+  });
+  if(!vis.length&&tasks.length){
+    const e=document.createElement('div');e.className='empty';
+    e.innerHTML='<div class="empty__title">Rien sous ce filtre.</div><div class="empty__hint">La mer est calme de ce c\u00f4t\u00e9.</div>';
+    list.appendChild(e);
+  }
+  if(!tasks.length){
+    const e=document.createElement('div');e.className='empty';
+    e.innerHTML='<div class="empty__title">Mer libre.</div><div class="empty__hint">Rien a faire n\u2019est pas rien. Pose une pensee quand elle vient.</div>';
+    list.appendChild(e);
+  }
+  amnesty.style.display=tasks.some(t=>t.old&&!t.done)?'':'none';
+  const allDone=tasks.length>0&&tasks.every(t=>t.done);
+  const headAnchor=document.getElementById('headAnchor');
+  const head=document.querySelector('.tasks-head');
+  if(allDone&&headAnchor.hidden){
+    headAnchor.hidden=false;
+    head.classList.add('is-anchored');
+    document.getElementById('tide').textContent='journ\u00e9e tenue';
+    /* clapotis d'arriv\u00e9e : une onde dans l'eau au point de chute */
+    const splash=document.createElement('span');
+    splash.className='splash';
+    headAnchor.appendChild(splash);
+    splash.addEventListener('animationend',()=>splash.remove());
+  }else if(!allDone&&!headAnchor.hidden){
+    headAnchor.hidden=true;
+    head.classList.remove('is-anchored');
+  }
+}
+
+function ripple(el){
+  for(const cls of['ring','ring ring--2']){
+    const r=document.createElement('span');r.className=cls;
+    el.appendChild(r);r.addEventListener('animationend',()=>r.remove());
+  }
+}
+
+function toggle(id,chk){
+  const t=tasks.find(x=>x.id===id);if(!t)return;
+  t.done=!t.done;
+  const row=list.querySelector('.task[data-id="'+id+'"]');
+  if(row){row.classList.toggle('done',t.done);
+    chk.setAttribute('aria-checked',String(t.done));
+    if(t.done){ripple(chk);
+      count.classList.remove('tick');void count.offsetWidth;count.classList.add('tick');
+      water.classList.remove('swell');void water.offsetWidth;water.classList.add('swell');
+    }
+  }
+  setTimeout(()=>render(),t.done?450:0);
+}
+
+document.getElementById('addBtn').addEventListener('click',add);
+document.getElementById('addInput').addEventListener('keydown',e=>{if(e.key==='Enter')add()});
+function add(){
+  const inp=document.getElementById('addInput');const v=inp.value.trim();
+  if(!v){inp.focus();return}
+  tasks.push({id:'t'+Date.now(),text:v,tag:'personnel',prio:false,done:false,old:false,subs:[]});
+  inp.value='';render();inp.focus();
+}
+
+document.getElementById('amnestyBtn').addEventListener('click',()=>{
+  const olds=tasks.filter(t=>t.old&&!t.done);
+  olds.forEach(t=>{const n=list.querySelector('.task[data-id="'+t.id+'"]');if(n)n.classList.add('pardoned')});
+  setTimeout(()=>{
+    tasks=tasks.filter(t=>!(t.old&&!t.done));
+    render();
+    const note=document.createElement('p');note.className='amnesty-note';
+    note.textContent='Pardonné. Demain est une autre marée.';
+    list.appendChild(note);
+  },680);
+});
+
+document.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>{
+  filter=c.dataset.f;
+  document.querySelectorAll('.chip').forEach(x=>x.classList.toggle('is-active',x===c));
+  render();
+}));
+
+document.querySelectorAll('[data-t]').forEach(b=>b.addEventListener('click',()=>{
+  document.documentElement.dataset.theme=b.dataset.t;
+  document.querySelectorAll('[data-t]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+}));
+
+const motion=document.getElementById('motion');
+motion.addEventListener('click',()=>{
+  const on=motion.getAttribute('aria-pressed')!=='true';
+  motion.setAttribute('aria-pressed',String(on));
+  document.body.classList.toggle('reduce-motion',on);
+});
+if(window.matchMedia('(prefers-reduced-motion:reduce)').matches){
+  motion.setAttribute('aria-pressed','true');document.body.classList.add('reduce-motion');
+}
+
+render();
+})();
+</script>
+</body>
+</html>
