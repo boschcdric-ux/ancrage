@@ -65,6 +65,8 @@ const MIGRATION_KEY = `${PREFIX}__pb_migration_v1_done__`;
 const RECORD_IDS_KEY = `${PREFIX}__pb_record_ids__`;
 const LAST_AUTO_BACKUP_KEY = `${PREFIX}last-auto-backup`;
 const BACKUP_KEY_PREFIX = `${PREFIX}backup:`;
+const MAX_DAILY_BACKUP_SNAPSHOTS = 3;
+const SAVE_FAILED_EVENT = 'ancrage:save-failed';
 
 const PAYLOAD_FIELD = 'payload';
 
@@ -258,7 +260,7 @@ function runDailyAutoBackupIfNeeded() {
       if (key && key.startsWith(BACKUP_KEY_PREFIX)) backupKeys.push(key);
     }
     backupKeys.sort();
-    while (backupKeys.length > 7) {
+    while (backupKeys.length > MAX_DAILY_BACKUP_SNAPSHOTS) {
       localStorage.removeItem(backupKeys.shift());
     }
   } catch (e) {
@@ -664,15 +666,86 @@ function bindConnectivityFlush() {
 
 bindConnectivityFlush();
 
+function isQuotaExceededError(error) {
+  if (!error) return false;
+  return error.name === 'QuotaExceededError' || error.code === 22;
+}
+
+function listBackupKeysSorted() {
+  const backupKeys = [];
+  for (let i = 0; i < localStorage.length; i += 1) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith(BACKUP_KEY_PREFIX)) backupKeys.push(key);
+  }
+  backupKeys.sort();
+  return backupKeys;
+}
+
+function removeOldestBackupSnapshot() {
+  const keys = listBackupKeysSorted();
+  if (!keys.length) return false;
+  const oldest = keys[0];
+  localStorage.removeItem(oldest);
+  console.warn('[storage] Quota plein — suppression du backup le plus ancien :', oldest);
+  return true;
+}
+
+function removeAllBackupSnapshots() {
+  const keys = listBackupKeysSorted();
+  if (!keys.length) return false;
+  for (const key of keys) {
+    localStorage.removeItem(key);
+  }
+  console.warn(
+    `[storage] Quota plein — suppression de tous les backups locaux (${keys.length} snapshot(s))`
+  );
+  return true;
+}
+
+function emitSaveFailed(logicalKey, reason) {
+  if (typeof document === 'undefined') return;
+  document.dispatchEvent(
+    new CustomEvent(SAVE_FAILED_EVENT, {
+      detail: { key: logicalKey, reason }
+    })
+  );
+}
+
 function save(key, data) {
   const logicalKey = normalizeLogicalKey(key);
   const storageKey = fullStorageKey(logicalKey);
-  try {
-    localStorage.setItem(storageKey, JSON.stringify(data));
+  const serialized = JSON.stringify(data);
+
+  function attemptWrite() {
+    localStorage.setItem(storageKey, serialized);
     setMetaAt(logicalKey, Date.now());
-  } catch (e) {
-    console.error('Erreur de sauvegarde:', e);
+  }
+
+  function failFinal(error) {
+    console.error('Erreur de sauvegarde:', error);
+    const reason = isQuotaExceededError(error) ? 'QuotaExceededError' : error?.name || 'unknown';
+    emitSaveFailed(logicalKey, reason);
     return false;
+  }
+
+  try {
+    attemptWrite();
+  } catch (firstError) {
+    if (!isQuotaExceededError(firstError)) {
+      return failFinal(firstError);
+    }
+
+    try {
+      removeOldestBackupSnapshot();
+      attemptWrite();
+    } catch (secondError) {
+      try {
+        removeAllBackupSnapshots();
+        attemptWrite();
+      } catch (finalError) {
+        return failFinal(finalError);
+      }
+    }
   }
 
   const collection = getCollectionForKey(logicalKey);
