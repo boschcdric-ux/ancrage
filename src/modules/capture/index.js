@@ -4,12 +4,15 @@ import {
   createCaptureView,
   createCaptureListBlock,
   createCaptureFilterBar,
-  createCaptureTagPicker,
+  createCaptureTagTrigger,
+  createCaptureTagPopoverItems,
+  CAPTURE_TAG_POPOVER_ID,
   PREDEFINED_TAGS
 } from './view.js';
 
 const STORAGE_KEY = 'capture:items';
 const MAX_VISIBLE_CAPTURES = 5;
+const VIEWPORT_MARGIN = 12;
 
 const TAG_ID_SET = new Set(PREDEFINED_TAGS.map((t) => t.id));
 
@@ -24,16 +27,24 @@ let listFilter = 'all';
 let listExpanded = false;
 let editingCaptureId = null;
 let formTagId = null;
-let openFormTagMenu = false;
+let useNativePopover = false;
+let fallbackTagMenuOpen = false;
+let tagPopoverEl = null;
 let onFormSubmit = null;
 let onCaptureRootClick = null;
 let onInputInput = null;
 let onKeyDown = null;
 let onPointerDown = null;
+let onTagPopoverToggle = null;
+let onTagPopoverKeyDown = null;
 
 /** Export test : la persistance ne tronque plus la liste. */
 export function getCapturesToPersist(items) {
   return items;
+}
+
+function supportsNativePopover() {
+  return typeof HTMLElement.prototype.showPopover === 'function';
 }
 
 function prefersReducedMotion() {
@@ -102,6 +113,21 @@ function getFormElements() {
   };
 }
 
+function getTagToggleButton() {
+  return rootContainer?.querySelector('[data-capture-tag-toggle]') ?? null;
+}
+
+function getTagPopoverElement() {
+  return tagPopoverEl ?? document.getElementById(CAPTURE_TAG_POPOVER_ID) ?? null;
+}
+
+function isTagPopoverOpen() {
+  const popover = getTagPopoverElement();
+  if (!popover) return false;
+  if (useNativePopover) return popover.matches(':popover-open');
+  return fallbackTagMenuOpen;
+}
+
 function getInputAriaLabel() {
   return editingCaptureId ? LABEL_EDIT_CAPTURE : LABEL_NEW_CAPTURE;
 }
@@ -113,11 +139,92 @@ function resetEditingState() {
   if (submit) submit.textContent = BTN_CAPTURE;
 }
 
+function syncTagToggleExpanded(isOpen) {
+  const toggle = getTagToggleButton();
+  if (toggle) toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+}
+
+function positionFallbackPopover() {
+  const toggle = getTagToggleButton();
+  const menu = getTagPopoverElement();
+  if (!(toggle instanceof HTMLElement) || !(menu instanceof HTMLElement)) return;
+
+  const rect = toggle.getBoundingClientRect();
+  const maxWidth = Math.min(260, window.innerWidth - VIEWPORT_MARGIN * 2);
+  menu.style.width = `${maxWidth}px`;
+
+  let left = rect.left;
+  if (left + maxWidth > window.innerWidth - VIEWPORT_MARGIN) {
+    left = window.innerWidth - VIEWPORT_MARGIN - maxWidth;
+  }
+  if (left < VIEWPORT_MARGIN) left = VIEWPORT_MARGIN;
+
+  menu.style.left = `${left}px`;
+  menu.style.visibility = 'hidden';
+  menu.classList.add('is-open');
+
+  const menuHeight = menu.offsetHeight;
+  let top = rect.top - menuHeight - 6;
+  if (top < VIEWPORT_MARGIN) {
+    top = rect.bottom + 6;
+    const maxTop = window.innerHeight - menuHeight - VIEWPORT_MARGIN;
+    if (top > maxTop) top = Math.max(VIEWPORT_MARGIN, maxTop);
+  }
+
+  menu.style.top = `${top}px`;
+  menu.style.visibility = '';
+}
+
+function openTagPopover() {
+  const popover = getTagPopoverElement();
+  if (!(popover instanceof HTMLElement)) return;
+
+  if (useNativePopover) {
+    if (!popover.matches(':popover-open')) popover.showPopover();
+    return;
+  }
+
+  if (!fallbackTagMenuOpen) {
+    fallbackTagMenuOpen = true;
+    syncTagToggleExpanded(true);
+    positionFallbackPopover();
+  }
+}
+
+function closeTagPopover({ restoreFocus = true } = {}) {
+  const popover = getTagPopoverElement();
+  const toggle = getTagToggleButton();
+
+  if (useNativePopover) {
+    if (popover instanceof HTMLElement && popover.matches(':popover-open')) {
+      popover.hidePopover();
+    }
+    return;
+  }
+
+  if (!fallbackTagMenuOpen) return;
+  fallbackTagMenuOpen = false;
+  if (popover instanceof HTMLElement) {
+    popover.classList.remove('is-open');
+    popover.style.top = '';
+    popover.style.left = '';
+    popover.style.width = '';
+    popover.style.visibility = '';
+  }
+  syncTagToggleExpanded(false);
+  if (restoreFocus && toggle instanceof HTMLElement) toggle.focus();
+}
+
 function refreshCaptureTagPicker() {
   if (!rootContainer) return;
+
   const wrap = rootContainer.querySelector('[data-capture-tag-wrap]');
-  if (!wrap) return;
-  wrap.outerHTML = createCaptureTagPicker(formTagId || '', openFormTagMenu);
+  if (wrap) wrap.outerHTML = createCaptureTagTrigger(formTagId || '', useNativePopover);
+
+  const popover = getTagPopoverElement();
+  if (popover) popover.innerHTML = createCaptureTagPopoverItems(formTagId || '');
+
+  syncTagToggleExpanded(isTagPopoverOpen());
 }
 
 function refreshCaptureList() {
@@ -208,12 +315,99 @@ function createCapture(text, tagId) {
   };
 }
 
+function focusTagMenuItem(offset) {
+  const popover = getTagPopoverElement();
+  if (!(popover instanceof HTMLElement)) return;
+  const items = [...popover.querySelectorAll('[data-capture-tag-pick]')];
+  if (!items.length) return;
+
+  const active = document.activeElement;
+  const currentIndex = items.findIndex((item) => item === active);
+  const nextIndex = currentIndex < 0
+    ? (offset > 0 ? 0 : items.length - 1)
+    : (currentIndex + offset + items.length) % items.length;
+
+  const next = items[nextIndex];
+  if (next instanceof HTMLElement) next.focus();
+}
+
+function setupTagPopover() {
+  tagPopoverEl = rootContainer?.querySelector(`#${CAPTURE_TAG_POPOVER_ID}`) ?? null;
+  if (!(tagPopoverEl instanceof HTMLElement)) return;
+
+  if (!useNativePopover) {
+    tagPopoverEl.removeAttribute('popover');
+    tagPopoverEl.classList.add('tagpick__popover--fallback');
+    if (tagPopoverEl.parentElement !== document.body) {
+      document.body.appendChild(tagPopoverEl);
+    }
+  }
+
+  onTagPopoverToggle = (event) => {
+    const isOpen = event.newState === 'open';
+    syncTagToggleExpanded(isOpen);
+    if (!isOpen) {
+      const toggle = getTagToggleButton();
+      if (toggle instanceof HTMLElement) toggle.focus();
+      return;
+    }
+    if (!useNativePopover) positionFallbackPopover();
+  };
+
+  onTagPopoverKeyDown = (event) => {
+    if (!(event.target instanceof Element) || !event.target.closest(`#${CAPTURE_TAG_POPOVER_ID}`)) {
+      return;
+    }
+
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      closeTagPopover();
+      return;
+    }
+
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      focusTagMenuItem(1);
+      return;
+    }
+
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      focusTagMenuItem(-1);
+    }
+  };
+
+  if (useNativePopover) {
+    tagPopoverEl.addEventListener('toggle', onTagPopoverToggle);
+  }
+
+  document.addEventListener('keydown', onTagPopoverKeyDown);
+}
+
+function teardownTagPopover() {
+  if (tagPopoverEl instanceof HTMLElement && onTagPopoverToggle) {
+    tagPopoverEl.removeEventListener('toggle', onTagPopoverToggle);
+  }
+  if (onTagPopoverKeyDown) {
+    document.removeEventListener('keydown', onTagPopoverKeyDown);
+  }
+
+  if (!useNativePopover && tagPopoverEl instanceof HTMLElement && tagPopoverEl.parentElement === document.body) {
+    tagPopoverEl.remove();
+  }
+
+  tagPopoverEl = null;
+  onTagPopoverToggle = null;
+  onTagPopoverKeyDown = null;
+  fallbackTagMenuOpen = false;
+}
+
 function finalizeDelete(captureId, captureIndex, removedCapture, form) {
   if (captureId === editingCaptureId) {
     resetEditingState();
     form.reset();
     formTagId = null;
-    openFormTagMenu = false;
+    closeTagPopover({ restoreFocus: false });
     refreshCaptureTagPicker();
     updateCharCounter();
   }
@@ -277,7 +471,7 @@ function bindEvents() {
         resetEditingState();
         form.reset();
         formTagId = null;
-        openFormTagMenu = false;
+        closeTagPopover({ restoreFocus: false });
         refreshCaptureTagPicker();
         updateCharCounter();
         return;
@@ -287,7 +481,7 @@ function bindEvents() {
       refreshCaptureList();
       form.reset();
       formTagId = null;
-      openFormTagMenu = false;
+      closeTagPopover({ restoreFocus: false });
       refreshCaptureTagPicker();
       resetEditingState();
       updateCharCounter();
@@ -299,7 +493,7 @@ function bindEvents() {
     persistCaptures();
     form.reset();
     formTagId = null;
-    openFormTagMenu = false;
+    closeTagPopover({ restoreFocus: false });
     refreshCaptureTagPicker();
     updateCharCounter();
     playDropAnimation();
@@ -325,9 +519,10 @@ function bindEvents() {
     if (!origin) return;
 
     const tagToggle = origin.closest('[data-capture-tag-toggle]');
-    if (tagToggle instanceof HTMLButtonElement) {
-      openFormTagMenu = !openFormTagMenu;
-      refreshCaptureTagPicker();
+    if (tagToggle instanceof HTMLButtonElement && !useNativePopover) {
+      event.preventDefault();
+      if (isTagPopoverOpen()) closeTagPopover();
+      else openTagPopover();
       return;
     }
 
@@ -335,8 +530,9 @@ function bindEvents() {
     if (tagPick instanceof HTMLButtonElement) {
       const raw = tagPick.dataset.tagId ?? '';
       formTagId = normalizeTagId(raw || null);
-      openFormTagMenu = false;
+      closeTagPopover({ restoreFocus: false });
       refreshCaptureTagPicker();
+      getTagToggleButton()?.focus();
       return;
     }
 
@@ -374,7 +570,7 @@ function bindEvents() {
 
       editingCaptureId = captureId;
       formTagId = item.tagId;
-      openFormTagMenu = false;
+      closeTagPopover({ restoreFocus: false });
       input.value = item.text;
       input.setAttribute('aria-label', LABEL_EDIT_CAPTURE);
       const { submit } = getFormElements();
@@ -399,18 +595,14 @@ function bindEvents() {
     const target = event.target;
     if (!(target instanceof Element)) return;
 
-    if (openFormTagMenu) {
-      const insideTagUi =
-        target.closest('.tagpick') ||
-        target.closest('[data-capture-tag-wrap]') ||
-        target.closest('[data-capture-tag-menu]') ||
-        target.closest('[data-capture-tag-toggle]') ||
-        target.closest('[data-capture-tag-pick]');
-      if (!insideTagUi) {
-        openFormTagMenu = false;
-        refreshCaptureTagPicker();
-      }
-    }
+    if (!isTagPopoverOpen()) return;
+
+    const insideTagUi =
+      target.closest('[data-capture-tag-wrap]') ||
+      target.closest('[data-capture-tag-toggle]') ||
+      target.closest(`#${CAPTURE_TAG_POPOVER_ID}`) ||
+      target.closest('[data-capture-tag-pick]');
+    if (!insideTagUi) closeTagPopover();
   };
 
   form.addEventListener('submit', onFormSubmit);
@@ -427,23 +619,31 @@ const capture = {
 
   init(container) {
     rootContainer = container;
+    useNativePopover = supportsNativePopover();
     captures = readCaptures();
     listFilter = 'all';
     listExpanded = false;
     editingCaptureId = null;
     formTagId = null;
-    openFormTagMenu = false;
+    fallbackTagMenuOpen = false;
     const { visible, remaining, expanded, filteredTotal, maxVisible } = getListDisplayState();
-    rootContainer.innerHTML = createCaptureView(visible, listFilter, formTagId || '', captures, {
-      remaining,
-      expanded,
-      filteredTotal,
-      maxVisible
-    }, openFormTagMenu, getInputAriaLabel());
+    rootContainer.innerHTML = createCaptureView(
+      visible,
+      listFilter,
+      formTagId || '',
+      captures,
+      { remaining, expanded, filteredTotal, maxVisible },
+      getInputAriaLabel(),
+      useNativePopover
+    );
+    setupTagPopover();
     bindEvents();
   },
 
   destroy() {
+    closeTagPopover({ restoreFocus: false });
+    teardownTagPopover();
+
     if (rootContainer && onCaptureRootClick) {
       rootContainer.removeEventListener('click', onCaptureRootClick);
     }
@@ -465,7 +665,7 @@ const capture = {
     onPointerDown = null;
     editingCaptureId = null;
     formTagId = null;
-    openFormTagMenu = false;
+    fallbackTagMenuOpen = false;
     listFilter = 'all';
     listExpanded = false;
     captures = [];

@@ -1,18 +1,28 @@
-/* Module Capture — signature M07 (la goutte) */
+/* Module Capture — signature M07 (la goutte) + popover tag M08 */
+
+.capture,
+.capture *,
+.capture *::before,
+.capture *::after {
+  box-sizing: border-box;
+}
 
 .capture {
   width: 100%;
-  max-width: 880px;
+  max-width: min(880px, 100%);
   margin: 0 auto;
   padding: var(--space-8) var(--space-6);
   display: flex;
   flex-direction: column;
   gap: 14px;
+  min-width: 0;
 }
 
 /* ---------- Carte capture ---------- */
 .cap {
   position: relative;
+  width: 100%;
+  max-width: 100%;
   background: var(--bg-secondary);
   border: 1px solid var(--border);
   border-radius: 24px;
@@ -86,13 +96,16 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
 }
 
 .cap__counter {
+  flex: 1;
+  min-width: 0;
   font-size: 0.74rem;
   color: var(--text-muted);
   font-variant-numeric: tabular-nums;
-  margin-left: auto;
+  text-align: right;
   opacity: 0;
   transition: opacity var(--duration-fast);
 }
@@ -102,12 +115,13 @@
 }
 
 .cap__submit {
-  padding: 11px 18px;
+  flex-shrink: 0;
+  padding: 10px 16px;
   border-radius: var(--radius-md);
   background: var(--accent);
   color: var(--text-on-accent);
   font-weight: 700;
-  font-size: 0.92rem;
+  font-size: 0.88rem;
   border: none;
   cursor: pointer;
   transition: transform var(--duration-fast) var(--ease-spring), background var(--duration-fast);
@@ -126,17 +140,20 @@
   outline-offset: 2px;
 }
 
-/* Sélecteur de tag */
+/* Sélecteur de tag — popover top layer */
 .tagpick {
   position: relative;
-  z-index: 35;
+  flex-shrink: 0;
+  min-width: 0;
 }
 
 .tagpick__btn {
+  anchor-name: --capture-tag-anchor;
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 9px 13px;
+  max-width: 100%;
+  padding: 9px 12px;
   border-radius: var(--radius-md);
   background: var(--bg-tertiary);
   border: 1px solid var(--border);
@@ -155,34 +172,66 @@
   color: var(--text-primary);
 }
 
-.tagpick__menu {
-  position: absolute;
-  bottom: calc(100% + 6px);
-  left: 0;
-  min-width: 170px;
-  max-height: min(300px, 55vh);
-  overflow-y: auto;
-  background: var(--bg-secondary);
+.tagpick__btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.tagpick__dot {
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.tagpick__popover {
+  margin: 0;
+  padding: 6px;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
+  background: var(--bg-secondary);
   box-shadow: var(--shadow);
-  padding: 6px;
+  min-width: 170px;
+  max-width: min(260px, calc(100vw - 24px));
+  max-height: min(300px, 55vh);
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 2px;
-  z-index: 40;
+}
+
+.tagpick__popover:popover-open {
+  position-anchor: --capture-tag-anchor;
+  inset: auto;
+  bottom: anchor(top);
+  left: anchor(left);
+  margin-bottom: 6px;
+}
+
+@supports not (position-anchor: --capture-tag-anchor) {
+  .tagpick__popover:popover-open {
+    position: fixed;
+    left: 50%;
+    bottom: max(16px, env(safe-area-inset-bottom, 0px));
+    top: auto;
+    transform: translateX(-50%);
+    margin-bottom: 0;
+  }
+}
+
+.tagpick__popover--fallback {
+  position: fixed;
+  z-index: 1000;
   visibility: hidden;
   opacity: 0;
+  pointer-events: none;
   transform: translateY(6px) scale(0.97);
   transform-origin: bottom left;
-  pointer-events: none;
   transition:
     opacity var(--duration-fast) var(--ease-out),
     transform var(--duration-fast) var(--ease-spring),
     visibility 0s linear var(--duration-fast);
 }
 
-.tagpick__menu.is-open {
+.tagpick__popover--fallback.is-open {
   visibility: visible;
   opacity: 1;
   transform: translateY(0) scale(1);
@@ -191,6 +240,9 @@
 }
 
 .tagpick__item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   text-align: left;
   padding: 8px 11px;
   border-radius: var(--radius-sm);
@@ -202,6 +254,11 @@
   transition: background var(--duration-fast);
 }
 
+.tagpick__item.is-selected {
+  color: var(--accent);
+  font-weight: 700;
+}
+
 .tagpick__item:hover {
   background: var(--bg-hover);
 }
@@ -209,6 +266,12 @@
 .tagpick__item:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: -2px;
+}
+
+.tagpick__check {
+  margin-left: auto;
+  color: var(--accent);
+  font-weight: 700;
 }
 
 /* Surface d'eau */
@@ -336,6 +399,8 @@
 
 /* ---------- Carte récentes ---------- */
 .capture__recent {
+  width: 100%;
+  max-width: 100%;
   background: var(--bg-secondary);
   border: 1px solid var(--border);
   border-radius: 24px;
@@ -558,17 +623,13 @@
   .capture {
     padding: var(--space-6) var(--space-4);
   }
-
-  .cap__row {
-    flex-wrap: wrap;
-  }
-
-  .cap__submit {
-    flex: 1 1 auto;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .tagpick__popover--fallback {
+    transition: none;
+  }
+
   .cap__surface-back,
   .cap__surface-front {
     animation: none;
