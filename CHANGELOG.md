@@ -32,3 +32,12 @@ Historique des modifications du chantier `chantier/redesign`.
 - `localDateString` centralisé dans `core/format.js` (+2 tests unitaires, total 29/29).
 - `formatDateFr` divergents renommés : mood → `formatDateShortFr`, journal → `formatDateFullFr`.
 - Bundle entrée : −0,9 KB (dans tolérance). Aucun changement visuel attendu.
+
+### M04 — Socle design : thèmes, mouvement, typographie
+
+- 4 thèmes Ancrage (encre, garrigue, crepuscule, maree) remplacent dark/light/warm.
+- Migration auto des préférences legacy dans `theme.js`.
+- Polices Atkinson Hyperlegible + Bricolage Grotesque auto-hébergées (npm).
+- Typographie display sur h1–h3, grammaire de mouvement mise à jour.
+- Test garde-fou contraste WCAG AA (+4 tests, total 33/33).
+- Bundle JS entrée : +0,2 KB (dans tolérance ±3 KB). Polices woff2 ~122 KB.
