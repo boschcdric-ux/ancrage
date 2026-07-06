@@ -3,7 +3,7 @@
 > Ce fichier est la mémoire du chantier. L'agent le lit au début de chaque
 > mission et le met à jour à la fin. Il doit rester factuel et concis.
 
-**Dernière mise à jour :** 2026-07-06 — M06
+**Dernière mise à jour :** 2026-07-06 — M07
 
 ---
 
@@ -19,7 +19,7 @@
 | M05 | Signature Tâches : la ligne de flottaison | ✅ faite (en attente validation Cédric) | 2026-07-06 |
 | M05b | Correctif interactions sous-tâches/tag | ✅ faite (en attente validation Cédric) | 2026-07-06 |
 | M06 | Tâches : tag, bordure, tag à la création | ✅ faite (en attente validation Cédric) | 2026-07-06 |
-| M07 | Signature Capture : la goutte | 🔶 en cours | 2026-07-06 |
+| M07 | Signature Capture : la goutte | ✅ faite (en attente validation Cédric) | 2026-07-06 |
 
 Statuts : ⬜ à faire · 🔶 en cours · ✅ faite et validée par Cédric · 🛑 bloquée
 
@@ -32,15 +32,15 @@ sans justification écrite.*
 
 | Métrique | Baseline (M00) | Dernière valeur | Mission |
 |---|---|---|---|
-| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M06 |
-| Tests unitaires | 22/22 passés (2 fichiers) | 42/42 passés (6 fichiers) | M06 |
-| Lint | 0 erreur | 0 erreur | M06 |
-| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 277 KB (`index-_jHHsfBn.js`) | M06 |
-| JS initial (gzip) | 243 KB | 76 KB | M06 |
-| CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 114 KB (`index-Ds6OK8cE.css`, entrée HTML) | M06 |
+| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M07 |
+| Tests unitaires | 22/22 passés (2 fichiers) | 44/44 passés (7 fichiers) | M07 |
+| Lint | 0 erreur | 0 erreur | M07 |
+| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 280 KB (`index-CnwUmJ8a.js`) | M07 |
+| JS initial (gzip) | 243 KB | 76 KB | M07 |
+| CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 116 KB (`index-BT23sQTf.css`, entrée HTML) | M07 |
 | Nombre de chunks JS | 1 | 9 | M01 |
 | Polices woff2 (dist) | — | ~122 KB (7 fichiers) | M04 |
-| Precache PWA | — | 1070 KiB (23 entrées) | M06 |
+| Precache PWA | — | 1074 KiB (23 entrées) | M07 |
 
 Variation bundle M05 : +4,3 KB brut sur le chunk d'entrée JS (275 vs 270 M04) — hors tolérance ±2 KB
 mais +1,5 KB gzip seulement ; justifié par markup SVG inline (houle, ancre, coche) et fonctions tide
@@ -104,6 +104,26 @@ et zéro `#c9a227` dans `tasks/style.css`.
 - Precache : 1070 KiB
 - Commits : `fix:` menu tag overflow + bordure form ; `feat:` tag à la création
 - `git diff --stat` index.js : câblage tag création + signature `createTask(text, tagId)` uniquement
+
+### Rituel AVANT M07 (2026-07-06)
+
+- Smoke : 20/20 modules, 4/4 shell
+- Unit : 42/42 (6 fichiers)
+- Lint : 0 erreur
+- Build entrée : 277 KB brut (`index-_jHHsfBn.js`), 76 KB gzip
+- CSS entrée : 114 KB brut (`index-Ds6OK8cE.css`), 18 KB gzip
+- Precache : 1070 KiB
+
+### Rituel APRÈS M07 (2026-07-06)
+
+- Smoke : 20/20 modules, 4/4 shell
+- Unit : 44/44 (7 fichiers, +2 tests troncature)
+- Lint : 0 erreur
+- Build entrée : 280 KB brut (`index-CnwUmJ8a.js`), 76 KB gzip (+2,6 KB brut, +0,45 KB gzip — animation goutte + tag picker)
+- CSS entrée : 116 KB brut (`index-BT23sQTf.css`), 19 KB gzip (+2 KB, styles signature capture)
+- Precache : 1074 KiB
+- Grep contrôle : 0 `!important` et 0 couleur en dur dans `capture/style.css`
+- Commits : `feat:` présentation ; `feat:` câblage + décisions produit ; `test:` troncature
 
 ### Simulation quota plein (procédure dev, M02)
 
@@ -185,6 +205,12 @@ Vérification automatisée équivalente : `npm run test:unit` — tests `save() 
 - M06 : tag à la création — `pendingCreateTagId` réinitialisé après chaque `createTask` ;
   sélecteur réutilise `PREDEFINED_TAGS` et le rendu du menu tag existant.
 - M06 : clôture série Tâches (M05 + M05b + M06) — validation humaine groupée attendue.
+- M07 : fin `maxlength` textarea — saisie illimitée, compteur informatif après 200 caractères.
+- M07 : fin troncature `MAX_STORED_CAPTURES` — toutes les captures persistées ; toast quota M02 si saturation.
+- M07 : signature « la goutte » — surface calme, animation goutte/ondes, confirmation « Posée. » (pas de toast).
+- M07 : couche décorative `.cap__layer` (overflow hidden) séparée du contenu ; menu tag en `z-index:35`.
+- M07 : handlers `onPointerDown` listent `.tagpick`, menu, toggle et items dès le départ (leçon M05b).
+- M07 : dates relatives (« aujourd'hui · HH:MM », « hier », « 3 juin »), suppression sink, filtres avec compteurs.
 
 ---
 
@@ -204,6 +230,7 @@ Vérification automatisée équivalente : `npm run test:unit` — tests `save() 
 - M04 : `notes/style.css` — palette papier sticky (`#1a1a1a`, `#fff`, etc.) en dur.
 - M04 : `tasks/style.css` — ombre dorée `#c9a227` sur badge priorité — **Résolu en M05.**
 - M05 : widget dashboard tâches (`createDashboardPreview`) non redessiné — mini-vague possible en mission future.
+- M07 : `shared-tag-badge` remplacé par `.capture__badge` scopé au module (badge partagé inchangé ailleurs).
 
 ---
 
