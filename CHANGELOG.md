@@ -103,3 +103,12 @@ Historique des modifications du chantier `chantier/redesign`.
   (repli). Aucun changement JS.
 - Saga Capture (M07 + M08 + M08b + M08c) prête pour validation groupée.
 - Bundle JS entrée : inchangé. CSS entrée : +0,04 KB (négligeable).
+
+### M08d — Capture : flash du popover à l'ouverture
+
+- Correctif double ceinture : `positionTagPopover()` synchrone (plus de rAF à l'ouverture
+  dans `openTagPopover`) + animation d'apparition opacity/transform sur `.tagpick__popover`.
+- `@starting-style` pour transition native popover ; `prefers-reduced-motion` étendu au sélecteur natif.
+- Patron popover : règle « positionner de façon synchrone après showPopover(), jamais via rAF ».
+- Saga Capture (M07 → M08d) finalisée — validation groupée attendue.
+- Bundle JS entrée : −0,04 KB brut (inchangé gzip). CSS entrée : +0,45 KB.

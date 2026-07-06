@@ -3,7 +3,7 @@
 > Ce fichier est la mémoire du chantier. L'agent le lit au début de chaque
 > mission et le met à jour à la fin. Il doit rester factuel et concis.
 
-**Dernière mise à jour :** 2026-07-06 — M08c
+**Dernière mise à jour :** 2026-07-06 — M08d
 
 ---
 
@@ -23,6 +23,7 @@
 | M08 | Capture : popover tag + mise en page | ✅ faite (en attente validation Cédric) | 2026-07-06 |
 | M08b | Capture : aligner popover tag (référence) | ✅ faite (en attente validation Cédric) | 2026-07-06 |
 | M08c | Capture : popover tag fantôme (display) | ✅ faite (en attente validation Cédric) | 2026-07-06 |
+| M08d | Capture : flash popover à l'ouverture | ✅ faite (en attente validation Cédric) | 2026-07-06 |
 
 Statuts : ⬜ à faire · 🔶 en cours · ✅ faite et validée par Cédric · 🛑 bloquée
 
@@ -35,15 +36,15 @@ sans justification écrite.*
 
 | Métrique | Baseline (M00) | Dernière valeur | Mission |
 |---|---|---|---|
-| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M08c |
-| Tests unitaires | 22/22 passés (2 fichiers) | 44/44 passés (7 fichiers) | M08c |
-| Lint | 0 erreur | 0 erreur | M08c |
-| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 283 KB (`index-DjrAev5L.js`) | M08c |
-| JS initial (gzip) | 243 KB | 78 KB | M08c |
-| CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 117 KB (`index-BXvU7IPb.css`, entrée HTML) | M08c |
+| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M08d |
+| Tests unitaires | 22/22 passés (2 fichiers) | 44/44 passés (7 fichiers) | M08d |
+| Lint | 0 erreur | 0 erreur | M08d |
+| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 283 KB (`index-CB6Id2oM.js`) | M08d |
+| JS initial (gzip) | 243 KB | 78 KB | M08d |
+| CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 117 KB (`index-DKelf_h_.css`, entrée HTML) | M08d |
 | Nombre de chunks JS | 1 | 9 | M01 |
 | Polices woff2 (dist) | — | ~122 KB (7 fichiers) | M04 |
-| Precache PWA | — | 1079 KiB (23 entrées) | M08c |
+| Precache PWA | — | 1079 KiB (23 entrées) | M08d |
 
 Variation bundle M05 : +4,3 KB brut sur le chunk d'entrée JS (275 vs 270 M04) — hors tolérance ±2 KB
 mais +1,5 KB gzip seulement ; justifié par markup SVG inline (houle, ancre, coche) et fonctions tide
@@ -190,6 +191,27 @@ et zéro `#c9a227` dans `tasks/style.css`.
 - `git diff --stat` : uniquement `capture/style.css` (6 lignes)
 - Commits : `fix:` display flex uniquement à l'ouverture ; `chore:` clôture M08c
 
+### Rituel AVANT M08d (2026-07-06)
+
+- Smoke : 20/20 modules, 4/4 shell
+- Unit : 44/44 (7 fichiers)
+- Lint : 0 erreur
+- Build entrée : 283 KB brut (`index-DjrAev5L.js`), 78 KB gzip
+- CSS entrée : 117 KB brut (`index-BXvU7IPb.css`), 19 KB gzip
+- Precache : 1079 KiB
+
+### Rituel APRÈS M08d (2026-07-06)
+
+- Smoke : 20/20 modules, 4/4 shell
+- Unit : 44/44 (7 fichiers)
+- Lint : 0 erreur
+- Build entrée : 283 KB brut (`index-CB6Id2oM.js`), 78 KB gzip (−0,04 KB, retrait rAF)
+- CSS entrée : 117 KB brut (`index-DKelf_h_.css`), 19 KB gzip (+0,45 KB, animation apparition popover)
+- Precache : 1079 KiB
+- Grep contrôle : 0 `!important`, 0 couleur en dur, 0 `<select>` dans `capture/`
+- `git diff --stat` : uniquement `capture/index.js` + `capture/style.css`
+- Commits : `fix:` positionnement synchrone + animation naissance ; `chore:` clôture M08d
+
 ### Simulation quota plein (procédure dev, M02)
 
 1. `npm run preview`, ouvrir l'app dans le navigateur.
@@ -290,6 +312,13 @@ Vérification automatisée équivalente : `npm run test:unit` — tests `save() 
   natif du popover et affichait un menu fantôme dans le flux. Flex appliqué sur `:popover-open`
   (natif) et `.tagpick__popover--fallback.is-open` (repli). Aucun changement JS.
 - M08c : saga Capture complète (M07 + M08 + M08b + M08c) prête pour validation groupée Cédric.
+- M08d : `positionTagPopover()` appelé de façon synchrone après `showPopover()` / `is-open`
+  dans `openTagPopover()` — jamais via `requestAnimationFrame` à l'ouverture (rAF conservé
+  uniquement pour resize/scroll). Règle ajoutée au patron popover canonique.
+- M08d : animation d'apparition (opacity + transform + `@starting-style`) sur `.tagpick__popover`
+  — naissance transparente masque toute frame mal positionnée ; `prefers-reduced-motion` couvre
+  le sélecteur natif en plus du repli.
+- M08d : saga Capture finalisée (M07 → M08d) — validation groupée Cédric attendue.
 
 ---
 
@@ -312,6 +341,9 @@ Vérification automatisée équivalente : `npm run test:unit` — tests `save() 
 - M07 : `shared-tag-badge` remplacé par `.capture__badge` scopé au module (badge partagé inchangé ailleurs).
 - M08 : débordement barre de nav du bas (`src/shell/`) — constaté aussi sur l'app d'origine ;
   candidat mission shell future, hors périmètre M08.
+- M08d : chemin d'ouverture natif via `popovertarget` passe par `onTagPopoverToggle` (l.388)
+  qui conserve un `requestAnimationFrame` — hors périmètre strict M08d ; la ceinture CSS
+  compense. Si flash persiste sur iPhone, micro-correctif sur cette ligne.
 
 ---
 
