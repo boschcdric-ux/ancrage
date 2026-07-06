@@ -73,3 +73,13 @@ Historique des modifications du chantier `chantier/redesign`.
 - Suppression de `maxlength` et de la troncature à 100 captures (`getCapturesToPersist`).
 - Test `capture.test.js` (+2 tests, total 44/44). Zéro `!important` dans `capture/style.css`.
 - Bundle JS entrée : +2,6 KB brut / +0,45 KB gzip (dans tolérance ±2 KB). CSS entrée : +2 KB.
+
+### M08 — Capture : popover tag thématisé + mise en page
+
+- Menu tag à la création : API Popover native (`popover="auto"`) en top layer ;
+  repli `position: fixed` sur `body` si `showPopover` absent.
+- Ancrage CSS via `anchor-name` / `position-anchor` ; repli centré bas viewport.
+- Mise en page : `box-sizing` sur `.capture`, largeurs bornées, tag + « Capturer » sur une ligne.
+- Accessibilité : `role="menu"`, `aria-expanded`, navigation clavier, focus rendu au déclencheur.
+- Zéro `!important`, zéro couleur en dur dans `capture/style.css`. M08 finalise Capture (validation groupée M07+M08).
+- Bundle JS entrée : +2,5 KB brut / +1,1 KB gzip (dans tolérance ±2 KB). CSS entrée : +1 KB.

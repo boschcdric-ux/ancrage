@@ -3,7 +3,7 @@
 > Ce fichier est la mémoire du chantier. L'agent le lit au début de chaque
 > mission et le met à jour à la fin. Il doit rester factuel et concis.
 
-**Dernière mise à jour :** 2026-07-06 — M07
+**Dernière mise à jour :** 2026-07-06 — M08
 
 ---
 
@@ -20,6 +20,7 @@
 | M05b | Correctif interactions sous-tâches/tag | ✅ faite (en attente validation Cédric) | 2026-07-06 |
 | M06 | Tâches : tag, bordure, tag à la création | ✅ faite (en attente validation Cédric) | 2026-07-06 |
 | M07 | Signature Capture : la goutte | ✅ faite (en attente validation Cédric) | 2026-07-06 |
+| M08 | Capture : popover tag + mise en page | ✅ faite (en attente validation Cédric) | 2026-07-06 |
 
 Statuts : ⬜ à faire · 🔶 en cours · ✅ faite et validée par Cédric · 🛑 bloquée
 
@@ -32,15 +33,15 @@ sans justification écrite.*
 
 | Métrique | Baseline (M00) | Dernière valeur | Mission |
 |---|---|---|---|
-| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M07 |
-| Tests unitaires | 22/22 passés (2 fichiers) | 44/44 passés (7 fichiers) | M07 |
-| Lint | 0 erreur | 0 erreur | M07 |
-| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 280 KB (`index-CnwUmJ8a.js`) | M07 |
-| JS initial (gzip) | 243 KB | 76 KB | M07 |
-| CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 116 KB (`index-BT23sQTf.css`, entrée HTML) | M07 |
+| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M08 |
+| Tests unitaires | 22/22 passés (2 fichiers) | 44/44 passés (7 fichiers) | M08 |
+| Lint | 0 erreur | 0 erreur | M08 |
+| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 283 KB (`index-D2M2TGAQ.js`) | M08 |
+| JS initial (gzip) | 243 KB | 78 KB | M08 |
+| CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 117 KB (`index-Bb7kltXR.css`, entrée HTML) | M08 |
 | Nombre de chunks JS | 1 | 9 | M01 |
 | Polices woff2 (dist) | — | ~122 KB (7 fichiers) | M04 |
-| Precache PWA | — | 1074 KiB (23 entrées) | M07 |
+| Precache PWA | — | 1079 KiB (23 entrées) | M08 |
 
 Variation bundle M05 : +4,3 KB brut sur le chunk d'entrée JS (275 vs 270 M04) — hors tolérance ±2 KB
 mais +1,5 KB gzip seulement ; justifié par markup SVG inline (houle, ancre, coche) et fonctions tide
@@ -124,6 +125,26 @@ et zéro `#c9a227` dans `tasks/style.css`.
 - Precache : 1074 KiB
 - Grep contrôle : 0 `!important` et 0 couleur en dur dans `capture/style.css`
 - Commits : `feat:` présentation ; `feat:` câblage + décisions produit ; `test:` troncature
+
+### Rituel AVANT M08 (2026-07-06)
+
+- Smoke : 20/20 modules, 4/4 shell
+- Unit : 44/44 (7 fichiers)
+- Lint : 0 erreur
+- Build entrée : 280 KB brut (`index-CnwUmJ8a.js`), 76 KB gzip
+- CSS entrée : 116 KB brut (`index-BT23sQTf.css`), 19 KB gzip
+- Precache : 1074 KiB
+
+### Rituel APRÈS M08 (2026-07-06)
+
+- Smoke : 20/20 modules, 4/4 shell
+- Unit : 44/44 (7 fichiers)
+- Lint : 0 erreur
+- Build entrée : 283 KB brut (`index-D2M2TGAQ.js`), 78 KB gzip (+2,5 KB brut, +1,1 KB gzip — popover + positionnement repli)
+- CSS entrée : 117 KB brut (`index-Bb7kltXR.css`), 19 KB gzip (+1 KB, styles popover + box-sizing)
+- Precache : 1079 KiB
+- Grep contrôle : 0 `!important`, 0 couleur en dur, 0 `<select>` dans `capture/`
+- Commits : `feat:` popover tag top layer ; `chore:` clôture M08
 
 ### Simulation quota plein (procédure dev, M02)
 
@@ -211,6 +232,10 @@ Vérification automatisée équivalente : `npm run test:unit` — tests `save() 
 - M07 : couche décorative `.cap__layer` (overflow hidden) séparée du contenu ; menu tag en `z-index:35`.
 - M07 : handlers `onPointerDown` listent `.tagpick`, menu, toggle et items dès le départ (leçon M05b).
 - M07 : dates relatives (« aujourd'hui · HH:MM », « hier », « 3 juin »), suppression sink, filtres avec compteurs.
+- M08 : menu tag capture — API Popover native (`popover="auto"`, `popovertarget`) en top layer ;
+  repli `position: fixed` sur `body` si `showPopover` absent. Patron à réutiliser pour tout menu flottant.
+- M08 : mise en page carte — `box-sizing: border-box`, largeurs bornées à 100 %, ligne tag + « Capturer »
+  sans `flex:1` mobile. M08 finalise Capture (validation groupée M07 + M08 attendue).
 
 ---
 
@@ -231,6 +256,8 @@ Vérification automatisée équivalente : `npm run test:unit` — tests `save() 
 - M04 : `tasks/style.css` — ombre dorée `#c9a227` sur badge priorité — **Résolu en M05.**
 - M05 : widget dashboard tâches (`createDashboardPreview`) non redessiné — mini-vague possible en mission future.
 - M07 : `shared-tag-badge` remplacé par `.capture__badge` scopé au module (badge partagé inchangé ailleurs).
+- M08 : débordement barre de nav du bas (`src/shell/`) — constaté aussi sur l'app d'origine ;
+  candidat mission shell future, hors périmètre M08.
 
 ---
 
