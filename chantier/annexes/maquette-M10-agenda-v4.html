@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="encre">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maquette M10 v2 — Agenda : la marée du jour</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   MAQUETTE M10 v2 — Agenda : la marée du jour
+   v2 : vue Semaine (liste de jours, pas de grille), gestion des
+   chevauchements par couloirs, durées réelles (heure de fin),
+   ancre apaisée, édition d'événement, heure réelle par défaut.
+   ============================================================ */
+:root, [data-theme="encre"] {
+  --bg-primary:#0a1017; --bg-secondary:#101a24; --bg-tertiary:#16232f; --bg-hover:#1c2c3b;
+  --text-primary:#e9f1f4; --text-secondary:#9db4c0; --text-muted:#8299a6;
+  --accent:#45e0b0; --accent-hover:#63eec2; --accent-soft:rgba(69,224,176,.15); --text-on-accent:#04241a;
+  --danger:#ef7d93; --border:rgba(233,241,244,.08); --shadow:0 4px 24px rgba(2,8,14,.5);
+  --water-front:rgba(69,224,176,.30); --water-back:rgba(69,224,176,.10); --water-glow:rgba(69,224,176,.10);
+}
+[data-theme="garrigue"]{--bg-primary:#f2eee6;--bg-secondary:#faf7f0;--bg-tertiary:#eae4d8;--bg-hover:#e2dccd;--text-primary:#26301f;--text-secondary:#55614a;--text-muted:#5f6b53;--accent:#4d6b3c;--accent-hover:#3e5a2f;--accent-soft:rgba(77,107,60,.12);--text-on-accent:#f5f8ef;--danger:#b3543f;--border:rgba(38,48,31,.10);--shadow:0 4px 24px rgba(90,80,60,.15);--water-front:rgba(77,107,60,.28);--water-back:rgba(77,107,60,.08);--water-glow:rgba(77,107,60,.08)}
+[data-theme="crepuscule"]{--bg-primary:#171015;--bg-secondary:#201620;--bg-tertiary:#291d29;--bg-hover:#322434;--text-primary:#f4e9e4;--text-secondary:#c3aaa4;--text-muted:#a89089;--accent:#f0a35e;--accent-hover:#f5b678;--accent-soft:rgba(240,163,94,.15);--text-on-accent:#2b1706;--danger:#ee7f8e;--border:rgba(244,233,228,.08);--shadow:0 4px 24px rgba(10,4,10,.5);--water-front:rgba(240,163,94,.26);--water-back:rgba(240,163,94,.08);--water-glow:rgba(240,163,94,.09)}
+[data-theme="maree"]{--bg-primary:#e8edeb;--bg-secondary:#f4f7f6;--bg-tertiary:#dee6e3;--bg-hover:#d4dedb;--text-primary:#1d2b2d;--text-secondary:#48605f;--text-muted:#536c6a;--accent:#146b66;--accent-hover:#0f5752;--accent-soft:rgba(20,107,102,.10);--text-on-accent:#eaf5f3;--danger:#b3543f;--border:rgba(29,43,45,.10);--shadow:0 4px 24px rgba(60,85,82,.15);--water-front:rgba(20,107,102,.28);--water-back:rgba(20,107,102,.08);--water-glow:rgba(20,107,102,.07)}
+:root{
+  --font-family:'Atkinson Hyperlegible',system-ui,sans-serif;
+  --font-display:'Bricolage Grotesque',var(--font-family);
+  --radius-sm:6px;--radius-md:12px;--radius-lg:18px;--radius-full:9999px;
+  --dfast:140ms;--dnorm:320ms;--dslow:500ms;
+  --ease-spring:cubic-bezier(.34,1.45,.64,1);--ease-out:cubic-bezier(.16,1,.3,1);
+  --evt-a:var(--accent);--evt-b:#d99a2b;--evt-c:#d96f5c;--evt-d:#8d7bd9;--evt-e:#6a8ba3;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-family);background:var(--bg-primary);color:var(--text-primary);
+display:flex;flex-direction:column;align-items:center;padding:20px 12px 60px;gap:14px;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;color:inherit;background:none;border:none;cursor:pointer;font-size:inherit}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+input,select{font-family:inherit;font-size:max(1rem,16px);color:var(--text-primary)}
+
+/* ---------- Bandeau démo ---------- */
+.demo-bar{width:min(420px,100%);display:flex;flex-direction:column;gap:8px}
+.demo-bar__row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.demo-bar__title{font-family:var(--font-display);font-weight:600;font-size:.9rem;color:var(--text-secondary)}
+.theme-chips{display:flex;gap:7px}
+.theme-chip{width:26px;height:26px;border-radius:50%;background:var(--pv);border:2px solid var(--border)}
+.theme-chip[aria-pressed="true"]{border-color:var(--accent);transform:scale(1.12)}
+.motion-toggle{font-size:.74rem;color:var(--text-secondary);border:1px solid var(--border);background:var(--bg-secondary);padding:5px 10px;border-radius:var(--radius-full)}
+.motion-toggle[aria-pressed="true"]{background:var(--accent);color:var(--text-on-accent);border-color:transparent}
+.demo-time{display:flex;align-items:center;gap:10px;font-size:.74rem;color:var(--text-muted)}
+.demo-time input{flex:1;accent-color:var(--accent)}
+
+.module{width:min(420px,100%);display:flex;flex-direction:column;gap:12px}
+
+/* ---------- En-tête ---------- */
+.head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.head__title{font-family:var(--font-display);font-weight:700;font-size:1.5rem;letter-spacing:-.015em}
+.head__spacer{flex:1}
+/* Ancre : transition de couleur uniquement (pas de ressort d'état) */
+.iconbtn{width:38px;height:38px;display:grid;place-items:center;border-radius:var(--radius-md);
+background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-secondary);font-size:1rem;
+transition:background var(--dnorm) var(--ease-out),color var(--dnorm) var(--ease-out),border-color var(--dnorm) var(--ease-out)}
+.iconbtn:hover{background:var(--bg-hover)}
+.iconbtn:active{transform:scale(.92)}
+.iconbtn.is-hot{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+.seg{display:flex;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-full);padding:3px;gap:2px}
+.seg__btn{padding:6px 12px;border-radius:var(--radius-full);font-size:.8rem;color:var(--text-secondary);transition:background var(--dfast),color var(--dfast)}
+.seg__btn[aria-pressed="true"]{background:var(--accent);color:var(--text-on-accent);font-weight:700}
+
+/* ---------- VUE JOUR : la marée ---------- */
+.day-card{position:relative;background:var(--bg-secondary);border:1px solid var(--border);
+border-radius:22px;box-shadow:var(--shadow);overflow:hidden}
+.day-nav{display:flex;align-items:center;justify-content:space-between;padding:14px 14px 8px}
+.day-nav__label{font-family:var(--font-display);font-weight:700;font-size:1.02rem;text-transform:capitalize}
+.day-nav__meta{font-size:.76rem;color:var(--text-muted)}
+.day-nav__btns{display:flex;gap:6px}
+
+.tide{position:relative;margin:4px 12px 14px;--hour-h:44px}
+.tide__hours{position:relative}
+.tide__hour{position:relative;height:var(--hour-h);border-top:1px dashed var(--border)}
+.tide__hour-label{position:absolute;top:-8px;left:0;font-size:.66rem;color:var(--text-muted);
+font-variant-numeric:tabular-nums;background:var(--bg-secondary);padding-right:6px}
+
+.tide__past{position:absolute;top:0;left:0;right:0;height:var(--now-y,0px);
+background:linear-gradient(to bottom,var(--water-back),var(--water-front));
+pointer-events:none;transition:height var(--dslow) var(--ease-out)}
+.tide__line{position:absolute;left:-4px;right:-4px;top:var(--now-y,0px);height:14px;
+margin-top:-13px;pointer-events:none;z-index:3;transition:top var(--dslow) var(--ease-out)}
+.tide__line svg{position:absolute;bottom:0;left:0;width:200%;height:14px}
+.tide__line path{fill:var(--water-front)}
+.tide__line--anim svg{animation:drift 12s linear infinite}
+@keyframes drift{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.tide__now{position:absolute;right:0;top:var(--now-y,0px);transform:translateY(-50%);
+font-size:.68rem;font-weight:700;color:var(--accent);background:var(--bg-secondary);
+border:1px solid var(--accent);border-radius:var(--radius-full);padding:2px 9px;z-index:4;
+font-variant-numeric:tabular-nums;transition:top var(--dslow) var(--ease-out)}
+
+/* Événements : positionnés par heure, hauteur = durée, couloirs si chevauchement */
+.evt{position:absolute;z-index:2;
+left:calc(44px + (100% - 52px) / var(--lanes,1) * var(--lane,0));
+width:calc((100% - 52px) / var(--lanes,1) - 4px);
+display:flex;flex-direction:column;justify-content:flex-start;gap:1px;
+background:var(--bg-tertiary);border:1px solid var(--border);
+border-left:4px solid var(--evt-color,var(--accent));
+border-radius:var(--radius-md);padding:5px 9px;overflow:hidden;
+transition:opacity var(--dnorm),filter var(--dnorm);cursor:pointer}
+.evt:hover{filter:brightness(1.08)}
+.evt__time{font-size:.68rem;color:var(--text-secondary);font-variant-numeric:tabular-nums}
+.evt__title{font-size:.83rem;font-weight:700;line-height:1.2;
+display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.evt--compact{flex-direction:row;align-items:center;gap:7px}
+.evt--compact .evt__title{white-space:nowrap;-webkit-line-clamp:1}
+.evt--past{opacity:.45;filter:saturate(.4)}
+.evt--past .evt__title{font-weight:400}
+.evt--now{border-color:var(--accent);box-shadow:0 0 0 3px var(--water-glow),var(--shadow);z-index:3}
+.evt--now .evt__time::after{content:' \u00b7 en cours';color:var(--accent);font-weight:700}
+@keyframes accoste{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.evt--new{animation:accoste var(--dnorm) var(--ease-out) both}
+
+.tide__empty{position:absolute;inset:30% 0 auto 0;z-index:2;padding:10px;text-align:center}
+.tide__empty-title{font-family:var(--font-display);font-weight:700;color:var(--text-secondary)}
+.tide__empty-hint{font-size:.8rem;color:var(--text-muted);margin-top:3px}
+
+/* ---------- VUE SEMAINE : liste de jours ---------- */
+.week{background:var(--bg-secondary);border:1px solid var(--border);border-radius:22px;
+box-shadow:var(--shadow);padding:14px}
+.week__nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.week__label{font-family:var(--font-display);font-weight:700;font-size:1rem}
+.wday{display:flex;gap:12px;padding:9px 6px;border-radius:var(--radius-lg);
+border:1px solid transparent}
+.wday+.wday{border-top:1px dashed var(--border);border-radius:0}
+.wday--today{background:var(--accent-soft);border-color:var(--accent);border-radius:var(--radius-lg)!important;border-top-style:solid}
+.wday__head{flex:none;width:44px;text-align:center;cursor:pointer;border-radius:var(--radius-md);padding:4px 0;transition:background var(--dfast)}
+.wday__head:hover{background:var(--bg-hover)}
+.wday__dow{font-size:.64rem;font-weight:700;letter-spacing:.08em;color:var(--text-muted);text-transform:uppercase}
+.wday__num{font-family:var(--font-display);font-weight:700;font-size:1.1rem}
+.wday--today .wday__num{color:var(--accent)}
+.wday__events{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px;justify-content:center}
+.wchip{display:flex;align-items:center;gap:7px;padding:5px 9px;border-radius:var(--radius-md);
+background:var(--bg-tertiary);border:1px solid var(--border);
+border-left:3px solid var(--evt-color,var(--accent));cursor:pointer;
+transition:background var(--dfast)}
+.wchip:hover{background:var(--bg-hover)}
+.wchip__time{font-size:.68rem;color:var(--text-secondary);font-variant-numeric:tabular-nums;flex:none}
+.wchip__title{font-size:.8rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wchip--past{opacity:.45}
+.wchip--past .wchip__title{font-weight:400}
+.wday__none{font-size:.76rem;color:var(--text-muted)}
+
+/* ---------- EN APPROCHE ---------- */
+.approach{background:var(--bg-secondary);border:1px solid var(--border);border-radius:20px;
+box-shadow:var(--shadow);padding:16px 14px}
+.approach__title{font-size:.74rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px}
+.app-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:var(--radius-md);
+transition:background var(--dfast);cursor:pointer}
+.app-item:hover{background:var(--bg-hover)}
+.app-item__dot{width:8px;height:8px;border-radius:50%;background:var(--evt-color,var(--accent));flex:none}
+.app-item__body{flex:1;min-width:0}
+.app-item__title{font-size:.88rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.app-item__when{font-size:.74rem;color:var(--text-secondary)}
+.app-item__dist{font-size:.72rem;color:var(--text-muted);font-variant-numeric:tabular-nums;flex:none}
+.app-item--far{opacity:.72}
+.app-item--far .app-item__title{font-weight:400;font-size:.84rem}
+.app-item--horizon{opacity:.5}
+.app-item--horizon .app-item__title{font-weight:400;font-size:.8rem}
+.approach__empty{font-size:.83rem;color:var(--text-muted);text-align:center;padding:8px}
+
+/* ---------- LA CARTE (mois) ---------- */
+.chart{background:var(--bg-secondary);border:1px solid var(--border);border-radius:22px;
+box-shadow:var(--shadow);padding:14px}
+.chart__nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.chart__label{font-family:var(--font-display);font-weight:700;font-size:1.05rem;text-transform:capitalize}
+.chart__grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.chart__dow{text-align:center;font-size:.66rem;font-weight:700;color:var(--text-muted);padding:4px 0}
+.cell{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+border-radius:var(--radius-md);border:1px solid transparent;font-size:.82rem;
+font-variant-numeric:tabular-nums;color:var(--text-secondary);
+transition:background var(--dfast),border-color var(--dfast)}
+.cell:hover{background:var(--bg-hover)}
+.cell--out{opacity:.3}
+.cell--today{border-color:var(--accent);color:var(--accent);font-weight:700}
+.cell--sel{background:var(--accent-soft)}
+.cell__dots{display:flex;gap:2px;height:5px;align-items:center}
+.cell__dot{width:5px;height:5px;border-radius:50%;background:var(--evt-color,var(--accent))}
+.cell__more{font-size:.58rem;color:var(--text-muted)}
+
+/* ---------- POSER / MODIFIER ---------- */
+.addbtn{position:sticky;bottom:14px;align-self:center;z-index:10;
+padding:12px 26px;border-radius:var(--radius-full);
+background:var(--accent);color:var(--text-on-accent);font-weight:700;font-size:.95rem;
+box-shadow:var(--shadow);transition:transform var(--dfast) var(--ease-spring),background var(--dfast)}
+.addbtn:hover{background:var(--accent-hover)}
+.addbtn:active{transform:scale(.95)}
+.composer{border:none;padding:0;background:transparent;color:var(--text-primary);
+width:min(380px,calc(100vw - 32px));margin:auto}
+.composer::backdrop{background:rgba(4,10,16,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+.composer[open]{animation:modal-in var(--dnorm) var(--ease-out) both}
+.composer[open]::backdrop{animation:fade-in var(--dnorm) ease both}
+.composer__card{background:var(--bg-secondary);border:1px solid var(--accent);border-radius:20px;
+box-shadow:var(--shadow);padding:18px 16px;display:flex;flex-direction:column;gap:10px}
+.reduce-motion .composer[open],.reduce-motion .composer[open]::backdrop{animation-duration:1ms}
+.composer__row{display:flex;gap:8px}
+.composer input[type="text"]{flex:1;background:var(--bg-tertiary);border:1px solid var(--border);
+border-radius:var(--radius-md);padding:11px 13px}
+.composer input[type="date"],.composer input[type="time"]{background:var(--bg-tertiary);
+border:1px solid var(--border);border-radius:var(--radius-md);padding:9px 11px;flex:1;min-width:0;color-scheme:light dark}
+.composer__more-toggle{font-size:.8rem;color:var(--text-muted);text-decoration:underline;text-underline-offset:3px;align-self:flex-start}
+.composer__more{display:none;flex-direction:column;gap:10px}
+.composer__more.is-open{display:flex}
+.composer select{background:var(--bg-tertiary);border:1px solid var(--border);border-radius:var(--radius-md);padding:9px 11px;flex:1;min-width:0}
+.composer__label{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted)}
+.swatches{display:flex;gap:8px}
+.swatch{width:26px;height:26px;border-radius:50%;border:2px solid transparent;background:var(--sw);transition:transform var(--dfast) var(--ease-spring)}
+.swatch[aria-pressed="true"]{border-color:var(--text-primary);transform:scale(1.12)}
+.composer__actions{display:flex;gap:8px;justify-content:flex-end}
+.btn{padding:10px 18px;border-radius:var(--radius-md);font-size:.88rem;font-weight:700;
+background:var(--bg-tertiary);border:1px solid var(--border);color:var(--text-secondary);
+transition:background var(--dfast),transform var(--dfast) var(--ease-spring)}
+.btn:active{transform:scale(.95)}
+.btn--primary{background:var(--accent);color:var(--text-on-accent);border-color:transparent}
+.btn--primary:hover{background:var(--accent-hover)}
+.btn--danger{color:var(--danger);border-color:var(--danger)}
+
+/* ---------- DÉTAIL ---------- */
+/* Modale de détail : élément <dialog> natif = top layer, centrage,
+   fond estompé et fermeture Échap gérés par le navigateur. */
+.detail{border:none;padding:0;background:transparent;color:var(--text-primary);
+width:min(360px,calc(100vw - 32px));margin:auto}
+.detail::backdrop{background:rgba(4,10,16,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+.detail__card{background:var(--bg-secondary);border:1px solid var(--border);border-radius:20px;
+box-shadow:var(--shadow);padding:18px 16px;display:flex;flex-direction:column;gap:10px}
+.detail[open]{animation:modal-in var(--dnorm) var(--ease-out) both}
+.detail[open]::backdrop{animation:fade-in var(--dnorm) ease both}
+@keyframes modal-in{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes fade-in{from{opacity:0}to{opacity:1}}
+.detail__title{font-family:var(--font-display);font-weight:700;font-size:1.2rem;
+border-left:4px solid var(--evt-color,var(--accent));padding-left:12px}
+.detail__when{font-size:.88rem;color:var(--text-secondary)}
+.detail__actions{display:flex;gap:8px;justify-content:flex-end;margin-top:6px;flex-wrap:wrap}
+.reduce-motion .detail[open],.reduce-motion .detail[open]::backdrop{animation-duration:1ms}
+
+/* ---------- Mouvement réduit ---------- */
+.reduce-motion *,.reduce-motion *::before,.reduce-motion *::after{animation-duration:1ms!important;transition-duration:1ms!important}
+.reduce-motion .tide__line--anim svg{animation:none!important}
+@media (prefers-reduced-motion:reduce){.tide__line--anim svg{animation:none}}
+[hidden]{display:none!important}
+.demo-note{width:min(420px,100%);font-size:.76rem;line-height:1.5;color:var(--text-muted);text-align:center}
+</style>
+</head>
+<body>
+
+<div class="demo-bar">
+  <div class="demo-bar__row">
+    <span class="demo-bar__title">M10 v2 · Agenda — maquette</span>
+    <div class="theme-chips" role="group" aria-label="Thèmes">
+      <button class="theme-chip" data-t="encre" style="--pv:linear-gradient(135deg,#101a24 55%,#45e0b0 55%)" aria-pressed="true" aria-label="Encre"></button>
+      <button class="theme-chip" data-t="garrigue" style="--pv:linear-gradient(135deg,#faf7f0 55%,#4d6b3c 55%)" aria-pressed="false" aria-label="Garrigue"></button>
+      <button class="theme-chip" data-t="crepuscule" style="--pv:linear-gradient(135deg,#201620 55%,#f0a35e 55%)" aria-pressed="false" aria-label="Crépuscule"></button>
+      <button class="theme-chip" data-t="maree" style="--pv:linear-gradient(135deg,#f4f7f6 55%,#146b66 55%)" aria-pressed="false" aria-label="Marée basse"></button>
+    </div>
+    <button class="motion-toggle" id="motion" aria-pressed="false">Réduire le mouvement</button>
+  </div>
+  <div class="demo-time">
+    <span>Heure simulée (démo) :</span>
+    <input type="range" id="demoHour" min="420" max="1380" step="5" value="880" aria-label="Heure simulée">
+    <span id="demoHourLabel"></span>
+  </div>
+</div>
+
+<main class="module" aria-label="Module Agenda — maquette">
+
+  <div class="head">
+    <h1 class="head__title">Agenda</h1>
+    <span class="head__spacer"></span>
+    <button class="iconbtn" id="todayBtn" title="Revenir à aujourd'hui" aria-label="Revenir à aujourd'hui">⚓</button>
+    <div class="seg" role="group" aria-label="Vue">
+      <button class="seg__btn" data-view="day" aria-pressed="true">Jour</button>
+      <button class="seg__btn" data-view="week" aria-pressed="false">Semaine</button>
+      <button class="seg__btn" data-view="month" aria-pressed="false">Mois</button>
+    </div>
+  </div>
+
+  <!-- ======== VUE JOUR ======== -->
+  <section id="dayView">
+    <div class="day-card">
+      <div class="day-nav">
+        <div>
+          <div class="day-nav__label" id="dayLabel"></div>
+          <div class="day-nav__meta" id="dayMeta"></div>
+        </div>
+        <div class="day-nav__btns">
+          <button class="iconbtn" id="prevDay" aria-label="Jour précédent">‹</button>
+          <button class="iconbtn" id="nextDay" aria-label="Jour suivant">›</button>
+        </div>
+      </div>
+      <div class="tide" id="tide">
+        <div class="tide__past" id="tidePast"></div>
+        <div class="tide__line tide__line--anim" id="tideLine">
+          <svg viewBox="0 0 1200 14" preserveAspectRatio="none" aria-hidden="true"><path d="M0,8 C80,3 160,12 300,8 C440,4 520,12 600,8 C680,3 760,12 900,8 C1040,4 1120,12 1200,8 L1200,14 L0,14 Z"/></svg>
+        </div>
+        <span class="tide__now" id="tideNow"></span>
+        <div class="tide__hours" id="tideHours"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======== VUE SEMAINE ======== -->
+  <section id="weekView" hidden>
+    <div class="week">
+      <div class="week__nav">
+        <button class="iconbtn" id="prevWeek" aria-label="Semaine précédente">‹</button>
+        <span class="week__label" id="weekLabel"></span>
+        <button class="iconbtn" id="nextWeek" aria-label="Semaine suivante">›</button>
+      </div>
+      <div id="weekList"></div>
+    </div>
+  </section>
+
+  <!-- ======== LA CARTE (mois) ======== -->
+  <section id="monthView" hidden>
+    <div class="chart">
+      <div class="chart__nav">
+        <button class="iconbtn" id="prevMonth" aria-label="Mois précédent">‹</button>
+        <span class="chart__label" id="monthLabel"></span>
+        <button class="iconbtn" id="nextMonth" aria-label="Mois suivant">›</button>
+      </div>
+      <div class="chart__grid" id="monthGrid"></div>
+    </div>
+  </section>
+
+  <dialog class="detail" id="detail"></dialog>
+
+  <section class="approach" id="approachCard">
+    <h2 class="approach__title">En approche</h2>
+    <div id="approachList"></div>
+  </section>
+
+  <!-- ======== POSER / MODIFIER ======== -->
+  <dialog class="composer" id="composer">
+    <div class="composer__card">
+    <input type="text" id="cTitle" placeholder="Quoi ?" aria-label="Titre de l'événement">
+    <div class="composer__row">
+      <input type="date" id="cDate" aria-label="Date">
+      <input type="time" id="cTime" aria-label="Heure de début">
+    </div>
+    <button class="composer__more-toggle" id="cMoreToggle" type="button">Plus d'options</button>
+    <div class="composer__more" id="cMore">
+      <span class="composer__label">Heure de fin</span>
+      <div class="composer__row">
+        <input type="time" id="cEnd" aria-label="Heure de fin">
+      </div>
+      <span class="composer__label">Se répète / Rappel</span>
+      <div class="composer__row">
+        <select id="cRecur" aria-label="Récurrence">
+          <option value="none">Jamais</option><option value="daily">Chaque jour</option>
+          <option value="weekly">Chaque semaine</option><option value="monthly">Chaque mois</option>
+        </select>
+        <select id="cReminder" aria-label="Rappel">
+          <option value="">Pas de rappel</option><option value="10">10 min avant</option>
+          <option value="60">1 h avant</option><option value="1440">La veille</option>
+        </select>
+      </div>
+      <span class="composer__label">Couleur</span>
+      <div class="swatches" id="cSwatches"></div>
+    </div>
+    <div class="composer__actions">
+      <button class="btn" id="cCancel" type="button">Annuler</button>
+      <button class="btn btn--primary" id="cSave" type="button">Poser</button>
+    </div>
+    </div>
+  </dialog>
+
+  <button class="addbtn" id="addBtn" type="button">+ Poser</button>
+
+</main>
+
+<p class="demo-note">
+  L'heure réelle est chargée au démarrage — le curseur la simule pour la démo.
+  Chevauchements : deux événements qui se croisent partagent la largeur en couloirs.
+  Semaine = liste des 7 jours. Tape un événement : détail, Modifier, Supprimer.
+</p>
+
+<script>
+(function(){
+'use strict';
+/* ---------- Données de démo (avec durées) ---------- */
+const COLORS=['a','b','c','d','e'];
+const cvar=id=>`var(--evt-${id})`;
+const today=new Date(); today.setHours(0,0,0,0);
+const ymd=d=>{const z=new Date(d);z.setMinutes(z.getMinutes()-z.getTimezoneOffset());return z.toISOString().slice(0,10)};
+const addD=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x};
+let events=[
+ {id:'e1',title:'Réunion accueil CRD',date:ymd(today),time:'09:00',end:'10:30',color:'e'},
+ {id:'e2',title:'Déjeuner avec Isabelle',date:ymd(today),time:'12:30',end:'13:30',color:'b'},
+ {id:'e3',title:'Kiné',date:ymd(today),time:'15:00',end:'15:45',color:'c'},
+ {id:'e4',title:'Point planning',date:ymd(today),time:'15:15',end:'16:00',color:'e'},
+ {id:'e5',title:'Arroser la pergola',date:ymd(today),time:'18:30',end:'',color:'a'},
+ {id:'e6',title:'RDV Sandrine (DRH)',date:ymd(addD(today,1)),time:'10:00',end:'11:00',color:'e'},
+ {id:'e7',title:'Plénière du collectif',date:ymd(addD(today,2)),time:'14:00',end:'16:00',color:'d'},
+ {id:'e8',title:'Vétérinaire Vola',date:ymd(addD(today,5)),time:'11:15',end:'',color:'c'},
+ {id:'e9',title:'Anniversaire de maman',date:ymd(addD(today,9)),time:'19:00',end:'',color:'b'}
+];
+
+/* ---------- État ---------- */
+const DAY_START=7, DAY_END=23, HOUR_H=44, DEFAULT_DUR=45;
+let view='day';
+let selectedDay=new Date(today);
+let monthRef=new Date(today.getFullYear(),today.getMonth(),1);
+let weekRef=startOfWeek(today);
+const realNow=new Date();
+let demoNowMin=Math.max(420,Math.min(1380,realNow.getHours()*60+realNow.getMinutes()));
+let pendingColor='a';
+let editingId=null;
+let didAutoScroll=false;
+
+const $=id=>document.getElementById(id);
+const fmtDayLong=d=>d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+const fmtHM=min=>`${String(Math.floor(min/60)).padStart(2,'0')}:${String(min%60).padStart(2,'0')}`;
+const isToday=d=>ymd(d)===ymd(today);
+const timeToMin=t=>{const[a,b]=t.split(':').map(Number);return a*60+b};
+function startOfWeek(d){const x=new Date(d);const off=(x.getDay()+6)%7;x.setDate(x.getDate()-off);x.setHours(0,0,0,0);return x}
+function evStart(e){return timeToMin(e.time)}
+function evEnd(e){return e.end?Math.max(timeToMin(e.end),evStart(e)+15):evStart(e)+DEFAULT_DUR}
+
+/* ---------- Couloirs (chevauchements) ---------- */
+function assignLanes(evs){
+  const sorted=[...evs].sort((a,b)=>evStart(a)-evStart(b)||evEnd(a)-evEnd(b));
+  const laneEnds=[]; /* fin du dernier événement de chaque couloir */
+  let cluster=[], clusterMaxLanes=0, results=new Map();
+  const flush=()=>{cluster.forEach(ev=>results.get(ev.id).lanes=clusterMaxLanes);cluster=[];clusterMaxLanes=0;laneEnds.length=0};
+  sorted.forEach(ev=>{
+    const s=evStart(ev);
+    if(cluster.length&&laneEnds.every(end=>end<=s))flush();
+    let lane=laneEnds.findIndex(end=>end<=s);
+    if(lane===-1){lane=laneEnds.length;laneEnds.push(0)}
+    laneEnds[lane]=evEnd(ev);
+    results.set(ev.id,{lane,lanes:1});
+    cluster.push(ev);
+    clusterMaxLanes=Math.max(clusterMaxLanes,laneEnds.length);
+  });
+  flush();
+  return results;
+}
+
+/* ---------- Vue Jour ---------- */
+function dayEvents(d){return events.filter(e=>e.date===ymd(d)).sort((a,b)=>evStart(a)-evStart(b))}
+function renderDay(){
+  $('dayLabel').textContent=isToday(selectedDay)?'Aujourd\u2019hui':fmtDayLong(selectedDay);
+  $('dayMeta').textContent=isToday(selectedDay)?fmtDayLong(selectedDay):'';
+  const evs=dayEvents(selectedDay);
+  const hours=$('tideHours');hours.innerHTML='';
+  for(let h=DAY_START;h<=DAY_END;h++){
+    const row=document.createElement('div');row.className='tide__hour';
+    row.innerHTML=`<span class="tide__hour-label">${String(h).padStart(2,'0')}h</span>`;
+    hours.appendChild(row);
+  }
+  const lanes=assignLanes(evs);
+  evs.forEach(e=>{
+    const s=evStart(e), en=evEnd(e);
+    if(en<DAY_START*60||s>DAY_END*60+30)return;
+    const el=document.createElement('div');
+    el.className='evt';
+    const li=lanes.get(e.id);
+    el.style.setProperty('--evt-color',cvar(e.color));
+    el.style.setProperty('--lane',li.lane);
+    el.style.setProperty('--lanes',li.lanes);
+    el.style.top=((s-DAY_START*60)/60*HOUR_H)+'px';
+    const hPx=Math.max(30,(en-s)/60*HOUR_H-4);
+    el.style.height=hPx+'px';
+    if(hPx<46)el.classList.add('evt--compact');
+    const isPast=isToday(selectedDay)&&en<demoNowMin;
+    const isNow=isToday(selectedDay)&&demoNowMin>=s&&demoNowMin<en;
+    if(isPast)el.classList.add('evt--past');
+    if(isNow)el.classList.add('evt--now');
+    const endTxt=e.end?`\u2013${e.end}`:'';
+    el.innerHTML=`<span class="evt__time">${e.time}${endTxt}</span><span class="evt__title">${e.title}</span>`;
+    el.dataset.evtId=e.id;
+    el.addEventListener('click',()=>openDetail(e.id));
+    hours.appendChild(el);
+  });
+  if(!evs.length){
+    const empty=document.createElement('div');
+    empty.className='tide__empty';
+    empty.innerHTML='<div class="tide__empty-title">Journée en eau libre.</div><div class="tide__empty-hint">Rien d\u2019amarré. L\u2019horizon est à toi.</div>';
+    hours.appendChild(empty);
+  }
+  updateTide();
+  updateAnchor();
+  if(!didAutoScroll&&isToday(selectedDay)){
+    didAutoScroll=true;
+    requestAnimationFrame(()=>$('tideLine').scrollIntoView({block:'center',behavior:'auto'}));
+  }
+}
+function updateTide(){
+  const show=isToday(selectedDay);
+  const y=Math.max(0,Math.min((DAY_END-DAY_START)*HOUR_H,(demoNowMin-DAY_START*60)/60*HOUR_H));
+  $('tide').style.setProperty('--now-y',show?y+'px':'0px');
+  $('tidePast').style.display=show?'':'none';
+  $('tideLine').style.display=show?'':'none';
+  const now=$('tideNow');
+  now.style.display=show?'':'none';
+  now.textContent=fmtHM(demoNowMin);
+}
+/* ---------- Vue Semaine (liste de jours) ---------- */
+function renderWeek(){
+  const end=addD(weekRef,6);
+  const sameMonth=weekRef.getMonth()===end.getMonth();
+  $('weekLabel').textContent=`Semaine du ${weekRef.getDate()}${sameMonth?'':' '+weekRef.toLocaleDateString('fr-FR',{month:'short'})} au ${end.getDate()} ${end.toLocaleDateString('fr-FR',{month:'long'})}`;
+  const list=$('weekList');list.innerHTML='';
+  for(let i=0;i<7;i++){
+    const d=addD(weekRef,i);
+    const row=document.createElement('div');
+    row.className='wday'+(isToday(d)?' wday--today':'');
+    const head=document.createElement('button');
+    head.type='button';head.className='wday__head';
+    head.setAttribute('aria-label','Ouvrir '+fmtDayLong(d));
+    head.innerHTML=`<div class="wday__dow">${d.toLocaleDateString('fr-FR',{weekday:'short'}).replace('.','')}</div><div class="wday__num">${d.getDate()}</div>`;
+    head.addEventListener('click',()=>{selectedDay=new Date(d);switchView('day')});
+    const evsWrap=document.createElement('div');evsWrap.className='wday__events';
+    const evs=dayEvents(d);
+    if(!evs.length){evsWrap.innerHTML='<span class="wday__none">\u2014</span>'}
+    else evs.forEach(e=>{
+      const chip=document.createElement('button');
+      chip.type='button';chip.className='wchip';
+      chip.style.setProperty('--evt-color',cvar(e.color));
+      if(isToday(d)&&evEnd(e)<demoNowMin)chip.classList.add('wchip--past');
+      chip.innerHTML=`<span class="wchip__time">${e.time}</span><span class="wchip__title">${e.title}</span>`;
+      chip.addEventListener('click',()=>openDetail(e.id));
+      evsWrap.appendChild(chip);
+    });
+    row.append(head,evsWrap);
+    list.appendChild(row);
+  }
+  updateAnchor();
+}
+/* ---------- En approche ---------- */
+function renderApproach(){
+  const list=$('approachList');list.innerHTML='';
+  const upcoming=events
+    .filter(e=>{
+      const d=new Date(e.date+'T00:00');
+      if(ymd(d)===ymd(today))return evEnd(e)>demoNowMin;
+      return d>today;
+    })
+    .sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time))
+    .slice(0,6);
+  if(!upcoming.length){
+    list.innerHTML='<p class="approach__empty">Horizon dégagé — rien en approche.</p>';return;
+  }
+  upcoming.forEach(e=>{
+    const d=new Date(e.date+'T00:00');
+    const diff=Math.round((d-today)/864e5);
+    const item=document.createElement('div');
+    item.className='app-item'+(diff>7?' app-item--horizon':diff>2?' app-item--far':'');
+    item.style.setProperty('--evt-color',cvar(e.color));
+    const when=diff===0?'aujourd\u2019hui':diff===1?'demain':d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric'});
+    const dist=diff<=1?'':`J+${diff}`;
+    item.innerHTML=`<span class="app-item__dot"></span>
+      <span class="app-item__body"><span class="app-item__title">${e.title}</span><br>
+      <span class="app-item__when">${when} \u00b7 ${e.time}</span></span>
+      <span class="app-item__dist">${dist}</span>`;
+    item.addEventListener('click',()=>{selectedDay=new Date(e.date+'T00:00');switchView('day')});
+    list.appendChild(item);
+  });
+}
+/* ---------- La carte (mois) ---------- */
+function renderMonth(){
+  $('monthLabel').textContent=monthRef.toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
+  const grid=$('monthGrid');grid.innerHTML='';
+  ['L','M','M','J','V','S','D'].forEach(d=>{
+    const el=document.createElement('div');el.className='chart__dow';el.textContent=d;grid.appendChild(el);
+  });
+  const startOffset=(monthRef.getDay()+6)%7;
+  const start=addD(monthRef,-startOffset);
+  for(let i=0;i<42;i++){
+    const d=addD(start,i);
+    const cell=document.createElement('button');
+    cell.type='button';cell.className='cell';
+    if(d.getMonth()!==monthRef.getMonth())cell.classList.add('cell--out');
+    if(isToday(d))cell.classList.add('cell--today');
+    if(ymd(d)===ymd(selectedDay))cell.classList.add('cell--sel');
+    const evs=dayEvents(d);
+    const dots=evs.slice(0,3).map(e=>`<span class="cell__dot" style="--evt-color:${cvar(e.color)}"></span>`).join('');
+    const more=evs.length>3?`<span class="cell__more">+${evs.length-3}</span>`:'';
+    cell.innerHTML=`<span>${d.getDate()}</span><span class="cell__dots">${dots}${more}</span>`;
+    cell.setAttribute('aria-label',fmtDayLong(d)+(evs.length?`, ${evs.length} événement(s)`:''));
+    cell.addEventListener('click',()=>{selectedDay=new Date(d);switchView('day')});
+    grid.appendChild(cell);
+  }
+  updateAnchor();
+}
+/* ---------- Ancre : revenir à aujourd'hui ---------- */
+function updateAnchor(){
+  let away=false;
+  if(view==='day')away=!isToday(selectedDay);
+  else if(view==='week')away=ymd(weekRef)!==ymd(startOfWeek(today));
+  else away=monthRef.getFullYear()!==today.getFullYear()||monthRef.getMonth()!==today.getMonth();
+  $('todayBtn').classList.toggle('is-hot',away);
+}
+/* ---------- Détail + édition ---------- */
+function closeDetail(){
+  const det=$('detail');
+  if(det.open)det.close();
+}
+function openDetail(id){
+  const e=events.find(x=>x.id===id);if(!e)return;
+  const det=$('detail');
+  det.style.setProperty('--evt-color',cvar(e.color));
+  const d=new Date(e.date+'T00:00');
+  const endTxt=e.end?` \u2192 ${e.end}`:'';
+  det.innerHTML=`<div class="detail__card">
+    <div class="detail__title">${e.title}</div>
+    <div class="detail__when">${fmtDayLong(d)} \u00b7 ${e.time}${endTxt}</div>
+    <div class="detail__actions">
+      <button class="btn btn--danger" type="button" data-del>Supprimer</button>
+      <button class="btn" type="button" data-edit>Modifier</button>
+      <button class="btn btn--primary" type="button" data-close>Fermer</button>
+    </div></div>`;
+  if(!det.open)det.showModal();
+  det.querySelector('[data-close]').addEventListener('click',closeDetail);
+  det.querySelector('[data-del]').addEventListener('click',()=>{
+    events=events.filter(x=>x.id!==e.id);
+    closeDetail();
+    refresh();
+  });
+  det.querySelector('[data-edit]').addEventListener('click',()=>{
+    closeDetail();
+    openComposer(e);
+  });
+}
+/* ---------- Poser / Modifier ---------- */
+function buildSwatches(){
+  const wrap=$('cSwatches');wrap.innerHTML='';
+  COLORS.forEach(id=>{
+    const b=document.createElement('button');
+    b.type='button';b.className='swatch';b.style.setProperty('--sw',cvar(id));
+    b.setAttribute('aria-label','Couleur '+id);
+    b.setAttribute('aria-pressed',String(id===pendingColor));
+    b.addEventListener('click',()=>{pendingColor=id;
+      wrap.querySelectorAll('.swatch').forEach(s=>s.setAttribute('aria-pressed','false'));
+      b.setAttribute('aria-pressed','true')});
+    wrap.appendChild(b);
+  });
+}
+function closeComposer(){const c=$('composer');if(c.open)c.close();editingId=null}
+function openComposer(e=null){
+  const c=$('composer');
+  editingId=e?e.id:null;
+  $('cTitle').value=e?e.title:'';
+  $('cDate').value=e?e.date:ymd(selectedDay);
+  $('cTime').value=e?e.time:fmtHM(Math.ceil((demoNowMin+60)/30)*30%1440);
+  $('cEnd').value=e?.end||'';
+  $('cMore').classList.remove('is-open');
+  $('cMoreToggle').textContent='Plus d\u2019options';
+  pendingColor=e?e.color:'a';buildSwatches();
+  $('cSave').textContent=e?'Enregistrer':'Poser';
+  if(!c.open)c.showModal();
+  $('cTitle').focus();
+}
+$('addBtn').addEventListener('click',()=>{
+  const c=$('composer');
+  if(c.open){closeComposer();return}
+  openComposer();
+});
+$('cMoreToggle').addEventListener('click',()=>{
+  const m=$('cMore');const open=m.classList.toggle('is-open');
+  $('cMoreToggle').textContent=open?'Moins d\u2019options':'Plus d\u2019options';
+});
+$('cCancel').addEventListener('click',closeComposer);
+$('cSave').addEventListener('click',()=>{
+  const title=$('cTitle').value.trim();
+  const date=$('cDate').value, time=$('cTime').value, end=$('cEnd').value;
+  if(!title||!date||!time){$('cTitle').focus();return}
+  if(editingId){
+    const e=events.find(x=>x.id===editingId);
+    if(e)Object.assign(e,{title,date,time,end,color:pendingColor});
+  }else{
+    events.push({id:'e'+Date.now(),title,date,time,end,color:pendingColor});
+  }
+  const savedTime=time, wasEditing=!!editingId;
+  editingId=null;
+  closeComposer();
+  selectedDay=new Date(date+'T00:00');
+  switchView('day');
+  if(!wasEditing)requestAnimationFrame(()=>{
+    const target=[...document.querySelectorAll('.evt')]
+      .find(el=>el.querySelector('.evt__time')?.textContent.startsWith(savedTime));
+    if(target)target.classList.add('evt--new');
+  });
+});
+/* ---------- Navigation ---------- */
+function refresh(){
+  if(view==='day')renderDay();
+  else if(view==='week')renderWeek();
+  else renderMonth();
+  renderApproach();
+}
+function switchView(v){
+  view=v;
+  $('dayView').hidden=v!=='day';
+  $('weekView').hidden=v!=='week';
+  $('monthView').hidden=v!=='month';
+  document.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.view===v)));
+  if(v==='week')weekRef=startOfWeek(selectedDay);
+  if(v==='month')monthRef=new Date(selectedDay.getFullYear(),selectedDay.getMonth(),1);
+  refresh();
+}
+document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.view)));
+$('prevDay').addEventListener('click',()=>{selectedDay=addD(selectedDay,-1);refresh()});
+$('nextDay').addEventListener('click',()=>{selectedDay=addD(selectedDay,1);refresh()});
+$('prevWeek').addEventListener('click',()=>{weekRef=addD(weekRef,-7);refresh()});
+$('nextWeek').addEventListener('click',()=>{weekRef=addD(weekRef,7);refresh()});
+$('prevMonth').addEventListener('click',()=>{monthRef=new Date(monthRef.getFullYear(),monthRef.getMonth()-1,1);refresh()});
+$('nextMonth').addEventListener('click',()=>{monthRef=new Date(monthRef.getFullYear(),monthRef.getMonth()+1,1);refresh()});
+$('todayBtn').addEventListener('click',()=>{
+  selectedDay=new Date(today);weekRef=startOfWeek(today);
+  monthRef=new Date(today.getFullYear(),today.getMonth(),1);
+  refresh();
+});
+
+/* ---------- Heure simulée (démo, initialisée sur l'heure réelle) ---------- */
+$('demoHour').value=demoNowMin;
+$('demoHourLabel').textContent=fmtHM(demoNowMin);
+$('demoHour').addEventListener('input',e=>{
+  demoNowMin=Number(e.target.value);
+  $('demoHourLabel').textContent=fmtHM(demoNowMin);
+  refresh();
+});
+/* ---------- Thèmes + mouvement ---------- */
+document.querySelectorAll('[data-t]').forEach(b=>b.addEventListener('click',()=>{
+  document.documentElement.dataset.theme=b.dataset.t;
+  document.querySelectorAll('[data-t]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+}));
+const motion=$('motion');
+motion.addEventListener('click',()=>{
+  const on=motion.getAttribute('aria-pressed')!=='true';
+  motion.setAttribute('aria-pressed',String(on));
+  document.body.classList.toggle('reduce-motion',on);
+});
+if(window.matchMedia('(prefers-reduced-motion:reduce)').matches){
+  motion.setAttribute('aria-pressed','true');document.body.classList.add('reduce-motion');
+}
+
+// clic sur le fond estompé (en dehors de la carte) ferme la modale
+$('detail').addEventListener('click',ev=>{if(ev.target===$('detail'))closeDetail()});
+$('composer').addEventListener('click',ev=>{if(ev.target===$('composer'))closeComposer()});
+
+buildSwatches();
+switchView('day');
+})();
+</script>
+</body>
+</html>
