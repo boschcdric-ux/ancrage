@@ -891,6 +891,10 @@
   box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35);
   z-index: 20;
   cursor: grabbing;
+  will-change: transform;
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 .habits__manage-item.list-drag-reorder__row--settle {
