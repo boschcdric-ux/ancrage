@@ -3,7 +3,7 @@
 > Ce fichier est la mémoire du chantier. L'agent le lit au début de chaque
 > mission et le met à jour à la fin. Il doit rester factuel et concis.
 
-**Dernière mise à jour :** 2026-07-07 — M12e
+**Dernière mise à jour :** 2026-07-07 — M12f
 
 ---
 
@@ -39,6 +39,7 @@
 | M12c | Habitudes : en-tête panneau + drag réorganisation | ✅ faite (validation Cédric en attente) | 2026-07-07 |
 | M12d | Habitudes : modale fantôme, scroll perdu, FLIP muet | ✅ faite (validation Cédric en attente) | 2026-07-07 |
 | M12e | Habitudes : ligne drag invisible iOS | ✅ faite (validation Cédric en attente) | 2026-07-07 |
+| M12f | Habitudes : drag invisible (ancêtre transformé) | ✅ faite (validation Cédric en attente) | 2026-07-07 |
 
 Statuts : ⬜ à faire · 🔶 en cours · ✅ faite et validée par Cédric · 🛑 bloquée
 
@@ -51,18 +52,18 @@ sans justification écrite.*
 
 | Métrique | Baseline (M00) | Dernière valeur | Mission |
 |---|---|---|---|
-| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M12e |
-| Tests unitaires | 22/22 passés (2 fichiers) | 65/65 passés (12 fichiers) | M12e |
-| Lint | 0 erreur | 0 erreur | M12e |
-| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 295 KB (`index-CtDdN1cb.js`) | M12e |
-| JS initial (gzip) | 243 KB | 83 KB | M12e |
-| CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 128 KB (`index-M5XUNlaS.css`, entrée HTML) | M12e |
-| Chunk calendar JS (gzip) | — | 9,4 KB (`index-BEu6gP9j.js`) | M12e |
-| Chunk calendar CSS (gzip) | — | 3,2 KB (`index-D1nMcXjX.css`) | M12e |
-| Chunk habits JS (gzip) | — | 4,1 KB (`index-CtUJC-8K.js`) | M12e |
+| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M12f |
+| Tests unitaires | 22/22 passés (2 fichiers) | 65/65 passés (12 fichiers) | M12f |
+| Lint | 0 erreur | 0 erreur | M12f |
+| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 295 KB (`index-sVOjzSqx.js`) | M12f |
+| JS initial (gzip) | 243 KB | 83 KB | M12f |
+| CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 128 KB (`index-yNyuf_7H.css`, entrée HTML) | M12f |
+| Chunk calendar JS (gzip) | — | 9,4 KB (`index-PR58ytKf.js`) | M12f |
+| Chunk calendar CSS (gzip) | — | 3,2 KB (`index-D1nMcXjX.css`) | M12f |
+| Chunk habits JS (gzip) | — | 4,1 KB (`index-CB-ZlIOC.js`) | M12f |
 | Nombre de chunks JS | 1 | 9 | M01 |
 | Polices woff2 (dist) | — | ~122 KB (7 fichiers) | M04 |
-| Precache PWA | — | 1089 KiB (23 entrées) | M12e |
+| Precache PWA | — | 1089 KiB (23 entrées) | M12f |
 
 Variation bundle M05 : +4,3 KB brut sur le chunk d'entrée JS (275 vs 270 M04) — hors tolérance ±2 KB
 mais +1,5 KB gzip seulement ; justifié par markup SVG inline (houle, ancre, coche) et fonctions tide
@@ -559,6 +560,29 @@ et zéro `#c9a227` dans `tasks/style.css`.
 - `git diff --stat` périmètre : `habits/style.css` uniquement (+4 propriétés CSS `--dragging`)
 - Commits : `fix:` promotion calque GPU drag iOS ; `chore:` clôture M12e
 
+### Rituel AVANT M12f (2026-07-07)
+
+- Smoke : 20/20 modules, 4/4 shell
+- Unit : 65/65 (12 fichiers)
+- Lint : 0 erreur
+- Build entrée : 295 KB brut (`index-CtDdN1cb.js`), 83 KB gzip
+- CSS entrée : 128 KB brut (`index-M5XUNlaS.css`), 21 KB gzip
+- Chunk habits JS : 11,6 KB brut (`index-CtUJC-8K.js`), 4,1 KB gzip
+- Precache : 1089 KiB
+
+### Rituel APRÈS M12f (2026-07-07)
+
+- Smoke : 20/20 modules, 4/4 shell
+- Unit : 65/65 (12 fichiers)
+- Lint : 0 erreur
+- Build entrée : 295 KB brut (`index-sVOjzSqx.js`), 83 KB gzip (inchangé)
+- CSS entrée : 128 KB brut (`index-yNyuf_7H.css`), 21 KB gzip (inchangé)
+- Chunk habits JS : 11,6 KB brut (`index-CB-ZlIOC.js`), 4,1 KB gzip (inchangé)
+- Precache : 1089 KiB (inchangé)
+- Grep contrôle : 0 `scale(1)` dans le `to` de `@keyframes habits-panel-in` ; 0 `!important` et 0 couleur en dur dans `habits/style.css`
+- `git diff --stat` périmètre : `habits/style.css` uniquement (retrait transform résiduel keyframe)
+- Commits : `fix:` transform résiduel keyframe modale ; `chore:` clôture M12f
+
 ### Simulation quota plein (procédure dev, M02)
 
 1. `npm run preview`, ouvrir l'app dans le navigateur.
@@ -819,6 +843,17 @@ Vérification automatisée équivalente : `npm run test:unit` — tests `save() 
   Annexe `composant-liste-drag-reorder.html` déjà alignée (M12d).
 - M12e : série Habitudes close (M12 → M12e). Validation manuelle groupée attendue
   (drag iPhone lent/rapide, 4 thèmes, absence de disparition sous le doigt).
+- M12f : vraie cause drag invisible iOS — `habits-panel-in` en `fill-mode: both`
+  laissait `transform: translateY(0) scale(1)` résiduel sur `.habits__panel-card`
+  (`overflow: auto`). Ce contexte ancêtre fait disparaître un enfant draggé par
+  `transform` sur WebKit. Correctif : retirer `transform` de l'image finale `to`
+  (l'entrée interpole depuis `from`, puis la carte revient à `transform: none`).
+- M12f : règle transverse patron modale + drag — **ne jamais retenir de transform
+  dans l'image finale d'une animation d'entrée en `fill: both`** sur un conteneur
+  scrollable. Ne pas « corriger » en ajoutant `translateZ(0)` sur l'ancêtre.
+  Calque GPU de la ligne (M12e) conservé, inoffensif.
+- M12f : série Habitudes close (M12 → M12f). Validation manuelle groupée attendue
+  (drag iPhone lent/rapide liste longue scrollée, animation ouverture modale, 4 thèmes).
 
 ---
 
@@ -845,6 +880,9 @@ Vérification automatisée équivalente : `npm run test:unit` — tests `save() 
   qui conserve un `requestAnimationFrame` — hors périmètre strict M08d ; la ceinture CSS
   compense. Si flash persiste sur iPhone, micro-correctif sur cette ligne. **Résolu en M08e**
   (retrait `popovertarget`, ouverture 100 % JS).
+- M12f : annexe `composant-liste-drag-reorder.html` indiquée « déjà alignée » dans la
+  mission mais conserve encore `transform` dans le `to` de `panel-in` — candidat micro-mission
+  annexe (hors périmètre M12f strict).
 - M10d : bouton d'aide « ? » de chaque module — (a) chevauche des éléments selon le module
   (ex. flotte sur « Mois » dans l'Agenda) et (b) contenus d'aide obsolètes après refontes.
   Candidat mission transversale « aide contextuelle » (repositionnement + réécriture).
