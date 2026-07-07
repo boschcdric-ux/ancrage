@@ -39,7 +39,7 @@ let completions = [];
 let viewMode = 'day';
 let panelOpen = false;
 let editHabitId = null;
-let bulkEditMode = false;
+let reorderViewOpen = false;
 let showOnboarding = false;
 let petSettingsOpen = false;
 let onboardingPetKind = null;
@@ -76,32 +76,34 @@ function openPetSettingsDialog() {
 }
 
 function syncDialogsAfterRender() {
+  if (reorderViewOpen) {
+    setupReorderListDrag();
+    return;
+  }
+  teardownReorderListDrag();
   if (panelOpen) {
     openHabitsPanelDialog();
-    setupManageListReorder();
-  } else {
-    teardownManageListReorder();
   }
   if (petSettingsOpen) openPetSettingsDialog();
 }
 
-function teardownManageListReorder() {
+function teardownReorderListDrag() {
   if (cleanupManageListDrag) {
     cleanupManageListDrag();
     cleanupManageListDrag = null;
   }
-  const listEl = rootContainer?.querySelector('[data-habits-manage-list]');
+  const listEl = rootContainer?.querySelector('[data-reorder-list]');
   if (listEl && onManageListKeydown) {
     listEl.removeEventListener('keydown', onManageListKeydown);
     onManageListKeydown = null;
   }
 }
 
-function setupManageListReorder() {
-  teardownManageListReorder();
-  if (!rootContainer || !bulkEditMode) return;
+function setupReorderListDrag() {
+  teardownReorderListDrag();
+  if (!rootContainer || !reorderViewOpen) return;
 
-  const listEl = rootContainer.querySelector('[data-habits-manage-list]');
+  const listEl = rootContainer.querySelector('[data-reorder-list]');
   if (!(listEl instanceof HTMLElement)) return;
 
   cleanupManageListDrag = attachListDragReorder({
@@ -115,7 +117,7 @@ function setupManageListReorder() {
   });
 
   onManageListKeydown = (event) => {
-    if (!bulkEditMode) return;
+    if (!reorderViewOpen) return;
     const row = event.target instanceof Element ? event.target.closest('.habits__manage-item') : null;
     if (!(row instanceof HTMLElement)) return;
     const habitId = row.dataset.id;
@@ -143,7 +145,7 @@ function getState() {
     viewMode,
     panelOpen,
     editHabitId,
-    bulkEditMode,
+    reorderViewOpen,
     showOnboarding,
     petSettingsOpen,
     onboardingPetKind
@@ -156,7 +158,7 @@ function setState(patch) {
   if (patch.viewMode !== undefined) viewMode = patch.viewMode;
   if (patch.panelOpen !== undefined) panelOpen = patch.panelOpen;
   if (patch.editHabitId !== undefined) editHabitId = patch.editHabitId;
-  if (patch.bulkEditMode !== undefined) bulkEditMode = patch.bulkEditMode;
+  if (patch.reorderViewOpen !== undefined) reorderViewOpen = patch.reorderViewOpen;
   if (patch.showOnboarding !== undefined) showOnboarding = patch.showOnboarding;
   if (patch.petSettingsOpen !== undefined) petSettingsOpen = patch.petSettingsOpen;
   if (patch.onboardingPetKind !== undefined) onboardingPetKind = patch.onboardingPetKind;
@@ -270,7 +272,7 @@ function moveHabit(habitId, direction) {
 }
 
 function moveManageRowInDom(habitId) {
-  const listEl = rootContainer?.querySelector('[data-habits-manage-list]');
+  const listEl = rootContainer?.querySelector('[data-reorder-list], [data-habits-manage-list]');
   const row = rootContainer?.querySelector(`.habits__manage-item[data-id="${habitId}"]`);
   if (!(listEl instanceof HTMLElement) || !(row instanceof HTMLElement)) return;
 
@@ -440,7 +442,7 @@ function getViewModel() {
       frequencyLabel: FREQUENCY_LABELS[habit.frequency] || FREQUENCY_LABELS.daily
     })),
     editHabit,
-    bulkEditMode
+    reorderViewOpen
   };
 }
 
@@ -482,7 +484,7 @@ function bindEvents() {
     const target = event.target;
     if (!(target instanceof HTMLDialogElement)) return;
     if (target.matches('[data-habits-panel-dialog]')) {
-      setState({ panelOpen: false, editHabitId: null, bulkEditMode: false });
+      setState({ panelOpen: false, editHabitId: null });
       render();
       return;
     }
@@ -524,13 +526,13 @@ const habitsModule = {
     petSettingsOpen = false;
     panelOpen = false;
     editHabitId = null;
-    bulkEditMode = false;
+    reorderViewOpen = false;
     render();
     bindEvents();
   },
 
   destroy() {
-    teardownManageListReorder();
+    teardownReorderListDrag();
     if (rootContainer && onClick) rootContainer.removeEventListener('click', onClick);
     if (rootContainer && onSubmit) rootContainer.removeEventListener('submit', onSubmit);
     if (rootContainer && onDialogClose) rootContainer.removeEventListener('close', onDialogClose, true);
@@ -545,7 +547,7 @@ const habitsModule = {
     viewMode = 'day';
     panelOpen = false;
     editHabitId = null;
-    bulkEditMode = false;
+    reorderViewOpen = false;
     showOnboarding = false;
     petSettingsOpen = false;
     onboardingPetKind = null;

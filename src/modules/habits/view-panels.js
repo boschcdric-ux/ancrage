@@ -2,7 +2,7 @@ import { escapeHtml } from '../../core/format.js';
 
 const GRIP_DOTS = '<span class="grip"><i></i><i></i><i></i><i></i><i></i><i></i></span>';
 
-function createManagePanel(habits, editHabit, bulkEditMode = false) {
+function createManagePanel(habits, editHabit) {
   const formTitle = editHabit ? "Modifier l'habitude" : 'Ajouter une habitude';
   const submitLabel = editHabit ? 'Enregistrer' : 'Ajouter';
 
@@ -15,10 +15,9 @@ function createManagePanel(habits, editHabit, bulkEditMode = false) {
           <button
             type="button"
             class="btn btn-secondary habits__panel-toggle"
-            data-habits-bulk-edit-toggle
-            aria-pressed="${bulkEditMode}"
+            data-habits-reorder-open
           >
-            ${bulkEditMode ? 'Terminé' : 'Réorganiser'}
+            Réorganiser
           </button>
           <button type="button" class="btn btn-secondary habits__panel-close" data-habits-panel-close>Fermer</button>
         </div>
@@ -54,11 +53,8 @@ function createManagePanel(habits, editHabit, bulkEditMode = false) {
 
       <div class="habits__manage-list-wrap">
         <h3 class="habits__panel-subtitle">Mes habitudes</h3>
-        <p class="habits__reorder-hint${bulkEditMode ? ' habits__reorder-hint--show' : ''}">
-          Glisse une ligne pour la déplacer. Au clavier : sélectionne une ligne puis ↑ / ↓.
-        </p>
         <ul class="habits__manage-list" data-habits-manage-list role="list" aria-label="Mes habitudes">
-          ${habits.map((habit, index) => createHabitManagerItem(habit, index, habits.length, bulkEditMode)).join('')}
+          ${habits.map((habit, index) => createHabitManagerItem(habit, index, habits.length, false)).join('')}
         </ul>
       </div>
       </div>
@@ -66,17 +62,33 @@ function createManagePanel(habits, editHabit, bulkEditMode = false) {
   `;
 }
 
+function createReorderView(habits) {
+  return `
+    <section class="habits habits--reorder animate-fade-in">
+      <header class="habits__reorder-head">
+        <h1 class="habits__reorder-title">Réorganiser</h1>
+        <p class="habits__reorder-sub">Glisse tes mouillages dans l'ordre qui te va.</p>
+        <button type="button" class="btn btn-primary" data-reorder-done>Terminé</button>
+      </header>
+      <ul class="habits__manage-list habits__manage-list--reorder" data-reorder-list role="list" aria-label="Réorganiser mes habitudes">
+        ${habits.map((habit, index) => createHabitManagerItem(habit, index, habits.length, true)).join('')}
+      </ul>
+    </section>
+  `;
+}
+
 function createHabitManagerItem(habit, index, total, reorderMode = false) {
   const canMoveUp = index > 0;
   const canMoveDown = index < total - 1;
   const name = escapeHtml(habit.name);
+  const cascadeStyle = reorderMode ? ` style="--i:${index}"` : '';
 
   return `
     <li
       class="habits__manage-item card${reorderMode ? ' habits__manage-item--reorder' : ''}"
       data-id="${escapeHtml(habit.id)}"
       role="listitem"
-      tabindex="0"
+      tabindex="0"${cascadeStyle}
     >
       <span class="habits__manage-handle${reorderMode ? ' habits__manage-handle--show' : ''}" aria-hidden="true">
         ${GRIP_DOTS}
@@ -195,4 +207,4 @@ function createPetSettingsPanel(petProfile) {
   `;
 }
 
-export { createManagePanel, createOnboardingView, createPetSettingsPanel };
+export { createManagePanel, createOnboardingView, createPetSettingsPanel, createReorderView };
