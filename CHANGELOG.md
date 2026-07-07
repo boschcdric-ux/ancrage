@@ -242,3 +242,15 @@ Historique des modifications du chantier `chantier/redesign`.
 - Bundle entrée : +3,6 KB brut / +1 KB gzip. CSS entrée : +5 KB. Chunk habits : 4,1 KB gzip.
 - Première application de `CHECKLIST-SORTIE-MODULE.md`. Validation manuelle (iPhone, taps
   rapides, 4 thèmes) attendue.
+
+### M12b — Habitudes : panneaux en modales dialog
+
+- Panneaux « Gérer mes habitudes » et « Mon animal » : `<aside position:fixed>` →
+  `<dialog>` + `showModal()` (patron Agenda M10b/c). Centrage natif, backdrop flouté,
+  taille `min(420px, calc(100vw - 32px))`, max-height 80vh.
+- Wrappers `.habits__panel-card` / `.habits__pet-card` pour animation `habits-panel-in`
+  (jamais sur le `<dialog>`). `prefers-reduced-motion` : modale centrée sans animation.
+- Fermeture : bouton, Échap, clic backdrop. Ouverture : `syncDialogsAfterRender()` après
+  `render()` (rAF). Logique formulaire / onboarding inchangée.
+- Bundle entrée : +1,3 KB brut / +0,3 KB gzip. CSS entrée : +0,9 KB. Chunk habits inchangé.
+- Validation manuelle (iPhone scrollé, 4 thèmes) attendue.

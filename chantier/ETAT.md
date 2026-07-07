@@ -3,7 +3,7 @@
 > Ce fichier est la mémoire du chantier. L'agent le lit au début de chaque
 > mission et le met à jour à la fin. Il doit rester factuel et concis.
 
-**Dernière mise à jour :** 2026-07-07 — M12
+**Dernière mise à jour :** 2026-07-07 — M12b
 
 ---
 
@@ -35,6 +35,7 @@
 | M10e | Agenda : input date iOS déborde | ✅ faite et validée par Cédric | 2026-07-07 |
 | M11 | Refonte Humeur : l'état de la mer | ✅ faite et validée par Cédric | 2026-07-07 |
 | M12 | Refonte Habitudes : les mouillages | ✅ faite (validation Cédric en attente) | 2026-07-07 |
+| M12b | Habitudes : panneaux en modales dialog | ✅ faite (validation Cédric en attente) | 2026-07-07 |
 
 Statuts : ⬜ à faire · 🔶 en cours · ✅ faite et validée par Cédric · 🛑 bloquée
 
@@ -47,18 +48,18 @@ sans justification écrite.*
 
 | Métrique | Baseline (M00) | Dernière valeur | Mission |
 |---|---|---|---|
-| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M12 |
-| Tests unitaires | 22/22 passés (2 fichiers) | 63/63 passés (11 fichiers) | M12 |
-| Lint | 0 erreur | 0 erreur | M12 |
-| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 291 KB (`index-BEr_ZN1A.js`) | M12 |
-| JS initial (gzip) | 243 KB | 81 KB | M12 |
-| CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 125 KB (`index-D0UZlOxI.css`, entrée HTML) | M12 |
-| Chunk calendar JS (gzip) | — | 9,4 KB (`index-DFd6PBzQ.js`) | M12 |
-| Chunk calendar CSS (gzip) | — | 3,2 KB (`index-D1nMcXjX.css`) | M12 |
-| Chunk habits JS (gzip) | — | 4,1 KB (`index-B-nyuVM0.js`) | M12 |
+| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M12b |
+| Tests unitaires | 22/22 passés (2 fichiers) | 63/63 passés (11 fichiers) | M12b |
+| Lint | 0 erreur | 0 erreur | M12b |
+| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 292 KB (`index-CL4CWTZx.js`) | M12b |
+| JS initial (gzip) | 243 KB | 82 KB | M12b |
+| CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 126 KB (`index-D1tyxsGw.css`, entrée HTML) | M12b |
+| Chunk calendar JS (gzip) | — | 9,4 KB (`index-BHeuOTt4.js`) | M12b |
+| Chunk calendar CSS (gzip) | — | 3,2 KB (`index-D1nMcXjX.css`) | M12b |
+| Chunk habits JS (gzip) | — | 4,1 KB (`index-Blcmr5pq.js`) | M12b |
 | Nombre de chunks JS | 1 | 9 | M01 |
 | Polices woff2 (dist) | — | ~122 KB (7 fichiers) | M04 |
-| Precache PWA | — | 1082 KiB (23 entrées) | M12 |
+| Precache PWA | — | 1084 KiB (23 entrées) | M12b |
 
 Variation bundle M05 : +4,3 KB brut sur le chunk d'entrée JS (275 vs 270 M04) — hors tolérance ±2 KB
 mais +1,5 KB gzip seulement ; justifié par markup SVG inline (houle, ancre, coche) et fonctions tide
@@ -463,6 +464,29 @@ et zéro `#c9a227` dans `tasks/style.css`.
 - `git diff --stat` périmètre : `habits/` uniquement (8 fichiers : logic, store, events, view, view-panels, index, style + tests)
 - Commits : `feat:` vue Aujourd'hui + animations ; `feat:` Régularité constellation ; `feat:` bandeau jauge ; `refactor:` store/events + retrait streak ; `chore:` clôture M12
 
+### Rituel AVANT M12b (2026-07-07)
+
+- Smoke : 20/20 modules, 4/4 shell
+- Unit : 63/63 (11 fichiers)
+- Lint : 0 erreur
+- Build entrée : 291 KB brut (`index-BEr_ZN1A.js`), 81 KB gzip
+- CSS entrée : 125 KB brut (`index-D0UZlOxI.css`), 21 KB gzip
+- Chunk habits JS : 11,6 KB brut (`index-B-nyuVM0.js`), 4,1 KB gzip
+- Precache : 1082 KiB
+
+### Rituel APRÈS M12b (2026-07-07)
+
+- Smoke : 20/20 modules, 4/4 shell
+- Unit : 63/63 (11 fichiers)
+- Lint : 0 erreur
+- Build entrée : 292 KB brut (`index-CL4CWTZx.js`), 82 KB gzip (+1,3 KB brut, +0,3 KB gzip — open/close dialog + handlers)
+- CSS entrée : 126 KB brut (`index-D1tyxsGw.css`), 21 KB gzip (+0,9 KB, styles modales dialog + keyframes)
+- Chunk habits JS : 11,6 KB brut (`index-Blcmr5pq.js`), 4,1 KB gzip (inchangé)
+- Precache : 1084 KiB (+2 KiB)
+- Grep contrôle : 0 `open` en HTML dans `view-panels.js` ; 0 `!important` et 0 couleur en dur dans `habits/style.css`
+- `git diff --stat` périmètre : `habits/view-panels.js`, `habits/style.css`, `habits/index.js`, `habits-events.js`
+- Commits : `feat:` panneaux dialog centrés ; `chore:` clôture M12b
+
 ### Simulation quota plein (procédure dev, M02)
 
 1. `npm run preview`, ouvrir l'app dans le navigateur.
@@ -681,6 +705,15 @@ Vérification automatisée équivalente : `npm run test:unit` — tests `save() 
 - M12 : première application CHECKLIST-SORTIE-MODULE — `style.css` (883 L) et `index.js` (445 L)
   dépassent le seuil 400 L (comparable Humeur pour le CSS) ; tous les autres critères passent.
   Validation manuelle attendue (iPhone, 4 thèmes, taps rapides sur mouillages).
+- M12b : panneaux « Gérer mes habitudes » et « Mon animal » convertis de `<aside
+  position:fixed>` en `<dialog>` + `showModal()` — 4e application du patron modale
+  (Agenda ×2, Habitudes ×2). Wrappers `.habits__panel-card` / `.habits__pet-card`
+  pour l'animation (jamais sur le dialog). Fermeture unifiée : bouton, Échap,
+  backdrop (`close` event + clic `event.target === dialog`). Ouverture via
+  `syncDialogsAfterRender()` après `render()` (rAF + `showModal()`).
+- M12b : règle CHECKLIST-SORTIE-MODULE § Modales déjà en place — confirmée par
+  cette mission corrective. Validation manuelle attendue (iPhone scrollé en bas,
+  ouverture « + Nouveau mouillage » et « ⚙️ Mon animal », 4 thèmes).
 
 ---
 
