@@ -196,3 +196,15 @@ Historique des modifications du chantier `chantier/redesign`.
 - Chunk calendar CSS : +0,02 KB gzip. Entrée et JS inchangés.
 - Série Agenda M10 → M10d terminée. Validation groupée (iPhone/Mac, 4 thèmes, insister Encre
   et Crépuscule) attendue.
+
+### M10e — Agenda : input date iOS déborde malgré width:100%
+
+- Cause : iOS Safari conserve l'apparence native des `<input type="date"/"time">`, qui impose
+  une largeur intrinsèque ignorante de `width:100%` — visible sur « Fin récurrence » (pleine
+  largeur), pas sur les champs en deux colonnes.
+- Correctif : `-webkit-appearance:none` + `appearance:none` sur les inputs date/heure de la
+  modale (`.cal__composer-field` et `.cal__composer-row`). Le sélecteur iOS reste fonctionnel.
+- Chunk calendar CSS : +0,05 KB gzip. Entrée et JS inchangés.
+- Règle chantier : tout futur champ date/heure doit porter `appearance:none` pour respecter
+  la largeur CSS sur iOS. Série Agenda M10 → M10e close. Validation groupée (iPhone prioritaire,
+  4 thèmes) attendue.
