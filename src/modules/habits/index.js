@@ -111,7 +111,6 @@ function setupManageListReorder() {
     getOrder: () => habits.map((habit) => habit.id),
     onReorderEnd: (orderedIds) => {
       reorderHabits(orderedIds);
-      render();
     }
   });
 
@@ -124,20 +123,14 @@ function setupManageListReorder() {
     if (event.key === 'ArrowUp') {
       event.preventDefault();
       moveHabit(habitId, 'up');
-      render();
-      requestAnimationFrame(() => {
-        const next = rootContainer?.querySelector(`[data-id="${habitId}"]`);
-        if (next instanceof HTMLElement) next.focus();
-      });
+      moveManageRowInDom(habitId);
+      row.focus();
     }
     if (event.key === 'ArrowDown') {
       event.preventDefault();
       moveHabit(habitId, 'down');
-      render();
-      requestAnimationFrame(() => {
-        const next = rootContainer?.querySelector(`[data-id="${habitId}"]`);
-        if (next instanceof HTMLElement) next.focus();
-      });
+      moveManageRowInDom(habitId);
+      row.focus();
     }
   };
   listEl.addEventListener('keydown', onManageListKeydown);
@@ -274,6 +267,19 @@ function moveHabit(habitId, direction) {
   const [item] = habits.splice(index, 1);
   habits.splice(targetIndex, 0, item);
   persistHabits(habits);
+}
+
+function moveManageRowInDom(habitId) {
+  const listEl = rootContainer?.querySelector('[data-habits-manage-list]');
+  const row = rootContainer?.querySelector(`.habits__manage-item[data-id="${habitId}"]`);
+  if (!(listEl instanceof HTMLElement) || !(row instanceof HTMLElement)) return;
+
+  const index = habits.findIndex((habit) => habit.id === habitId);
+  const nextHabit = habits[index + 1];
+  const nextEl = nextHabit
+    ? listEl.querySelector(`.habits__manage-item[data-id="${nextHabit.id}"]`)
+    : null;
+  listEl.insertBefore(row, nextEl);
 }
 
 function reorderHabits(orderedIds) {
@@ -497,7 +503,7 @@ function bindEvents() {
 
   rootContainer.addEventListener('click', onClick);
   rootContainer.addEventListener('submit', onSubmit);
-  rootContainer.addEventListener('close', onDialogClose);
+  rootContainer.addEventListener('close', onDialogClose, true);
   rootContainer.addEventListener('click', onDialogClick);
   document.addEventListener('ancrage:sync-complete', onSyncComplete);
 }
@@ -527,7 +533,7 @@ const habitsModule = {
     teardownManageListReorder();
     if (rootContainer && onClick) rootContainer.removeEventListener('click', onClick);
     if (rootContainer && onSubmit) rootContainer.removeEventListener('submit', onSubmit);
-    if (rootContainer && onDialogClose) rootContainer.removeEventListener('close', onDialogClose);
+    if (rootContainer && onDialogClose) rootContainer.removeEventListener('close', onDialogClose, true);
     if (rootContainer && onDialogClick) rootContainer.removeEventListener('click', onDialogClick);
     if (onSyncComplete) document.removeEventListener('ancrage:sync-complete', onSyncComplete);
 
