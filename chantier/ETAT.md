@@ -3,7 +3,7 @@
 > Ce fichier est la mémoire du chantier. L'agent le lit au début de chaque
 > mission et le met à jour à la fin. Il doit rester factuel et concis.
 
-**Dernière mise à jour :** 2026-07-07 — M11
+**Dernière mise à jour :** 2026-07-07 — M12
 
 ---
 
@@ -34,6 +34,7 @@
 | M10d | Agenda : fonds thématisés + fin récurrence | ✅ faite et validée par Cédric | 2026-07-07 |
 | M10e | Agenda : input date iOS déborde | ✅ faite et validée par Cédric | 2026-07-07 |
 | M11 | Refonte Humeur : l'état de la mer | ✅ faite et validée par Cédric | 2026-07-07 |
+| M12 | Refonte Habitudes : les mouillages | ✅ faite (validation Cédric en attente) | 2026-07-07 |
 
 Statuts : ⬜ à faire · 🔶 en cours · ✅ faite et validée par Cédric · 🛑 bloquée
 
@@ -46,17 +47,18 @@ sans justification écrite.*
 
 | Métrique | Baseline (M00) | Dernière valeur | Mission |
 |---|---|---|---|
-| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M11 |
-| Tests unitaires | 22/22 passés (2 fichiers) | 55/55 passés (10 fichiers) | M11 |
-| Lint | 0 erreur | 0 erreur | M11 |
-| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 287 KB (`index-BKjO6ypW.js`) | M11 |
-| JS initial (gzip) | 243 KB | 80 KB | M11 |
-| CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 120 KB (`index-awEnvpsx.css`, entrée HTML) | M11 |
-| Chunk calendar JS (gzip) | — | 9,4 KB (`index-jft-JrAk.js`) | M11 |
-| Chunk calendar CSS (gzip) | — | 3,2 KB (`index-D1nMcXjX.css`) | M11 |
+| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M12 |
+| Tests unitaires | 22/22 passés (2 fichiers) | 63/63 passés (11 fichiers) | M12 |
+| Lint | 0 erreur | 0 erreur | M12 |
+| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 291 KB (`index-BEr_ZN1A.js`) | M12 |
+| JS initial (gzip) | 243 KB | 81 KB | M12 |
+| CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 125 KB (`index-D0UZlOxI.css`, entrée HTML) | M12 |
+| Chunk calendar JS (gzip) | — | 9,4 KB (`index-DFd6PBzQ.js`) | M12 |
+| Chunk calendar CSS (gzip) | — | 3,2 KB (`index-D1nMcXjX.css`) | M12 |
+| Chunk habits JS (gzip) | — | 4,1 KB (`index-B-nyuVM0.js`) | M12 |
 | Nombre de chunks JS | 1 | 9 | M01 |
 | Polices woff2 (dist) | — | ~122 KB (7 fichiers) | M04 |
-| Precache PWA | — | 1073 KiB (23 entrées) | M11 |
+| Precache PWA | — | 1082 KiB (23 entrées) | M12 |
 
 Variation bundle M05 : +4,3 KB brut sur le chunk d'entrée JS (275 vs 270 M04) — hors tolérance ±2 KB
 mais +1,5 KB gzip seulement ; justifié par markup SVG inline (houle, ancre, coche) et fonctions tide
@@ -439,6 +441,28 @@ et zéro `#c9a227` dans `tasks/style.css`.
 - `git diff --stat` périmètre : `mood/` uniquement (6 fichiers : ocean-canvas, scene, view, index, style + tests)
 - Commits : `feat:` moteur Canvas ; `feat:` curseurs sans re-render ; `feat:` galerie ; `refactor:` containment ; `chore:` clôture M11
 
+### Rituel AVANT M12 (2026-07-07)
+
+- Smoke : 20/20 modules, 4/4 shell
+- Unit : 55/55 (10 fichiers)
+- Lint : 0 erreur
+- Build entrée : 287 KB brut (`index-BKjO6ypW.js`), 80 KB gzip
+- CSS entrée : 120 KB brut (`index-awEnvpsx.css`), 20 KB gzip
+- Precache : 1073 KiB
+
+### Rituel APRÈS M12 (2026-07-07)
+
+- Smoke : 20/20 modules, 4/4 shell
+- Unit : 63/63 (11 fichiers, +8 tests retours/constellation/bandeau)
+- Lint : 0 erreur
+- Build entrée : 291 KB brut (`index-BEr_ZN1A.js`), 81 KB gzip (+3,6 KB brut, +1 KB gzip — logique constellation + handlers DOM)
+- CSS entrée : 125 KB brut (`index-D0UZlOxI.css`), 21 KB gzip (+5 KB, styles mouillages + constellation)
+- Chunk habits JS : 11,6 KB brut (`index-B-nyuVM0.js`), 4,1 KB gzip
+- Precache : 1082 KiB (+9 KiB)
+- Grep contrôle : 0 `streak` / `jours de suite` dans `habits/view.js` ; 0 `!important` et 0 couleur en dur dans `habits/style.css`
+- `git diff --stat` périmètre : `habits/` uniquement (8 fichiers : logic, store, events, view, view-panels, index, style + tests)
+- Commits : `feat:` vue Aujourd'hui + animations ; `feat:` Régularité constellation ; `feat:` bandeau jauge ; `refactor:` store/events + retrait streak ; `chore:` clôture M12
+
 ### Simulation quota plein (procédure dev, M02)
 
 1. `npm run preview`, ouvrir l'app dans le navigateur.
@@ -642,6 +666,21 @@ Vérification automatisée équivalente : `npm run test:unit` — tests `save() 
   Tokens eau scène (`--w1`…`--foam`) par thème dans `mood/style.css`.
 - M11 : `MutationObserver` sur `data-theme` pour rafraîchir palette scène sans re-mount.
 - M11 : validation manuelle attendue (iPhone ≤375 px + 15 Pro Max, 4 thèmes, mouvement réduit).
+- M12 : Habitudes refondu — 6e emploi de l'eau (mesure / accueille / guide / situe dans le temps /
+  traduit l'état intérieur / **accueille le retour sans jugement**). Vue Aujourd'hui = cartes
+  mouillages (eau, ancre ⚓, ondes, compteur retours). Vue Régularité = constellation 35 jours
+  (bioluminescence / attente neutre / hors fréquence).
+- M12 : **correctif critique** — toggle complétion ne déclenche plus `render()` global ; classes
+  `done` / `just-done` + mise à jour ciblée compteur et jauge (`updateTodayBanner`).
+- M12 : retrait volontaire affichage streak — remplacé par `getReturnsCount()` (30 jours glissants).
+  `getConsecutiveDays()` conservée en base (exportée) pour usage futur, jamais affichée.
+- M12 : modèle de données inchangé (`habits:list`, `habits:completions`, petSlot, onboarding animal).
+  Widget dashboard conservé. Historique calendrier mensuel remplacé par vue Régularité.
+- M12 : découpage `logic.js` / `habits-store.js` / `habits-events.js` / `view-panels.js`.
+- M12 : constellation — idée initiée par proposition Ollama, affinée au monde Ancrage (bioluminescence).
+- M12 : première application CHECKLIST-SORTIE-MODULE — `style.css` (883 L) et `index.js` (445 L)
+  dépassent le seuil 400 L (comparable Humeur pour le CSS) ; tous les autres critères passent.
+  Validation manuelle attendue (iPhone, 4 thèmes, taps rapides sur mouillages).
 
 ---
 
