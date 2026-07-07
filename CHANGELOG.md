@@ -185,3 +185,14 @@ Historique des modifications du chantier `chantier/redesign`.
 - Patron modale complété : **jamais `open` en HTML, toujours `showModal()` en JS** (complète M10b).
 - Chunk calendar JS : +0,1 KB gzip. Chunk calendar CSS : +0,01 KB. Entrée inchangée.
 - Fin refonte Agenda. Validation groupée M10 + M10b + M10c (iPhone/Mac, 4 thèmes) attendue.
+
+### M10d — Agenda : fonds thématisés (mois) + débordement fin récurrence
+
+- Cases mois (`.cal__cell`) et boutons Jour/Semaine/Mois (`.cal__seg-btn`) : fond explicite
+  token — le défaut navigateur des `<button>` restait clair en thèmes sombres (Encre, Crépuscule).
+- Boutons « En approche » (`.cal__app-item`) : `background: transparent`, `border: none`.
+- Champ Fin récurrence : `.cal__composer-field input` ajouté au sélecteur largeur modale
+  (`width:100%`, `box-sizing`, `min-width:0`).
+- Chunk calendar CSS : +0,02 KB gzip. Entrée et JS inchangés.
+- Série Agenda M10 → M10d terminée. Validation groupée (iPhone/Mac, 4 thèmes, insister Encre
+  et Crépuscule) attendue.
