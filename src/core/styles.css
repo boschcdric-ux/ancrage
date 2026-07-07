@@ -346,6 +346,12 @@ textarea:focus {
 #app-module-parallax {
   position: relative;
   min-height: 100%;
+}
+
+/* will-change permanent retiré (M12g) : créait un contexte de composition
+   permanent au-dessus des modales ; WebKit ne repeignait plus la ligne draguée.
+   Activé uniquement pendant le pan horizontal swipe (classe JS). */
+#app-module-parallax.app-module-parallax--will-change {
   will-change: transform;
 }
 
