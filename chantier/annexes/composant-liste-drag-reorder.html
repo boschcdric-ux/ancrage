@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="encre">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Composant — Liste réordonnable par glisser-déposer</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   COMPOSANT — Liste réordonnable par glisser-déposer tactile
+   Remplace le pattern "flèches haut/bas" (bidouillage) par un
+   vrai drag au toucher, via Pointer Events (souris + tactile).
+   RÉUTILISABLE : conçu pour resservir tel quel dans Mémo (post-its,
+   listes) — logique découplée du contenu de la ligne.
+   Fallback accessibilité : ↑/↓ clavier discrets, visibles au focus
+   uniquement (drag seul n'est pas accessible au clavier).
+   ============================================================ */
+:root, [data-theme="encre"]{--bg-primary:#0a1017;--bg-secondary:#101a24;--bg-tertiary:#16232f;--bg-hover:#1c2c3b;--text-primary:#e9f1f4;--text-secondary:#9db4c0;--text-muted:#8299a6;--accent:#45e0b0;--accent-hover:#63eec2;--accent-soft:rgba(69,224,176,.15);--text-on-accent:#04241a;--danger:#ef7d93;--border:rgba(233,241,244,.08);--shadow:0 4px 24px rgba(2,8,14,.5)}
+[data-theme="garrigue"]{--bg-primary:#f2eee6;--bg-secondary:#faf7f0;--bg-tertiary:#eae4d8;--bg-hover:#e2dccd;--text-primary:#26301f;--text-secondary:#55614a;--text-muted:#5f6b53;--accent:#4d6b3c;--accent-hover:#3e5a2f;--accent-soft:rgba(77,107,60,.12);--text-on-accent:#f5f8ef;--danger:#b3543f;--border:rgba(38,48,31,.10);--shadow:0 4px 24px rgba(90,80,60,.15)}
+[data-theme="crepuscule"]{--bg-primary:#171015;--bg-secondary:#201620;--bg-tertiary:#291d29;--bg-hover:#322434;--text-primary:#f4e9e4;--text-secondary:#c3aaa4;--text-muted:#a89089;--accent:#f0a35e;--accent-hover:#f5b678;--accent-soft:rgba(240,163,94,.15);--text-on-accent:#2b1706;--danger:#ee7f8e;--border:rgba(244,233,228,.08);--shadow:0 4px 24px rgba(10,4,10,.5)}
+[data-theme="maree"]{--bg-primary:#e8edeb;--bg-secondary:#f4f7f6;--bg-tertiary:#dee6e3;--bg-hover:#d4dedb;--text-primary:#1d2b2d;--text-secondary:#48605f;--text-muted:#536c6a;--accent:#146b66;--accent-hover:#0f5752;--accent-soft:rgba(20,107,102,.10);--text-on-accent:#eaf5f3;--danger:#b3543f;--border:rgba(29,43,45,.10);--shadow:0 4px 24px rgba(60,85,82,.15)}
+:root{--font-family:'Atkinson Hyperlegible',system-ui,sans-serif;--font-display:'Bricolage Grotesque',var(--font-family);
+--radius-md:12px;--radius-full:9999px;--dfast:140ms;--dnorm:260ms;--ease-spring:cubic-bezier(.34,1.45,.64,1);--ease-out:cubic-bezier(.16,1,.3,1)}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{max-width:100%;overflow-x:hidden}
+body{font-family:var(--font-family);background:var(--bg-primary);color:var(--text-primary);display:flex;flex-direction:column;align-items:center;padding:24px 12px 60px;gap:16px;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;color:inherit;background:none;border:none;cursor:pointer;font-size:inherit}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+input{font-family:inherit;font-size:max(1rem,16px);color:var(--text-primary)}
+.bar{width:min(440px,100%);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.bar__title{font-family:var(--font-display);font-weight:600;font-size:.9rem;color:var(--text-secondary)}
+.chips{display:flex;gap:7px}.chip{width:24px;height:24px;border-radius:50%;background:var(--pv);border:2px solid var(--border)}
+.chip[aria-pressed="true"]{border-color:var(--accent);transform:scale(1.12)}
+.intro{width:min(440px,100%);font-size:.82rem;color:var(--text-secondary);line-height:1.5}
+.intro b{color:var(--text-primary)}
+.reopen{font-size:.8rem;color:var(--accent);text-decoration:underline;text-underline-offset:3px}
+
+/* ---------- Modale (patron canonique : jamais 'open' HTML, jamais transform sur le dialog) ---------- */
+.panel{border:none;padding:0;background:transparent;color:var(--text-primary);
+width:min(420px,calc(100vw - 32px));margin:auto;max-height:min(82vh,620px)}
+.panel::backdrop{background:rgba(4,10,16,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+.panel[open] .panel__card{animation:panel-in var(--dnorm) var(--ease-out) both}
+@keyframes panel-in{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+.panel__card{background:var(--bg-secondary);border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow);
+padding:16px;max-height:min(82vh,620px);overflow:auto;box-sizing:border-box;display:flex;flex-direction:column;gap:16px}
+
+/* En-tête : titre SEUL sur sa ligne, actions compactes en dessous — corrige le bug de largeur */
+.panel__head{display:flex;flex-direction:column;gap:10px}
+.panel__title{font-family:var(--font-display);font-weight:700;font-size:1.2rem}
+.panel__actions{display:flex;gap:8px;flex-wrap:wrap}
+.pbtn{padding:8px 14px;border-radius:var(--radius-full);font-size:.82rem;font-weight:700;white-space:nowrap;
+background:var(--bg-tertiary);border:1px solid var(--border);color:var(--text-secondary);
+transition:background var(--dfast),color var(--dfast),transform var(--dfast) var(--ease-spring)}
+.pbtn:active{transform:scale(.96)}
+.pbtn--toggle[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.pbtn--primary{background:var(--accent);color:var(--text-on-accent);border-color:transparent}
+
+/* ---------- Liste réordonnable ---------- */
+.reorder-hint{font-size:.76rem;color:var(--text-muted);display:none}
+.reorder-hint.show{display:block}
+.list{display:flex;flex-direction:column;gap:8px;position:relative}
+.row{display:flex;align-items:center;gap:10px;background:var(--bg-tertiary);border:1px solid var(--border);
+border-radius:var(--radius-md);padding:10px 12px;touch-action:pan-y;position:relative;
+transition:transform var(--dfast) var(--ease-out),box-shadow var(--dfast)}
+.row.dragging{transition:none;box-shadow:0 10px 26px rgba(0,0,0,.35);z-index:20;cursor:grabbing}
+.row.settle{transition:transform var(--dnorm) var(--ease-spring)}
+.row__handle{flex:none;width:28px;height:28px;display:none;place-items:center;border-radius:8px;cursor:grab;
+color:var(--text-muted);touch-action:none}
+.row__handle.show{display:grid}
+.row__handle:active{cursor:grabbing;background:var(--bg-hover)}
+.grip{display:grid;grid-template-columns:repeat(2,3px);grid-template-rows:repeat(3,3px);gap:3px}
+.grip i{width:3px;height:3px;border-radius:50%;background:currentColor}
+.row__emoji{flex:none;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;
+background:var(--bg-secondary);border:1px solid var(--border);font-size:.95rem}
+.row__body{flex:1;min-width:0}
+.row__name{font-size:.92rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row__meta{font-size:.72rem;color:var(--text-secondary)}
+.row__kbd{flex:none;display:none;flex-direction:column;gap:2px}
+.row:focus-within .row__kbd,.row__kbd.show{display:flex}
+.row__kbd button{width:22px;height:18px;display:grid;place-items:center;border-radius:5px;background:var(--bg-secondary);
+border:1px solid var(--border);color:var(--text-secondary);font-size:.7rem}
+.row__del{flex:none;width:28px;height:28px;display:grid;place-items:center;border-radius:8px;color:var(--danger)}
+.row__del:hover{background:var(--bg-hover)}
+
+.demo-note{width:min(440px,100%);font-size:.76rem;line-height:1.5;color:var(--text-muted);text-align:center}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <span class="bar__title">Composant · Réorganiser par glisser</span>
+  <div class="chips" role="group" aria-label="Thèmes">
+    <button class="chip" data-t="encre" style="--pv:linear-gradient(135deg,#101a24 55%,#45e0b0 55%)" aria-pressed="true"></button>
+    <button class="chip" data-t="garrigue" style="--pv:linear-gradient(135deg,#faf7f0 55%,#4d6b3c 55%)" aria-pressed="false"></button>
+    <button class="chip" data-t="crepuscule" style="--pv:linear-gradient(135deg,#201620 55%,#f0a35e 55%)" aria-pressed="false"></button>
+    <button class="chip" data-t="maree" style="--pv:linear-gradient(135deg,#f4f7f6 55%,#146b66 55%)" aria-pressed="false"></button>
+  </div>
+</div>
+
+<p class="intro">
+  En-tête redessiné (titre seul sur sa ligne, boutons raccourcis) + liste
+  réordonnable par <b>glisser-déposer tactile</b> (Pointer Events, souris
+  ET doigt). Touche « Réorganiser » pour faire apparaître les poignées
+  ⠿, puis glisse une ligne — les autres s'écartent avec un léger ressort.
+</p>
+
+<button class="reopen" id="reopen">Rouvrir la modale ↻</button>
+
+<dialog class="panel" id="panel">
+  <div class="panel__card">
+    <div class="panel__head">
+      <h2 class="panel__title">Gérer mes habitudes</h2>
+      <div class="panel__actions">
+        <button type="button" class="pbtn pbtn--toggle" id="reorderToggle" aria-pressed="false">Réorganiser</button>
+        <button type="button" class="pbtn" id="closeBtn">Fermer</button>
+      </div>
+    </div>
+
+    <p class="reorder-hint" id="reorderHint">Glisse une ligne pour la déplacer. Au clavier : sélectionne une ligne puis ↑ / ↓.</p>
+
+    <div class="list" id="list" role="list" aria-label="Mes habitudes"></div>
+
+    <button type="button" class="pbtn pbtn--primary" style="align-self:flex-start" id="addBtn">+ Ajouter</button>
+  </div>
+</dialog>
+
+<p class="demo-note">
+  Ce composant est pensé pour être repris tel quel dans Mémo (réordonner
+  des post-its ou des blocs) — la logique de drag est découplée du
+  contenu de chaque ligne.
+</p>
+
+<script>
+(function(){
+'use strict';
+const $=id=>document.getElementById(id);
+const panel=$('panel');
+
+/* ---------- Données de démo ---------- */
+let items=[
+ {id:'h1',emoji:'🐕',name:'Sortir Vola',meta:'Quotidien'},
+ {id:'h2',emoji:'💧',name:"Boire assez d'eau",meta:'Quotidien'},
+ {id:'h3',emoji:'📵',name:'10 min sans écran le matin',meta:'Quotidien'},
+ {id:'h4',emoji:'🌿',name:'5 min de lumière naturelle',meta:'En semaine'},
+ {id:'h5',emoji:'😴',name:'Coucher avant minuit',meta:'Quotidien'},
+ {id:'h6',emoji:'🐱',name:'Litière de Guimel',meta:'Un jour sur deux'}
+];
+let reorderMode=false;
+
+/* ================================================================
+   COMPOSANT RÉUTILISABLE : liste réordonnable par glisser (drag)
+   API : renderList(container, items, onReorder) — items = [{id,...}]
+   Technique : Pointer Events (souris + tactile unifiés), déplacement
+   du bloc saisi en transform (hors flux), calcul de l'index cible par
+   comparaison avec le point médian des autres lignes, réagencement
+   des autres lignes via FLIP (transform de la position ancienne vers
+   la nouvelle, transition CSS).
+   ================================================================ */
+function renderList(){
+  const wrap=$('list');wrap.innerHTML='';
+  items.forEach(it=>{
+    const row=document.createElement('div');
+    row.className='row';row.dataset.id=it.id;row.setAttribute('role','listitem');
+    row.tabIndex=0;
+    row.innerHTML=`
+      <span class="row__handle${reorderMode?' show':''}" aria-hidden="true">
+        <span class="grip"><i></i><i></i><i></i><i></i><i></i><i></i></span>
+      </span>
+      <div class="row__emoji">${it.emoji}</div>
+      <div class="row__body">
+        <div class="row__name">${it.name}</div>
+        <div class="row__meta">${it.meta}</div>
+      </div>
+      <div class="row__kbd${reorderMode?' show':''}">
+        <button type="button" data-move="-1" aria-label="Monter ${it.name}">▲</button>
+        <button type="button" data-move="1" aria-label="Descendre ${it.name}">▼</button>
+      </div>
+      ${reorderMode?'':'<button type="button" class="row__del" aria-label="Supprimer">✕</button>'}
+    `;
+    if(reorderMode){
+      const handle=row.querySelector('.row__handle');
+      handle.addEventListener('pointerdown',ev=>startDrag(ev,row));
+      row.querySelectorAll('[data-move]').forEach(b=>b.addEventListener('click',()=>{
+        keyboardMove(it.id,Number(b.dataset.move));
+      }));
+    }
+    row.addEventListener('keydown',ev=>{
+      if(!reorderMode)return;
+      if(ev.key==='ArrowUp'){ev.preventDefault();keyboardMove(it.id,-1);}
+      if(ev.key==='ArrowDown'){ev.preventDefault();keyboardMove(it.id,1);}
+    });
+    wrap.appendChild(row);
+  });
+}
+function keyboardMove(id,dir){
+  const i=items.findIndex(x=>x.id===id);
+  const j=i+dir;
+  if(j<0||j>=items.length)return;
+  [items[i],items[j]]=[items[j],items[i]];
+  renderList();
+  requestAnimationFrame(()=>{
+    const row=$('list').querySelector(`[data-id="${id}"]`);
+    if(row)row.focus();
+  });
+}
+
+/* ---------- Drag tactile/souris (Pointer Events) ---------- */
+let drag=null;
+function startDrag(ev,row){
+  ev.preventDefault();
+  const listEl=$('list');
+  const rows=[...listEl.querySelectorAll('.row')];
+  drag={
+    id:row.dataset.id,
+    pointerId:ev.pointerId,
+    startY:ev.clientY,
+    row,
+    order:items.map(x=>x.id) // ordre courant, muté pendant le drag
+  };
+  row.setPointerCapture(ev.pointerId);
+  row.classList.add('dragging');
+  row.style.transform='translateY(0)';
+  window.addEventListener('pointermove',onDragMove);
+  window.addEventListener('pointerup',onDragEnd,{once:true});
+}
+function onDragMove(ev){
+  if(!drag)return;
+  const dy=ev.clientY-drag.startY;
+  drag.row.style.transform=`translateY(${dy}px)`;
+
+  const listEl=$('list');
+  const others=[...listEl.querySelectorAll('.row')].filter(r=>r!==drag.row);
+  const pointerY=ev.clientY;
+  let curIndex=drag.order.indexOf(drag.id);
+  let targetIndex=curIndex;
+  others.forEach(r=>{
+    const rect=r.getBoundingClientRect();
+    const mid=rect.top+rect.height/2;
+    const idx=drag.order.indexOf(r.dataset.id);
+    if(pointerY<mid && idx<curIndex) targetIndex=Math.min(targetIndex,idx);
+    if(pointerY>mid && idx>curIndex) targetIndex=Math.max(targetIndex,idx);
+  });
+  if(targetIndex!==curIndex){
+    // FLIP : positions AVANT le réagencement
+    const before=new Map(others.map(r=>[r,r.getBoundingClientRect()]));
+    const [moved]=drag.order.splice(curIndex,1);
+    drag.order.splice(targetIndex,0,moved);
+    // réordonner le DOM selon le nouvel ordre (sans re-render lourd)
+    drag.order.forEach(id=>{
+      if(id===drag.id)return;
+      listEl.appendChild(listEl.querySelector(`[data-id="${id}"]`));
+    });
+    listEl.appendChild(drag.row); // le dragué reste visuellement au-dessus, position DOM peu importe (z-index)
+    // POSITIONS APRÈS -> appliquer l'inversion puis jouer vers 0 (FLIP)
+    others.forEach(r=>{
+      const b=before.get(r);
+      const a=r.getBoundingClientRect();
+      const deltaY=b.top-a.top;
+      if(deltaY){
+        r.style.transition='none';
+        r.style.transform=`translateY(${deltaY}px)`;
+        requestAnimationFrame(()=>{
+          r.style.transition='';
+          r.classList.add('settle');
+          r.style.transform='';
+        });
+      }
+    });
+  }
+}
+function onDragEnd(){
+  if(!drag)return;
+  window.removeEventListener('pointermove',onDragMove);
+  drag.row.classList.remove('dragging');
+  drag.row.style.transform='';
+  // appliquer le nouvel ordre aux données, puis re-render propre
+  items=drag.order.map(id=>items.find(x=>x.id===id));
+  drag=null;
+  renderList();
+}
+
+/* ---------- Bascule mode réorganisation ---------- */
+$('reorderToggle').addEventListener('click',()=>{
+  reorderMode=!reorderMode;
+  $('reorderToggle').setAttribute('aria-pressed',String(reorderMode));
+  $('reorderToggle').textContent=reorderMode?'Terminé':'Réorganiser';
+  $('reorderHint').classList.toggle('show',reorderMode);
+  renderList();
+});
+$('closeBtn').addEventListener('click',()=>panel.close());
+$('addBtn').addEventListener('click',()=>{});
+panel.addEventListener('click',ev=>{if(ev.target===panel)panel.close()});
+$('reopen').addEventListener('click',()=>{if(!panel.open)panel.showModal()});
+
+document.querySelectorAll('[data-t]').forEach(b=>b.addEventListener('click',()=>{
+  document.documentElement.dataset.theme=b.dataset.t;
+  document.querySelectorAll('[data-t]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+}));
+
+renderList();
+requestAnimationFrame(()=>panel.showModal());
+})();
+</script>
+</body>
+</html>
