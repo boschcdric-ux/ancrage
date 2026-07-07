@@ -254,3 +254,16 @@ Historique des modifications du chantier `chantier/redesign`.
   `render()` (rAF). Logique formulaire / onboarding inchangée.
 - Bundle entrée : +1,3 KB brut / +0,3 KB gzip. CSS entrée : +0,9 KB. Chunk habits inchangé.
 - Validation manuelle (iPhone scrollé, 4 thèmes) attendue.
+
+### M12c — Habitudes : en-tête panneau + drag réorganisation
+
+- En-tête panneau « Gérer » : titre seul sur sa ligne, actions compactes en dessous
+  (« Réorganiser » / « Terminé ») — corrige le débordement des libellés longs.
+- Remplacement des flèches ↑/↓ visibles par glisser-déposer tactile (Pointer Events +
+  animation FLIP des lignes adjacentes). Poignées ⠿ visibles en mode réorganisation.
+- `reorderHabits(orderedIds)` + module partagé `core/list-drag-reorder.js` (réutilisable
+  pour Mémo). Repli clavier ↑/↓ conservé (focus ou mode réorganisation).
+- Ancien formulaire bulk « Modifier toutes les habitudes » retiré.
+- Tests : +2 (`list-drag-reorder.test.js`). Total 65/65.
+- Bundle entrée : +3 KB brut / +0,6 KB gzip. CSS entrée : +2 KB. Chunk habits inchangé.
+- Fin série Habitudes (M12 → M12c). Validation manuelle groupée attendue.
