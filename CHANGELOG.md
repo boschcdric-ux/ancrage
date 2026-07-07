@@ -300,3 +300,18 @@ Historique des modifications du chantier `chantier/redesign`.
   `transform: none` après l'animation d'entrée. Calque GPU ligne (M12e) conservé.
 - Périmètre : `habits/style.css` uniquement. Bundle et tests inchangés (65/65).
 - Série Habitudes close (M12 → M12f). Validation manuelle iPhone prioritaire attendue.
+
+### M12g — Habitudes : audit profond drag invisible
+
+- Investigation empirique WebKit (sonde A/B `scripts/m12g-webkit-drag-probe.mjs`) :
+  cause prouvée = `<dialog>` top-layer × `overflow:auto` sur la carte modale clippe
+  la ligne `transform`ée (non-peinture, pas déplacement hors écran). Liste hors modale
+  ou `overflow:visible` pendant drag restaure la visibilité.
+- Correctif Habitudes : `.habits__panel-card:has(.list-drag-reorder__row--dragging)
+  { overflow: visible }` — scroll au repos inchangé.
+- Correctif socle : `will-change:transform` sur `#app-module-parallax` uniquement pendant
+  le pan swipe (`app-module-parallax--will-change`), retiré au repos — défense contre
+  contextes de composition permanents au-dessus des modales.
+- Tests : +4 (`swipe-detection.test.js`). Total 69/69. Repli flèches ↑/↓ non activé.
+- Bundle entrée : +0,2 KB brut / gzip stable. CSS entrée : +0,2 KB. Precache inchangé.
+- Fin investigation série Habitudes (M12 → M12g). Validation iPhone drag modale attendue.
