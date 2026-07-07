@@ -701,7 +701,7 @@ textarea:focus {
   margin: 0;
   padding-left: 0;
   padding-right: 0;
-  padding-top: 0;
+  padding-top: calc(env(safe-area-inset-top, 0px) + var(--space-4));
   padding-bottom: calc(80px + max(env(safe-area-inset-bottom, 0px), 20px));
   font-size: var(--text-base);
   box-sizing: border-box;
