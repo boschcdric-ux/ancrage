@@ -14,6 +14,10 @@
    listes) — logique découplée du contenu de la ligne.
    Fallback accessibilité : ↑/↓ clavier discrets, visibles au focus
    uniquement (drag seul n'est pas accessible au clavier).
+   M12g (2026-07) : cause WebKit prouvée = interaction `<dialog>` top-layer
+   × overflow:auto sur la carte modale (clippe la ligne transformée).
+   Correctif prod : `:has(.dragging){overflow:visible}` sur la carte +
+   will-change conditionnel sur #app-module-parallax (socle). Valider sur iPhone.
    ============================================================ */
 :root, [data-theme="encre"]{--bg-primary:#0a1017;--bg-secondary:#101a24;--bg-tertiary:#16232f;--bg-hover:#1c2c3b;--text-primary:#e9f1f4;--text-secondary:#9db4c0;--text-muted:#8299a6;--accent:#45e0b0;--accent-hover:#63eec2;--accent-soft:rgba(69,224,176,.15);--text-on-accent:#04241a;--danger:#ef7d93;--border:rgba(233,241,244,.08);--shadow:0 4px 24px rgba(2,8,14,.5)}
 [data-theme="garrigue"]{--bg-primary:#f2eee6;--bg-secondary:#faf7f0;--bg-tertiary:#eae4d8;--bg-hover:#e2dccd;--text-primary:#26301f;--text-secondary:#55614a;--text-muted:#5f6b53;--accent:#4d6b3c;--accent-hover:#3e5a2f;--accent-soft:rgba(77,107,60,.12);--text-on-accent:#f5f8ef;--danger:#b3543f;--border:rgba(38,48,31,.10);--shadow:0 4px 24px rgba(90,80,60,.15)}
