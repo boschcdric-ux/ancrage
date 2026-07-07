@@ -175,3 +175,13 @@ Historique des modifications du chantier `chantier/redesign`.
   (tous modules, pas de doublon par module).
 - CSS entrée : +0,05 KB gzip. Chunk calendar CSS : +0,1 KB gzip. JS inchangé.
 - Validation groupée M10 + M10b (iPhone, 4 thèmes) attendue.
+
+### M10c — Agenda : modale en mode modal (showModal)
+
+- Cause : attribut `open` posé en HTML sur les `<dialog>` détail/composeur → mode non-modal
+  (pas de top layer, pas de backdrop, pas de centrage) ; `!dialog.open` bloquait `showModal()`.
+- Retrait de `open` sur les 2 dialogs dans `view.js` ; ouverture uniquement via `showModal()`.
+- Classe `cal--modal-open` masque le bouton sticky « + Poser » tant qu'une modale est ouverte.
+- Patron modale complété : **jamais `open` en HTML, toujours `showModal()` en JS** (complète M10b).
+- Chunk calendar JS : +0,1 KB gzip. Chunk calendar CSS : +0,01 KB. Entrée inchangée.
+- Fin refonte Agenda. Validation groupée M10 + M10b + M10c (iPhone/Mac, 4 thèmes) attendue.

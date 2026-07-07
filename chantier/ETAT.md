@@ -3,7 +3,7 @@
 > Ce fichier est la mémoire du chantier. L'agent le lit au début de chaque
 > mission et le met à jour à la fin. Il doit rester factuel et concis.
 
-**Dernière mise à jour :** 2026-07-07 — M10b
+**Dernière mise à jour :** 2026-07-07 — M10c
 
 ---
 
@@ -30,6 +30,7 @@
 | M09c | Respiration : sync eau démarrage + pause | ✅ faite (en attente validation Cédric) | 2026-07-06 |
 | M10 | Refonte Agenda : la marée du jour | ✅ faite (en attente validation Cédric) | 2026-07-07 |
 | M10b | Agenda : modale centrée, boutons + espacement haut | ✅ faite (en attente validation Cédric) | 2026-07-07 |
+| M10c | Agenda : modale en mode modal (showModal) | ✅ faite (en attente validation Cédric) | 2026-07-07 |
 
 Statuts : ⬜ à faire · 🔶 en cours · ✅ faite et validée par Cédric · 🛑 bloquée
 
@@ -42,17 +43,17 @@ sans justification écrite.*
 
 | Métrique | Baseline (M00) | Dernière valeur | Mission |
 |---|---|---|---|
-| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M10b |
-| Tests unitaires | 22/22 passés (2 fichiers) | 51/51 passés (8 fichiers) | M10b |
-| Lint | 0 erreur | 0 erreur | M10b |
-| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 285 KB (`index-C9S-lv1L.js`) | M10b |
-| JS initial (gzip) | 243 KB | 78 KB | M10b |
-| CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 117 KB (`index-JBBUZz1k.css`, entrée HTML) | M10b |
-| Chunk calendar JS (gzip) | — | 9,3 KB (`index-DnseyYGl.js`) | M10b |
-| Chunk calendar CSS (gzip) | — | 3,2 KB (`index-BM-95gr2.css`) | M10b |
+| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M10c |
+| Tests unitaires | 22/22 passés (2 fichiers) | 51/51 passés (8 fichiers) | M10c |
+| Lint | 0 erreur | 0 erreur | M10c |
+| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 285 KB (`index-zyQQYnVE.js`) | M10c |
+| JS initial (gzip) | 243 KB | 78 KB | M10c |
+| CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 117 KB (`index-JBBUZz1k.css`, entrée HTML) | M10c |
+| Chunk calendar JS (gzip) | — | 9,4 KB (`index-CtJM2E8J.js`) | M10c |
+| Chunk calendar CSS (gzip) | — | 3,2 KB (`index-Ci4y9893.css`) | M10c |
 | Nombre de chunks JS | 1 | 9 | M01 |
 | Polices woff2 (dist) | — | ~122 KB (7 fichiers) | M04 |
-| Precache PWA | — | 1068 KiB (23 entrées) | M10b |
+| Precache PWA | — | 1068 KiB (23 entrées) | M10c |
 
 Variation bundle M05 : +4,3 KB brut sur le chunk d'entrée JS (275 vs 270 M04) — hors tolérance ±2 KB
 mais +1,5 KB gzip seulement ; justifié par markup SVG inline (houle, ancre, coche) et fonctions tide
@@ -347,6 +348,29 @@ et zéro `#c9a227` dans `tasks/style.css`.
 - `git diff --stat` : `calendar/style.css` + `core/styles.css` uniquement
 - Commits : `fix:` modale centrée + boutons ; `fix:` padding-top safe-area ; `chore:` clôture M10b
 
+### Rituel AVANT M10c (2026-07-07)
+
+- Smoke : 20/20 modules, 4/4 shell
+- Unit : 51/51 (8 fichiers)
+- Lint : 0 erreur
+- Build entrée : 285 KB brut (`index-C9S-lv1L.js`), 78 KB gzip
+- CSS entrée : 117 KB brut (`index-JBBUZz1k.css`), 19 KB gzip
+- Precache : 1068 KiB
+
+### Rituel APRÈS M10c (2026-07-07)
+
+- Smoke : 20/20 modules, 4/4 shell
+- Unit : 51/51 (8 fichiers)
+- Lint : 0 erreur
+- Build entrée : 285 KB brut (`index-zyQQYnVE.js`), 78 KB gzip (inchangé)
+- CSS entrée : 117 KB brut (`index-JBBUZz1k.css`), 19 KB gzip (inchangé)
+- Chunk calendar JS : 32 KB brut (`index-CtJM2E8J.js`), 9,4 KB gzip (+0,1 KB, `syncModalOpenClass`)
+- Chunk calendar CSS : 15,6 KB brut (`index-Ci4y9893.css`), 3,2 KB gzip (+0,01 KB, masquage addbtn)
+- Precache : 1068 KiB (inchangé)
+- Grep contrôle : 0 dialog avec attribut `open` dans `calendar/view.js`
+- `git diff --stat` : `calendar/view.js` + `calendar/index.js` + `calendar/style.css` uniquement
+- Commits : `fix:` showModal sans open HTML ; `chore:` clôture M10c
+
 ### Simulation quota plein (procédure dev, M02)
 
 1. `npm run preview`, ouvrir l'app dans le navigateur.
@@ -512,6 +536,16 @@ Vérification automatisée équivalente : `npm run test:unit` — tests `save() 
   modules). Mission balai `--module-max-width` + revue espacements à planifier.
 - M10b : wrappers `-card` déjà présents en M10 (`view.js` inchangé). Validation groupée
   M10 + M10b attendue.
+- M10c : cause racine modale agenda — attribut `open` posé en HTML ouvrait le `<dialog>`
+  en mode non-modal (pas de top layer, pas de backdrop, pas de centrage) ; la garde
+  `!dialog.open` empêchait ensuite `showModal()`. Retrait de `open` sur les 2 dialogs ;
+  ouverture uniquement via `showModal()` après `render()`.
+- M10c : patron modale complété — **un `<dialog>` ne doit JAMAIS recevoir l'attribut `open`
+  via HTML** ; toujours `showModal()` en JS. Complète la règle « ne pas animer le dialog
+  lui-même » (M10b).
+- M10c : classe `cal--modal-open` sur `.cal` masque le bouton sticky « + Poser » tant
+  qu'une modale est ouverte (sync après render + handler `close` backdrop/Échap).
+- M10c : fin de la refonte Agenda. Validation groupée M10 + M10b + M10c attendue.
 
 ---
 
