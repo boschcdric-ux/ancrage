@@ -719,7 +719,9 @@
 
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    /* Pas de transform ici : la carte revient à transform:none après l'entrée.
+       Un transform résiduel sur un ancêtre en overflow:auto fait disparaître
+       l'enfant draggé sur WebKit iOS (fill-mode: both). */
   }
 }
 
