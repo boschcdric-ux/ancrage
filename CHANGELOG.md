@@ -152,3 +152,15 @@ Historique des modifications du chantier `chantier/redesign`.
   sans transition ; reprise inchangée (transition vers cible sur durée restante).
 - Un seul fichier (`breathing/index.js`, +26 lignes). Saga Respiration M09→M09c finalisée.
 - Bundle JS entrée : +0,5 KB brut / +0,12 KB gzip (dans tolérance). CSS entrée : inchangé.
+
+### M10 — Refonte Agenda : la marée du jour
+
+- Vue Jour : marée animée (`--now-y`, houle SVG, passé sous la surface), couloirs de chevauchement
+  (`assignLanes` dans `tide.js`), hauteur = durée réelle, ticker 60 s avec mutations ciblées.
+- Vue Semaine : liste verticale des 7 jours (puces cliquables). Vue Mois : carte pastilles (max 3).
+- Section « En approche » : distance temporelle = estompage visuel (far / horizon).
+- Modales `<dialog>` centrées pour détail et composeur « + Poser » (fin écran plein flux).
+- Ancre ⚓, auto-scroll sur maintenant, animation accostage création, `prefers-reduced-motion`.
+- Largeur `min(420px, 100%)`, champs ≥ 16 px, 0 `!important`, 0 couleur en dur.
+- Chunk calendar : JS 9,3 KB gzip (−1,7 KB), CSS 3,1 KB gzip (−1,4 KB). Entrée inchangée. +7 tests.
+- Validation manuelle iPhone/Mac (4 thèmes) attendue avant mission suivante.
