@@ -3,7 +3,7 @@
 > Ce fichier est la mémoire du chantier. L'agent le lit au début de chaque
 > mission et le met à jour à la fin. Il doit rester factuel et concis.
 
-**Dernière mise à jour :** 2026-07-07 — M12f
+**Dernière mise à jour :** 2026-07-07 — STOP (aucune mission ⬜)
 
 ---
 
@@ -893,4 +893,12 @@ Vérification automatisée équivalente : `npm run test:unit` — tests `save() 
 
 *Rempli uniquement en cas de STOP. Vidé une fois le blocage levé par Cédric.*
 
-- —
+- **2026-07-07 — Aucune mission ⬜ disponible.** Le tableau de bord liste M00→M12f
+  toutes en ✅ (M12→M12f : « faite, validation Cédric en attente »). Aucun
+  document `chantier/M13-*.md` (ni autre mission ⬜) n'existe dans le dépôt.
+  Rituel AVANT relancé (baseline saine, identique M12f) : smoke 20/20 + 4/4 shell,
+  unit 65/65, lint 0, build OK (entrée 295 KB / 83 KB gzip, precache 1089 KiB).
+  **Question pour Cédric :** (1) valider manuellement la série Habitudes M12→M12f
+  (§7 00-REGLES) ; (2) rédiger et ajouter au tableau la prochaine mission (candidats
+  notés en Découvertes : micro-mission annexe drag-reorder, harmonisation largeurs,
+  aide contextuelle « ? », module Mémo, etc.).
