@@ -164,3 +164,14 @@ Historique des modifications du chantier `chantier/redesign`.
 - Largeur `min(420px, 100%)`, champs ≥ 16 px, 0 `!important`, 0 couleur en dur.
 - Chunk calendar : JS 9,3 KB gzip (−1,7 KB), CSS 3,1 KB gzip (−1,4 KB). Entrée inchangée. +7 tests.
 - Validation manuelle iPhone/Mac (4 thèmes) attendue avant mission suivante.
+
+### M10b — Agenda : modale centrée, boutons lisibles + espacement haut (socle)
+
+- Modales détail/composeur : animation `cal-modal-in` déplacée sur `.cal__detail-card` /
+  `.cal__composer-card` — le `<dialog>` ne porte plus de `transform` (centrage vertical restauré).
+- Boutons `.cal__btn` : `--text-primary` par défaut, `--text-on-accent` forcé sur primary
+  (:hover/:active), danger explicite. `prefers-reduced-motion` cible les wrappers.
+- Socle : `padding-top: calc(env(safe-area-inset-top) + var(--space-4))` sur mobile-bar
+  (tous modules, pas de doublon par module).
+- CSS entrée : +0,05 KB gzip. Chunk calendar CSS : +0,1 KB gzip. JS inchangé.
+- Validation groupée M10 + M10b (iPhone, 4 thèmes) attendue.
