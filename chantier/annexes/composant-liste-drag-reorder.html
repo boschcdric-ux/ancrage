@@ -205,34 +205,40 @@ function keyboardMove(id,dir){
   });
 }
 
-/* ---------- Drag tactile/souris (Pointer Events) ---------- */
+/* ---------- Drag tactile/souris (Pointer Events) — version robuste M12d ---------- */
 let drag=null;
+function currentLayoutTop(row,listEl){
+  return row.offsetTop-listEl.offsetTop+listEl.getBoundingClientRect().top;
+}
+function applyDragTransform(ev){
+  const listEl=drag.row.parentElement;
+  const targetVisualTop=ev.clientY-drag.grabOffset;
+  const layoutTop=currentLayoutTop(drag.row,listEl);
+  drag.row.style.transform=`translateY(${targetVisualTop-layoutTop}px)`;
+}
 function startDrag(ev,row){
   ev.preventDefault();
-  const listEl=$('list');
-  const rows=[...listEl.querySelectorAll('.row')];
   drag={
     id:row.dataset.id,
-    pointerId:ev.pointerId,
-    startY:ev.clientY,
     row,
-    order:items.map(x=>x.id) // ordre courant, muté pendant le drag
+    pointerId:ev.pointerId,
+    grabOffset:ev.clientY-row.getBoundingClientRect().top,
+    order:items.map(x=>x.id)
   };
   row.setPointerCapture(ev.pointerId);
   row.classList.add('dragging');
-  row.style.transform='translateY(0)';
   window.addEventListener('pointermove',onDragMove);
   window.addEventListener('pointerup',onDragEnd,{once:true});
 }
 function onDragMove(ev){
   if(!drag)return;
-  const dy=ev.clientY-drag.startY;
-  drag.row.style.transform=`translateY(${dy}px)`;
+  const listEl=drag.row.parentElement;
+  applyDragTransform(ev);
 
-  const listEl=$('list');
-  const others=[...listEl.querySelectorAll('.row')].filter(r=>r!==drag.row);
+  const rows=[...listEl.querySelectorAll('.row')];
+  const others=rows.filter(r=>r!==drag.row);
   const pointerY=ev.clientY;
-  let curIndex=drag.order.indexOf(drag.id);
+  const curIndex=drag.order.indexOf(drag.id);
   let targetIndex=curIndex;
   others.forEach(r=>{
     const rect=r.getBoundingClientRect();
@@ -241,33 +247,33 @@ function onDragMove(ev){
     if(pointerY<mid && idx<curIndex) targetIndex=Math.min(targetIndex,idx);
     if(pointerY>mid && idx>curIndex) targetIndex=Math.max(targetIndex,idx);
   });
-  if(targetIndex!==curIndex){
-    // FLIP : positions AVANT le réagencement
-    const before=new Map(others.map(r=>[r,r.getBoundingClientRect()]));
-    const [moved]=drag.order.splice(curIndex,1);
-    drag.order.splice(targetIndex,0,moved);
-    // réordonner le DOM selon le nouvel ordre (sans re-render lourd)
-    drag.order.forEach(id=>{
-      if(id===drag.id)return;
-      listEl.appendChild(listEl.querySelector(`[data-id="${id}"]`));
+  if(targetIndex===curIndex)return;
+
+  const before=new Map(others.map(r=>[r,r.getBoundingClientRect()]));
+  const [moved]=drag.order.splice(curIndex,1);
+  drag.order.splice(targetIndex,0,moved);
+
+  const nextId=drag.order[targetIndex+1];
+  const nextEl=nextId?listEl.querySelector(`[data-id="${nextId}"]`):null;
+  listEl.insertBefore(drag.row,nextEl);
+
+  applyDragTransform(ev);
+
+  others.forEach(r=>{
+    const prev=before.get(r);
+    const next=r.getBoundingClientRect();
+    const deltaY=prev.top-next.top;
+    if(!deltaY)return;
+    r.style.transition='none';
+    r.style.transform=`translateY(${deltaY}px)`;
+    requestAnimationFrame(()=>{
+      requestAnimationFrame(()=>{
+        r.style.transition='';
+        r.classList.add('settle');
+        r.style.transform='';
+      });
     });
-    listEl.appendChild(drag.row); // le dragué reste visuellement au-dessus, position DOM peu importe (z-index)
-    // POSITIONS APRÈS -> appliquer l'inversion puis jouer vers 0 (FLIP)
-    others.forEach(r=>{
-      const b=before.get(r);
-      const a=r.getBoundingClientRect();
-      const deltaY=b.top-a.top;
-      if(deltaY){
-        r.style.transition='none';
-        r.style.transform=`translateY(${deltaY}px)`;
-        requestAnimationFrame(()=>{
-          r.style.transition='';
-          r.classList.add('settle');
-          r.style.transform='';
-        });
-      }
-    });
-  }
+  });
 }
 function onDragEnd(){
   if(!drag)return;
