@@ -13,6 +13,8 @@ function createHabitsEventHandlers(ctx) {
     deleteHabit,
     completeOnboarding,
     applyPetSettings,
+    closeHabitsPanelDialog,
+    closePetSettingsDialog,
     render,
     readHabits,
     readCompletions
@@ -72,8 +74,7 @@ function createHabitsEventHandlers(ctx) {
     }
 
     if (target.closest('[data-pet-settings-close]')) {
-      setState({ petSettingsOpen: false });
-      render();
+      closePetSettingsDialog();
       return;
     }
 
@@ -84,8 +85,7 @@ function createHabitsEventHandlers(ctx) {
     }
 
     if (target.closest('[data-habits-panel-close]')) {
-      setState({ panelOpen: false, editHabitId: null, bulkEditMode: false });
-      render();
+      closeHabitsPanelDialog();
       return;
     }
 

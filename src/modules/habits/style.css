@@ -682,19 +682,70 @@
   color: var(--text-secondary);
 }
 
-.habits__panel {
-  position: fixed;
-  right: var(--space-4);
-  top: var(--space-4);
-  bottom: calc(var(--space-16) + var(--space-8));
-  width: min(520px, calc(100vw - var(--space-8)));
-  max-width: 100%;
+.habits__panel,
+.habits__panel--pet {
+  border: none;
+  padding: 0;
+  background: transparent;
+  color: var(--text-primary);
+  width: min(420px, calc(100vw - 32px));
+  margin: auto;
+  position: static;
+  max-height: min(80vh, 640px);
+}
+
+.habits__panel::backdrop,
+.habits__panel--pet::backdrop {
+  background: rgba(4, 10, 16, 0.55);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
+.habits__panel[open] .habits__panel-card,
+.habits__panel--pet[open] .habits__pet-card {
+  animation: habits-panel-in var(--duration-normal, 320ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both;
+}
+
+.habits__panel[open]::backdrop,
+.habits__panel--pet[open]::backdrop {
+  animation: habits-panel-fade-in var(--duration-normal, 320ms) ease both;
+}
+
+@keyframes habits-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes habits-panel-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.habits__panel-card,
+.habits__pet-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+  padding: 18px 16px;
+  max-height: min(80vh, 640px);
   overflow: auto;
-  z-index: 30;
+  box-sizing: border-box;
   display: grid;
   gap: var(--space-4);
   align-content: start;
-  box-sizing: border-box;
 }
 
 .habits__panel-header {
@@ -857,19 +908,18 @@
   .habits__star--done {
     animation: none;
   }
+
+  .habits__panel[open] .habits__panel-card,
+  .habits__panel--pet[open] .habits__pet-card,
+  .habits__panel[open]::backdrop,
+  .habits__panel--pet[open]::backdrop {
+    animation: none;
+  }
 }
 
 @media (max-width: 760px) {
   .habits {
     padding: var(--space-4) var(--space-3) var(--space-6);
-  }
-
-  .habits__panel {
-    left: var(--space-2);
-    right: var(--space-2);
-    top: var(--space-2);
-    bottom: calc(var(--space-16) + var(--space-6));
-    width: auto;
   }
 
   .habits__panel-header-actions {

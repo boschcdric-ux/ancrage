@@ -45,6 +45,37 @@ let onboardingPetKind = null;
 let onClick = null;
 let onSubmit = null;
 let onSyncComplete = null;
+let onDialogClose = null;
+let onDialogClick = null;
+
+function closeHabitsPanelDialog() {
+  const dialog = rootContainer?.querySelector('[data-habits-panel-dialog]');
+  if (dialog instanceof HTMLDialogElement && dialog.open) dialog.close();
+}
+
+function closePetSettingsDialog() {
+  const dialog = rootContainer?.querySelector('[data-pet-settings-dialog]');
+  if (dialog instanceof HTMLDialogElement && dialog.open) dialog.close();
+}
+
+function openHabitsPanelDialog() {
+  requestAnimationFrame(() => {
+    const dialog = rootContainer?.querySelector('[data-habits-panel-dialog]');
+    if (dialog instanceof HTMLDialogElement && !dialog.open) dialog.showModal();
+  });
+}
+
+function openPetSettingsDialog() {
+  requestAnimationFrame(() => {
+    const dialog = rootContainer?.querySelector('[data-pet-settings-dialog]');
+    if (dialog instanceof HTMLDialogElement && !dialog.open) dialog.showModal();
+  });
+}
+
+function syncDialogsAfterRender() {
+  if (panelOpen) openHabitsPanelDialog();
+  if (petSettingsOpen) openPetSettingsDialog();
+}
 
 function getState() {
   return {
@@ -336,6 +367,7 @@ function getViewModel() {
 function render() {
   if (!rootContainer) return;
   rootContainer.innerHTML = createHabitsView(getViewModel());
+  syncDialogsAfterRender();
 }
 
 function bindEvents() {
@@ -355,6 +387,8 @@ function bindEvents() {
     deleteHabit,
     completeOnboarding,
     applyPetSettings,
+    closeHabitsPanelDialog,
+    closePetSettingsDialog,
     render,
     readHabits,
     readCompletions
@@ -364,8 +398,33 @@ function bindEvents() {
   onSubmit = handlers.onSubmit;
   onSyncComplete = handlers.onSyncComplete;
 
+  onDialogClose = (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLDialogElement)) return;
+    if (target.matches('[data-habits-panel-dialog]')) {
+      setState({ panelOpen: false, editHabitId: null, bulkEditMode: false });
+      render();
+      return;
+    }
+    if (target.matches('[data-pet-settings-dialog]')) {
+      setState({ petSettingsOpen: false });
+      render();
+    }
+  };
+
+  onDialogClick = (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLDialogElement)) return;
+    if (event.target !== target) return;
+    if (target.matches('[data-habits-panel-dialog]') || target.matches('[data-pet-settings-dialog]')) {
+      target.close();
+    }
+  };
+
   rootContainer.addEventListener('click', onClick);
   rootContainer.addEventListener('submit', onSubmit);
+  rootContainer.addEventListener('close', onDialogClose);
+  rootContainer.addEventListener('click', onDialogClick);
   document.addEventListener('ancrage:sync-complete', onSyncComplete);
 }
 
@@ -393,11 +452,15 @@ const habitsModule = {
   destroy() {
     if (rootContainer && onClick) rootContainer.removeEventListener('click', onClick);
     if (rootContainer && onSubmit) rootContainer.removeEventListener('submit', onSubmit);
+    if (rootContainer && onDialogClose) rootContainer.removeEventListener('close', onDialogClose);
+    if (rootContainer && onDialogClick) rootContainer.removeEventListener('click', onDialogClick);
     if (onSyncComplete) document.removeEventListener('ancrage:sync-complete', onSyncComplete);
 
     onClick = null;
     onSubmit = null;
     onSyncComplete = null;
+    onDialogClose = null;
+    onDialogClick = null;
     viewMode = 'day';
     panelOpen = false;
     editHabitId = null;

@@ -5,7 +5,8 @@ function createManagePanel(habits, editHabit, bulkEditMode = false) {
   const submitLabel = editHabit ? 'Enregistrer' : 'Ajouter';
 
   return `
-    <aside class="habits__panel card animate-slide-up" data-habits-panel>
+    <dialog class="habits__panel" data-habits-panel-dialog>
+      <div class="habits__panel-card">
       <header class="habits__panel-header">
         <h2 class="habits__panel-title">Gérer mes habitudes</h2>
         <div class="habits__panel-header-actions">
@@ -63,7 +64,8 @@ function createManagePanel(habits, editHabit, bulkEditMode = false) {
             `
         }
       </div>
-    </aside>
+      </div>
+    </dialog>
   `;
 }
 
@@ -151,7 +153,8 @@ function createPetSettingsPanel(petProfile) {
   const name = petProfile?.name || '';
 
   return `
-    <aside class="habits__panel habits__panel--pet card animate-slide-up" data-pet-settings-panel>
+    <dialog class="habits__panel habits__panel--pet" data-pet-settings-dialog>
+      <div class="habits__pet-card">
       <header class="habits__panel-header">
         <h2 class="habits__panel-title">Mon animal</h2>
         <button type="button" class="btn btn-secondary habits__panel-close" data-pet-settings-close>Fermer</button>
@@ -180,7 +183,8 @@ function createPetSettingsPanel(petProfile) {
         </div>
         <button type="submit" class="btn btn-primary">Enregistrer</button>
       </form>
-    </aside>
+      </div>
+    </dialog>
   `;
 }
 
