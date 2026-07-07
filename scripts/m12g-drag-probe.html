@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="encre">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M12g — Sonde pile ancêtres + drag WebKit</title>
+<style>
+:root{--bg-primary:#0a1017;--bg-secondary:#101a24;--bg-tertiary:#16232f;--bg-hover:#1c2c3b;--text-primary:#e9f1f4;--text-muted:#8299a6;--border:rgba(233,241,244,.08);--shadow:0 4px 24px rgba(2,8,14,.5);--accent:#45e0b0}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:var(--bg-primary);color:var(--text-primary);padding:12px}
+/* Socle Ancrage (extrait styles.css) */
+#app-module-content.module-stage{position:relative;overflow-x:hidden;overflow-y:auto;isolation:isolate;min-height:80vh;padding:16px}
+#app-module-pan-layer{position:relative;z-index:2;min-height:100%;touch-action:pan-y}
+#app-module-parallax{position:relative;min-height:100%}
+.panel{border:none;padding:0;background:transparent;color:var(--text-primary);width:min(420px,100%);margin:auto}
+.panel::backdrop{background:rgba(4,10,16,.55)}
+.panel__card{background:var(--bg-secondary);border:1px solid var(--border);border-radius:20px;padding:16px;max-height:60vh;overflow:auto;display:flex;flex-direction:column;gap:12px}
+.list{display:flex;flex-direction:column;gap:8px;position:relative}
+.row{display:flex;align-items:center;gap:10px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:12px;padding:10px 12px;touch-action:pan-y;position:relative;transition:transform 140ms}
+.row.dragging{transition:none;box-shadow:0 10px 26px rgba(0,0,0,.35);z-index:20;will-change:transform;-webkit-transform:translateZ(0);backface-visibility:hidden}
+.row__handle{width:28px;height:28px;display:grid;place-items:center;border-radius:8px;cursor:grab;touch-action:none;color:var(--text-muted)}
+.row__body{flex:1}
+#log{font-size:11px;color:var(--text-muted);white-space:pre-wrap;margin-top:12px}
+</style>
+</head>
+<body>
+<div id="app-module-content" class="module-stage">
+  <div id="app-module-pan-layer">
+    <div id="app-module-parallax">
+      <dialog class="panel" open>
+        <div class="panel__card">
+          <p style="font-size:.85rem;color:var(--text-muted)">M12g sonde — dialog top-layer × ancêtres socle</p>
+          <div class="list" id="list">
+            <div class="row" data-id="a"><span class="row__handle">⠿</span><span class="row__body">Ligne A</span></div>
+            <div class="row" data-id="b"><span class="row__handle">⠿</span><span class="row__body">Ligne B</span></div>
+            <div class="row" data-id="c"><span class="row__handle">⠿</span><span class="row__body">Ligne C</span></div>
+          </div>
+        </div>
+      </dialog>
+    </div>
+  </div>
+</div>
+<pre id="log"></pre>
+<script>
+const list = document.getElementById('list');
+let drag = null;
+
+function log(msg) {
+  document.getElementById('log').textContent += msg + '\n';
+}
+
+function applyTransform(ev, row) {
+  const parent = row.parentElement;
+  const layoutTop = row.offsetTop - parent.offsetTop + parent.getBoundingClientRect().top;
+  const targetVisualTop = ev.clientY - drag.grabOffset;
+  row.style.transform = `translateY(${targetVisualTop - layoutTop}px)`;
+}
+
+list.addEventListener('pointerdown', (ev) => {
+  const handle = ev.target.closest('.row__handle');
+  if (!handle) return;
+  const row = handle.closest('.row');
+  ev.preventDefault();
+  drag = { row, grabOffset: ev.clientY - row.getBoundingClientRect().top, pointerId: ev.pointerId };
+  row.setPointerCapture(ev.pointerId);
+  row.classList.add('dragging');
+  window.addEventListener('pointermove', onMove);
+  window.addEventListener('pointerup', onEnd, { once: true });
+});
+
+function onMove(ev) {
+  if (!drag) return;
+  applyTransform(ev, drag.row);
+}
+
+function onEnd() {
+  if (!drag) return;
+  drag.row.classList.remove('dragging');
+  drag.row.style.transform = '';
+  drag = null;
+  window.removeEventListener('pointermove', onMove);
+}
+</script>
+</body>
+</html>
