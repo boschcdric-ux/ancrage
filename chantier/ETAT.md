@@ -3,7 +3,7 @@
 > Ce fichier est la mémoire du chantier. L'agent le lit au début de chaque
 > mission et le met à jour à la fin. Il doit rester factuel et concis.
 
-**Dernière mise à jour :** 2026-07-07 — M10e
+**Dernière mise à jour :** 2026-07-07 — M11
 
 ---
 
@@ -33,6 +33,7 @@
 | M10c | Agenda : modale en mode modal (showModal) | ✅ faite et validée par Cédric | 2026-07-07 |
 | M10d | Agenda : fonds thématisés + fin récurrence | ✅ faite et validée par Cédric | 2026-07-07 |
 | M10e | Agenda : input date iOS déborde | ✅ faite et validée par Cédric | 2026-07-07 |
+| M11 | Refonte Humeur : l'état de la mer | ✅ faite et validée par Cédric | 2026-07-07 |
 
 Statuts : ⬜ à faire · 🔶 en cours · ✅ faite et validée par Cédric · 🛑 bloquée
 
@@ -45,17 +46,17 @@ sans justification écrite.*
 
 | Métrique | Baseline (M00) | Dernière valeur | Mission |
 |---|---|---|---|
-| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M10e |
-| Tests unitaires | 22/22 passés (2 fichiers) | 51/51 passés (8 fichiers) | M10e |
-| Lint | 0 erreur | 0 erreur | M10e |
-| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 285 KB (`index-BWAfFFr1.js`) | M10e |
-| JS initial (gzip) | 243 KB | 78 KB | M10e |
-| CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 117 KB (`index-JBBUZz1k.css`, entrée HTML) | M10e |
-| Chunk calendar JS (gzip) | — | 9,4 KB (`index-86JbBOWl.js`) | M10e |
-| Chunk calendar CSS (gzip) | — | 3,2 KB (`index-D1nMcXjX.css`) | M10e |
+| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M11 |
+| Tests unitaires | 22/22 passés (2 fichiers) | 55/55 passés (10 fichiers) | M11 |
+| Lint | 0 erreur | 0 erreur | M11 |
+| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 287 KB (`index-BKjO6ypW.js`) | M11 |
+| JS initial (gzip) | 243 KB | 80 KB | M11 |
+| CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 120 KB (`index-awEnvpsx.css`, entrée HTML) | M11 |
+| Chunk calendar JS (gzip) | — | 9,4 KB (`index-jft-JrAk.js`) | M11 |
+| Chunk calendar CSS (gzip) | — | 3,2 KB (`index-D1nMcXjX.css`) | M11 |
 | Nombre de chunks JS | 1 | 9 | M01 |
 | Polices woff2 (dist) | — | ~122 KB (7 fichiers) | M04 |
-| Precache PWA | — | 1068 KiB (23 entrées) | M10e |
+| Precache PWA | — | 1073 KiB (23 entrées) | M11 |
 
 Variation bundle M05 : +4,3 KB brut sur le chunk d'entrée JS (275 vs 270 M04) — hors tolérance ±2 KB
 mais +1,5 KB gzip seulement ; justifié par markup SVG inline (houle, ancre, coche) et fonctions tide
@@ -417,6 +418,27 @@ et zéro `#c9a227` dans `tasks/style.css`.
 - `git diff --stat` : `calendar/style.css` uniquement
 - Commits : `fix:` appearance none inputs date/heure ; `chore:` clôture M10e
 
+### Rituel AVANT M11 (2026-07-07)
+
+- Smoke : 20/20 modules, 4/4 shell
+- Unit : 51/51 (8 fichiers)
+- Lint : 0 erreur
+- Build entrée : 285 KB brut (`index-BWAfFFr1.js`), 78 KB gzip
+- CSS entrée : 117 KB brut (`index-JBBUZz1k.css`), 19 KB gzip
+- Precache : 1068 KiB
+
+### Rituel APRÈS M11 (2026-07-07)
+
+- Smoke : 20/20 modules, 4/4 shell
+- Unit : 55/55 (10 fichiers, +4 tests ocean-canvas + galerie)
+- Lint : 0 erreur
+- Build entrée : 287 KB brut (`index-BKjO6ypW.js`), 80 KB gzip (+2 KB brut, +2 KB gzip — moteur Canvas Gerstner + soliton)
+- CSS entrée : 120 KB brut (`index-awEnvpsx.css`), 20 KB gzip (+3 KB, styles scène + galerie)
+- Precache : 1073 KiB (+5 KiB)
+- Grep contrôle : 0 `!important` dans `mood/` ; tous les `width:100%` de `mood/style.css` accompagnés de `max-width:100%` + `box-sizing:border-box`
+- `git diff --stat` périmètre : `mood/` uniquement (6 fichiers : ocean-canvas, scene, view, index, style + tests)
+- Commits : `feat:` moteur Canvas ; `feat:` curseurs sans re-render ; `feat:` galerie ; `refactor:` containment ; `chore:` clôture M11
+
 ### Simulation quota plein (procédure dev, M02)
 
 1. `npm run preview`, ouvrir l'app dans le navigateur.
@@ -605,6 +627,21 @@ Vérification automatisée équivalente : `npm run test:unit` — tests `save() 
   `appearance:none` pour neutraliser la largeur intrinsèque iOS Safari (le widget natif ignore
   `width:100%`). Règle à appliquer d'office dans tout futur module avec champs date/heure.
 - M10e : série Agenda close (M10 → M10e). Validation groupée attendue.
+- M11 : Humeur refondu — 5e emploi de l'eau (mesure / accueille / guide / situe dans le temps /
+  **traduit l'état intérieur**). Scène Canvas persistante : houle + reflet en continu, soliton
+  au consignement. Premier module à deux régimes de boucle (repos permanent + geste ponctuel).
+- M11 : `ocean-canvas.js` — moteur Gerstner transplanté quasi tel quel depuis la maquette ;
+  `scene.js` — `SKY_BY_MOOD`, `buildGalleryBuckets`, `PERIOD_OPTIONS` (Semaine/Mois/3 mois/Année).
+- M11 : tap humeur/énergie → `applyMoodToScene()` + `updateSegmentButtons()` uniquement ;
+  **jamais** `innerHTML` global ni recréation du canvas (leçon durcie vs Respiration).
+- M11 : galerie remplace la courbe SVG ; agrégation moyennes au-delà de la semaine ;
+  ancien graphique courbe retiré (pas d'option secondaire — décision reportée si souhaitée).
+- M11 : modèle de données inchangé (`mood:entries`, labels/emojis réels MOOD_LEVELS /
+  ENERGY_LEVELS). Widget dashboard conservé (mini-courbe SVG).
+- M11 : containment — `width:min(420px,100%)`, grilles `minmax(0,1fr)`, champs ≥ 16 px.
+  Tokens eau scène (`--w1`…`--foam`) par thème dans `mood/style.css`.
+- M11 : `MutationObserver` sur `data-theme` pour rafraîchir palette scène sans re-mount.
+- M11 : validation manuelle attendue (iPhone ≤375 px + 15 Pro Max, 4 thèmes, mouvement réduit).
 
 ---
 

@@ -208,3 +208,19 @@ Historique des modifications du chantier `chantier/redesign`.
 - Règle chantier : tout futur champ date/heure doit porter `appearance:none` pour respecter
   la largeur CSS sur iOS. Série Agenda M10 → M10e close. Validation groupée (iPhone prioritaire,
   4 thèmes) attendue.
+
+### M11 — Refonte Humeur : l'état de la mer
+
+- Scène océan Canvas persistante (houle Gerstner + reflet scintillant en continu, soliton +
+  gerbe d'écume au consignement). Moteur dans `ocean-canvas.js`, transplanté depuis la maquette.
+- Deux curseurs segmentés (humeur = lumière / énergie = amplitude houle) ; labels et emojis
+  réels conservés (pas ceux de la maquette).
+- **Correctif critique** : tap humeur/énergie ne déclenche plus `refreshView()` — mise à jour
+  scopée (`applyMoodToScene`, `aria-pressed`) sans recréer le canvas.
+- Galerie multi-périodes (Semaine / Mois / 3 mois / Année) avec vignettes mini-mer ; moyennes
+  arrondies au-delà de la semaine. Détail au tap. Courbe SVG historique retirée.
+- Modèle `mood:entries` inchangé. Widget dashboard conservé (mini-courbe).
+- Styles : `width:min(420px,100%)`, grilles `minmax(0,1fr)`, tokens eau par thème.
+- Tests : +4 (ocean-canvas helpers, buildGalleryBuckets). Total 55/55.
+- Bundle entrée : +2 KB brut / +2 KB gzip (moteur canvas). CSS entrée : +3 KB.
+- Validation manuelle (iPhone, 4 thèmes, mouvement réduit) attendue.
