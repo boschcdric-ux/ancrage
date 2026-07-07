@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="encre">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maquette M12 v2 — Habitudes : les mouillages</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   MAQUETTE M12 v2 — Habitudes : les mouillages
+   v2 : - Vue Régularité = CONSTELLATION (bioluminescence) :
+          les retours sont des points de lumière sur une houle,
+          les jours manqués sont des points éteints qui attendent
+          (concept affiné à partir d'une proposition Ollama).
+        - Micro-animations : ancre qui plonge avec ressort, onde,
+          bascule emoji->ancre, jauge animée, entrée en cascade.
+   ============================================================ */
+:root, [data-theme="encre"]{--bg-primary:#0a1017;--bg-secondary:#101a24;--bg-tertiary:#16232f;--bg-hover:#1c2c3b;--text-primary:#e9f1f4;--text-secondary:#9db4c0;--text-muted:#8299a6;--accent:#45e0b0;--accent-hover:#63eec2;--accent-soft:rgba(69,224,176,.15);--text-on-accent:#04241a;--border:rgba(233,241,244,.08);--shadow:0 4px 24px rgba(2,8,14,.5);--water-front:rgba(69,224,176,.28);--water-back:rgba(69,224,176,.08);--water-glow:rgba(69,224,176,.35);--night:#0b1522}
+[data-theme="garrigue"]{--bg-primary:#f2eee6;--bg-secondary:#faf7f0;--bg-tertiary:#eae4d8;--bg-hover:#e2dccd;--text-primary:#26301f;--text-secondary:#55614a;--text-muted:#5f6b53;--accent:#4d6b3c;--accent-hover:#3e5a2f;--accent-soft:rgba(77,107,60,.12);--text-on-accent:#f5f8ef;--border:rgba(38,48,31,.10);--shadow:0 4px 24px rgba(90,80,60,.15);--water-front:rgba(77,107,60,.26);--water-back:rgba(77,107,60,.07);--water-glow:rgba(77,107,60,.4);--night:#e2e8dc}
+[data-theme="crepuscule"]{--bg-primary:#171015;--bg-secondary:#201620;--bg-tertiary:#291d29;--bg-hover:#322434;--text-primary:#f4e9e4;--text-secondary:#c3aaa4;--text-muted:#a89089;--accent:#f0a35e;--accent-hover:#f5b678;--accent-soft:rgba(240,163,94,.15);--text-on-accent:#2b1706;--border:rgba(244,233,228,.08);--shadow:0 4px 24px rgba(10,4,10,.5);--water-front:rgba(240,163,94,.24);--water-back:rgba(240,163,94,.07);--water-glow:rgba(240,163,94,.4);--night:#160d18}
+[data-theme="maree"]{--bg-primary:#e8edeb;--bg-secondary:#f4f7f6;--bg-tertiary:#dee6e3;--bg-hover:#d4dedb;--text-primary:#1d2b2d;--text-secondary:#48605f;--text-muted:#536c6a;--accent:#146b66;--accent-hover:#0f5752;--accent-soft:rgba(20,107,102,.10);--text-on-accent:#eaf5f3;--border:rgba(29,43,45,.10);--shadow:0 4px 24px rgba(60,85,82,.15);--water-front:rgba(20,107,102,.26);--water-back:rgba(20,107,102,.07);--water-glow:rgba(20,107,102,.45);--night:#d5e0dc}
+:root{--font-family:'Atkinson Hyperlegible',system-ui,sans-serif;--font-display:'Bricolage Grotesque',var(--font-family);
+--radius-sm:6px;--radius-md:12px;--radius-lg:18px;--radius-full:9999px;--dfast:140ms;--dnorm:320ms;--dslow:500ms;
+--ease-spring:cubic-bezier(.34,1.45,.64,1);--ease-out:cubic-bezier(.16,1,.3,1)}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{max-width:100%;overflow-x:hidden}
+body{font-family:var(--font-family);background:var(--bg-primary);color:var(--text-primary);display:flex;flex-direction:column;align-items:center;padding:20px 12px 60px;gap:14px;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;color:inherit;background:none;border:none;cursor:pointer;font-size:inherit}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.demo-bar{width:min(420px,100%);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.demo-bar__title{font-family:var(--font-display);font-weight:600;font-size:.9rem;color:var(--text-secondary)}
+.theme-chips{display:flex;gap:7px}.theme-chip{width:26px;height:26px;border-radius:50%;background:var(--pv);border:2px solid var(--border)}
+.theme-chip[aria-pressed="true"]{border-color:var(--accent);transform:scale(1.12)}
+.motion-toggle{font-size:.74rem;color:var(--text-secondary);border:1px solid var(--border);background:var(--bg-secondary);padding:5px 10px;border-radius:var(--radius-full)}
+.motion-toggle[aria-pressed="true"]{background:var(--accent);color:var(--text-on-accent);border-color:transparent}
+
+.module{width:min(420px,100%);max-width:100%;display:flex;flex-direction:column;gap:14px;box-sizing:border-box}
+.head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.head__title{font-family:var(--font-display);font-weight:700;font-size:1.5rem;letter-spacing:-.015em}
+.head__spacer{flex:1}
+.seg{display:flex;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-full);padding:3px;gap:2px}
+.seg__btn{padding:6px 13px;border-radius:var(--radius-full);font-size:.8rem;color:var(--text-secondary);transition:background var(--dfast),color var(--dfast)}
+.seg__btn[aria-pressed="true"]{background:var(--accent);color:var(--text-on-accent);font-weight:700}
+
+/* Bandeau du jour */
+.today-banner{background:var(--bg-secondary);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);
+padding:14px 16px;display:flex;align-items:center;gap:14px;box-sizing:border-box}
+.today-banner__gauge{position:relative;width:48px;height:48px;flex:none}
+.today-banner__gauge svg{transform:rotate(-90deg)}
+#gaugeArc{transition:stroke-dashoffset var(--dslow) var(--ease-out)} /* micro-anim : la jauge glisse */
+.today-banner__gauge-txt{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--font-display);font-weight:700;font-size:.85rem}
+.today-banner__title{font-family:var(--font-display);font-weight:700;font-size:1rem}
+.today-banner__sub{font-size:.8rem;color:var(--text-secondary);margin-top:2px}
+
+/* ---------- VUE JOUR : les mouillages ---------- */
+.moorings{display:flex;flex-direction:column;gap:10px}
+/* entrée en cascade des cartes */
+@keyframes card-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.mooring{position:relative;background:var(--bg-secondary);border:1px solid var(--border);border-radius:16px;
+overflow:hidden;box-shadow:var(--shadow);cursor:pointer;box-sizing:border-box;
+animation:card-in var(--dnorm) var(--ease-out) both;animation-delay:calc(var(--i,0)*55ms);
+transition:transform var(--dfast) var(--ease-spring),border-color var(--dnorm)}
+.mooring:active{transform:scale(.985)}
+.mooring.done{border-color:var(--accent)}
+.mooring__water{position:absolute;left:0;right:0;bottom:0;height:0;z-index:0;
+background:linear-gradient(to top,var(--water-front),var(--water-back));
+transition:height var(--dslow) var(--ease-out)}
+.mooring.done .mooring__water{height:100%}
+.mooring__row{position:relative;z-index:1;display:flex;align-items:center;gap:13px;padding:15px 15px}
+.mooring__anchor{position:relative;width:42px;height:42px;flex:none;border-radius:50%;display:grid;place-items:center;
+border:2px solid var(--border);background:var(--bg-tertiary);font-size:1.15rem;overflow:hidden;
+transition:border-color var(--dnorm),background var(--dnorm),box-shadow var(--dnorm)}
+.mooring.done .mooring__anchor{border-color:var(--accent);background:var(--accent);color:var(--text-on-accent);
+box-shadow:0 0 12px var(--water-glow)}
+/* bascule emoji <-> ancre : deux couches superposées qui pivotent */
+.mooring__face{position:absolute;inset:0;display:grid;place-items:center;
+transition:transform var(--dnorm) var(--ease-spring),opacity var(--dnorm)}
+.mooring__face--anchor{transform:translateY(120%) rotate(-25deg);opacity:0}
+.mooring.done .mooring__face--emoji{transform:translateY(-120%) rotate(15deg);opacity:0}
+.mooring.done .mooring__face--anchor{transform:translateY(0) rotate(0);opacity:1}
+/* pop à l'ancrage : l'ancre plonge avec un ressort */
+@keyframes anchor-pop{0%{transform:scale(.7)}55%{transform:scale(1.18)}100%{transform:scale(1)}}
+.mooring.just-done .mooring__anchor{animation:anchor-pop var(--dnorm) var(--ease-spring)}
+/* onde à l'ancrage */
+.mooring__ripple{position:absolute;left:24px;top:50%;width:18px;height:18px;margin-top:-9px;border-radius:50%;
+border:2px solid var(--accent);opacity:0;z-index:1;pointer-events:none;transform:scale(.4)}
+.mooring.just-done .mooring__ripple{animation:ripple var(--dslow) var(--ease-out)}
+.mooring.just-done .mooring__ripple--2{animation-delay:.12s}
+@keyframes ripple{0%{opacity:.7;transform:scale(.4)}100%{opacity:0;transform:scale(3.4)}}
+.mooring__body{flex:1;min-width:0}
+.mooring__name{font-family:var(--font-display);font-weight:700;font-size:1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:opacity var(--dnorm)}
+.mooring.done .mooring__name{opacity:.85}
+.mooring__meta{font-size:.76rem;color:var(--text-secondary);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mooring__returns{flex:none;text-align:right}
+.mooring__returns-n{font-family:var(--font-display);font-weight:700;font-size:1.1rem;color:var(--accent);line-height:1;
+display:inline-block;transition:transform var(--dfast) var(--ease-spring)}
+@keyframes count-bump{0%{transform:translateY(0)}40%{transform:translateY(-5px) scale(1.15)}100%{transform:translateY(0)}}
+.mooring.just-done .mooring__returns-n{animation:count-bump var(--dnorm) var(--ease-spring)}
+.mooring__returns-l{font-size:.62rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em}
+
+.day-empty{background:var(--bg-secondary);border:1px dashed var(--border);border-radius:16px;padding:26px 16px;text-align:center}
+.day-empty__t{font-family:var(--font-display);font-weight:700;color:var(--text-secondary)}
+.day-empty__s{font-size:.82rem;color:var(--text-muted);margin-top:4px}
+
+/* ---------- VUE RÉGULARITÉ : la constellation ---------- */
+.reg-intro{font-size:.8rem;color:var(--text-muted);text-align:center;font-style:italic;line-height:1.5;padding:0 6px}
+.regularity{display:flex;flex-direction:column;gap:12px}
+.reg-card{background:var(--bg-secondary);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow);
+padding:14px;box-sizing:border-box;animation:card-in var(--dnorm) var(--ease-out) both;animation-delay:calc(var(--i,0)*55ms)}
+.reg-card__head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.reg-card__emoji{width:34px;height:34px;flex:none;border-radius:50%;display:grid;place-items:center;background:var(--bg-tertiary);border:1px solid var(--border);font-size:1rem}
+.reg-card__name{font-family:var(--font-display);font-weight:700;font-size:.95rem;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.reg-card__count{font-size:.76rem;color:var(--accent);font-weight:700;white-space:nowrap;
+background:var(--accent-soft);padding:4px 10px;border-radius:var(--radius-full)}
+/* le ciel/l'eau de nuit où flottent les points */
+.sky{position:relative;height:74px;border-radius:12px;background:
+ radial-gradient(120% 100% at 50% 0%, transparent, rgba(0,0,0,.12)),
+ var(--night);
+border:1px solid var(--border);overflow:hidden}
+.star{position:absolute;width:9px;height:9px;border-radius:50%;transform:translate(-50%,-50%);
+transition:transform var(--dfast) var(--ease-spring)}
+.star--done{background:var(--accent);box-shadow:0 0 8px var(--water-glow),0 0 3px var(--accent)}
+/* scintillement doux, décalé par point */
+@keyframes twinkle{0%,100%{opacity:1}50%{opacity:.65}}
+.star--done{animation:twinkle 3.2s ease-in-out infinite;animation-delay:var(--tw,0s)}
+.star--waiting{width:7px;height:7px;background:transparent;border:1.5px solid var(--text-muted);opacity:.35}
+.star--off{width:4px;height:4px;background:var(--text-muted);opacity:.12}
+.star--today{outline:2px solid var(--accent);outline-offset:2px}
+.reg-legend{display:flex;align-items:center;gap:14px;justify-content:center;margin-top:2px;font-size:.72rem;color:var(--text-muted);flex-wrap:wrap}
+.reg-legend span{display:flex;align-items:center;gap:5px}
+.reg-legend i{width:9px;height:9px;border-radius:50%;display:inline-block}
+
+.add-btn{position:sticky;bottom:14px;align-self:center;z-index:10;padding:12px 24px;border-radius:var(--radius-full);
+background:var(--accent);color:var(--text-on-accent);font-weight:700;font-size:.95rem;box-shadow:var(--shadow);
+transition:transform var(--dfast) var(--ease-spring),background var(--dfast)}
+.add-btn:active{transform:scale(.95)}
+
+/* Mouvement réduit : tout est instantané, positions correctes */
+.reduce-motion *,.reduce-motion *::before,.reduce-motion *::after{animation-duration:1ms!important;transition-duration:1ms!important}
+.reduce-motion .star--done{animation:none!important}
+@media (prefers-reduced-motion:reduce){.star--done{animation:none}}
+[hidden]{display:none!important}
+.demo-note{width:min(420px,100%);max-width:100%;font-size:.76rem;line-height:1.5;color:var(--text-muted);text-align:center}
+</style>
+</head>
+<body>
+
+<div class="demo-bar">
+  <span class="demo-bar__title">M12 v2 · Habitudes — maquette</span>
+  <div class="theme-chips" role="group" aria-label="Thèmes">
+    <button class="theme-chip" data-t="encre" style="--pv:linear-gradient(135deg,#101a24 55%,#45e0b0 55%)" aria-pressed="true" aria-label="Encre"></button>
+    <button class="theme-chip" data-t="garrigue" style="--pv:linear-gradient(135deg,#faf7f0 55%,#4d6b3c 55%)" aria-pressed="false" aria-label="Garrigue"></button>
+    <button class="theme-chip" data-t="crepuscule" style="--pv:linear-gradient(135deg,#201620 55%,#f0a35e 55%)" aria-pressed="false" aria-label="Crépuscule"></button>
+    <button class="theme-chip" data-t="maree" style="--pv:linear-gradient(135deg,#f4f7f6 55%,#146b66 55%)" aria-pressed="false" aria-label="Marée basse"></button>
+  </div>
+  <button class="motion-toggle" id="motion" aria-pressed="false">Réduire le mouvement</button>
+</div>
+
+<main class="module" aria-label="Module Habitudes — maquette v2">
+
+  <div class="head">
+    <h1 class="head__title">Habitudes</h1>
+    <span class="head__spacer"></span>
+    <div class="seg" role="group" aria-label="Vue">
+      <button class="seg__btn" data-view="day" aria-pressed="true">Aujourd'hui</button>
+      <button class="seg__btn" data-view="reg" aria-pressed="false">Régularité</button>
+    </div>
+  </div>
+
+  <div class="today-banner" id="banner">
+    <div class="today-banner__gauge">
+      <svg width="48" height="48" viewBox="0 0 48 48">
+        <circle cx="24" cy="24" r="20" fill="none" stroke="var(--bg-tertiary)" stroke-width="5"/>
+        <circle id="gaugeArc" cx="24" cy="24" r="20" fill="none" stroke="var(--accent)" stroke-width="5" stroke-linecap="round" stroke-dasharray="126" stroke-dashoffset="126"/>
+      </svg>
+      <span class="today-banner__gauge-txt" id="gaugeTxt">0/0</span>
+    </div>
+    <div>
+      <div class="today-banner__title">Tes mouillages du jour</div>
+      <div class="today-banner__sub" id="bannerSub"></div>
+    </div>
+  </div>
+
+  <section id="dayView">
+    <div class="moorings" id="moorings"></div>
+  </section>
+
+  <section id="regView" hidden>
+    <p class="reg-intro">Chaque carte est un petit ciel : les jours où tu es revenu s'illuminent. Les autres n'attendent que toi — sans crier.</p>
+    <div class="regularity" id="regularity"></div>
+  </section>
+
+  <button class="add-btn" id="addBtn" type="button">+ Nouveau mouillage</button>
+
+</main>
+
+<p class="demo-note">
+  Touche une carte : l'ancre plonge avec un ressort, l'onde se propage,
+  l'eau monte, le compteur bondit, la jauge glisse. En « Régularité »,
+  tes retours scintillent comme du plancton bioluminescent sur la houle —
+  les jours manqués sont des points éteints qui attendent, sans reproche.
+</p>
+
+<script>
+(function(){
+'use strict';
+const $=id=>document.getElementById(id);
+const FREQ_LABEL={daily:'Chaque jour',weekdays:'En semaine',weekend:'Le week-end',every2days:'Un jour sur deux'};
+let view='day';
+const today=new Date();today.setHours(0,0,0,0);
+const key=d=>{const z=new Date(d);z.setMinutes(z.getMinutes()-z.getTimezoneOffset());return z.toISOString().slice(0,10)};
+const addD=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x};
+
+let habits=[
+ {id:'h1',emoji:'🐕',name:'Sortir Vola',freq:'daily',pet:true},
+ {id:'h2',emoji:'🐱',name:'Litière de Guimel',freq:'every2days',pet:true},
+ {id:'h3',emoji:'💧',name:"Boire assez d'eau",freq:'daily'},
+ {id:'h4',emoji:'📵',name:'10 min sans écran le matin',freq:'daily'},
+ {id:'h5',emoji:'🌿',name:'5 min de lumière naturelle',freq:'weekdays'},
+ {id:'h6',emoji:'😴',name:'Coucher avant minuit',freq:'daily'}
+];
+let done=new Set();
+(function seed(){
+  for(let i=1;i<35;i++){
+    const d=key(addD(today,-i));
+    habits.forEach(h=>{if(Math.random()<0.66)done.add(h.id+'|'+d);});
+  }
+})();
+
+function isScheduled(h,date){
+  const dow=date.getDay();
+  if(h.freq==='daily')return true;
+  if(h.freq==='weekdays')return dow>=1&&dow<=5;
+  if(h.freq==='weekend')return dow===0||dow===6;
+  if(h.freq==='every2days'){const diff=Math.round((date-new Date('2026-01-01'))/864e5);return diff%2===0;}
+  return true;
+}
+function isDone(h,date){return done.has(h.id+'|'+key(date))}
+function returnsThisMonth(h){let n=0;for(let i=0;i<31;i++){if(done.has(h.id+'|'+key(addD(today,-i))))n++;}return n;}
+function todaysHabits(){return habits.filter(h=>isScheduled(h,today))}
+
+function renderBanner(){
+  const list=todaysHabits();
+  const doneN=list.filter(h=>isDone(h,today)).length,total=list.length;
+  $('gaugeTxt').textContent=`${doneN}/${total}`;
+  $('gaugeArc').style.strokeDashoffset=String(126*(1-(total?doneN/total:0)));
+  if(doneN===0)$('bannerSub').textContent='Reviens à tes mouillages quand tu peux.';
+  else if(doneN===total)$('bannerSub').textContent='Tous rejoints aujourd\u2019hui. Belle traversée.';
+  else $('bannerSub').textContent=`${doneN} mouillage${doneN>1?'s':''} rejoint${doneN>1?'s':''} — sans pression pour le reste.`;
+}
+
+/* ---------- Vue Jour ---------- */
+function renderDay(){
+  const wrap=$('moorings');wrap.innerHTML='';
+  const list=todaysHabits();
+  if(!list.length){
+    wrap.innerHTML='<div class="day-empty"><div class="day-empty__t">Aucun mouillage aujourd\u2019hui.</div><div class="day-empty__s">Rien de prévu ce jour. Repose-toi, la mer attend.</div></div>';
+    return;
+  }
+  list.forEach((h,idx)=>{
+    const card=document.createElement('div');
+    card.className='mooring'+(isDone(h,today)?' done':'');
+    card.style.setProperty('--i',idx);
+    card.innerHTML=`
+      <div class="mooring__water"></div>
+      <span class="mooring__ripple"></span>
+      <span class="mooring__ripple mooring__ripple--2"></span>
+      <div class="mooring__row">
+        <div class="mooring__anchor">
+          <span class="mooring__face mooring__face--emoji">${h.emoji}</span>
+          <span class="mooring__face mooring__face--anchor">⚓</span>
+        </div>
+        <div class="mooring__body">
+          <div class="mooring__name">${h.name}</div>
+          <div class="mooring__meta">${FREQ_LABEL[h.freq]}</div>
+        </div>
+        <div class="mooring__returns">
+          <div class="mooring__returns-n">${returnsThisMonth(h)}</div>
+          <div class="mooring__returns-l">retours / mois</div>
+        </div>
+      </div>`;
+    card.addEventListener('click',()=>{
+      const k=h.id+'|'+key(today);
+      if(done.has(k)){done.delete(k);card.classList.remove('done','just-done');}
+      else{
+        done.add(k);
+        card.classList.add('done');
+        card.classList.remove('just-done');void card.offsetWidth;
+        card.classList.add('just-done');
+        setTimeout(()=>card.classList.remove('just-done'),600);
+      }
+      card.querySelector('.mooring__returns-n').textContent=returnsThisMonth(h);
+      renderBanner();
+    });
+    wrap.appendChild(card);
+  });
+}
+
+/* ---------- Vue Régularité : la constellation ---------- */
+function renderReg(){
+  const wrap=$('regularity');wrap.innerHTML='';
+  habits.forEach((h,idx)=>{
+    const card=document.createElement('div');card.className='reg-card';
+    card.style.setProperty('--i',idx);
+    card.innerHTML=`
+      <div class="reg-card__head">
+        <div class="reg-card__emoji">${h.emoji}</div>
+        <div class="reg-card__name">${h.name}</div>
+        <div class="reg-card__count">${returnsThisMonth(h)} retours</div>
+      </div>
+      <div class="sky"></div>`;
+    const sky=card.querySelector('.sky');
+    /* 35 jours en points sur une houle : x régulier, y sinusoïdal */
+    for(let i=34;i>=0;i--){
+      const d=addD(today,-i);
+      const pos=34-i;                       // 0 (il y a 34 j) -> 34 (auj.)
+      const x=4+(pos/34)*92;                // % horizontal, marges 4%
+      const y=50+Math.sin(pos*0.55)*26;     // houle douce
+      const sched=isScheduled(h,d),dn=isDone(h,d);
+      const star=document.createElement('span');
+      let cls='star';
+      if(dn)cls+=' star--done';
+      else if(sched)cls+=' star--waiting';
+      else cls+=' star--off';
+      if(key(d)===key(today))cls+=' star--today';
+      star.className=cls;
+      star.style.left=x+'%';star.style.top=y+'%';
+      if(dn)star.style.setProperty('--tw',(Math.random()*3).toFixed(2)+'s');
+      star.title=key(d);
+      sky.appendChild(star);
+    }
+    wrap.appendChild(card);
+  });
+  const legend=document.createElement('div');legend.className='reg-legend';
+  legend.innerHTML=`<span><i style="background:var(--accent);box-shadow:0 0 6px var(--water-glow)"></i>Revenu</span>
+    <span><i style="background:transparent;border:1.5px solid var(--text-muted)"></i>T\u2019attend</span>
+    <span><i style="background:var(--text-muted);opacity:.3;transform:scale(.6)"></i>Non prévu</span>`;
+  wrap.appendChild(legend);
+}
+
+/* ---------- Navigation ---------- */
+function switchView(v){
+  view=v;
+  $('dayView').hidden=v!=='day';
+  $('regView').hidden=v!=='reg';
+  $('banner').style.display=v==='day'?'':'none';
+  document.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.view===v)));
+  if(v==='day'){renderBanner();renderDay()}else renderReg();
+}
+document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.view)));
+$('addBtn').addEventListener('click',()=>{});
+
+document.querySelectorAll('[data-t]').forEach(b=>b.addEventListener('click',()=>{
+  document.documentElement.dataset.theme=b.dataset.t;
+  document.querySelectorAll('[data-t]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+}));
+const m=$('motion');
+m.addEventListener('click',()=>{const on=m.getAttribute('aria-pressed')!=='true';m.setAttribute('aria-pressed',String(on));document.body.classList.toggle('reduce-motion',on);});
+if(matchMedia('(prefers-reduced-motion:reduce)').matches){m.setAttribute('aria-pressed','true');document.body.classList.add('reduce-motion');}
+
+switchView('day');
+})();
+</script>
+</body>
+</html>
