@@ -3,7 +3,7 @@
 > Ce fichier est la mémoire du chantier. L'agent le lit au début de chaque
 > mission et le met à jour à la fin. Il doit rester factuel et concis.
 
-**Dernière mise à jour :** 2026-07-07 — M12b
+**Dernière mise à jour :** 2026-07-07 — M12c
 
 ---
 
@@ -36,6 +36,7 @@
 | M11 | Refonte Humeur : l'état de la mer | ✅ faite et validée par Cédric | 2026-07-07 |
 | M12 | Refonte Habitudes : les mouillages | ✅ faite (validation Cédric en attente) | 2026-07-07 |
 | M12b | Habitudes : panneaux en modales dialog | ✅ faite (validation Cédric en attente) | 2026-07-07 |
+| M12c | Habitudes : en-tête panneau + drag réorganisation | ✅ faite (validation Cédric en attente) | 2026-07-07 |
 
 Statuts : ⬜ à faire · 🔶 en cours · ✅ faite et validée par Cédric · 🛑 bloquée
 
@@ -48,18 +49,18 @@ sans justification écrite.*
 
 | Métrique | Baseline (M00) | Dernière valeur | Mission |
 |---|---|---|---|
-| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M12b |
-| Tests unitaires | 22/22 passés (2 fichiers) | 63/63 passés (11 fichiers) | M12b |
-| Lint | 0 erreur | 0 erreur | M12b |
-| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 292 KB (`index-CL4CWTZx.js`) | M12b |
-| JS initial (gzip) | 243 KB | 82 KB | M12b |
-| CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 126 KB (`index-D1tyxsGw.css`, entrée HTML) | M12b |
-| Chunk calendar JS (gzip) | — | 9,4 KB (`index-BHeuOTt4.js`) | M12b |
-| Chunk calendar CSS (gzip) | — | 3,2 KB (`index-D1nMcXjX.css`) | M12b |
-| Chunk habits JS (gzip) | — | 4,1 KB (`index-Blcmr5pq.js`) | M12b |
+| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M12c |
+| Tests unitaires | 22/22 passés (2 fichiers) | 65/65 passés (12 fichiers) | M12c |
+| Lint | 0 erreur | 0 erreur | M12c |
+| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 295 KB (`index-C7Rt5db-.js`) | M12c |
+| JS initial (gzip) | 243 KB | 83 KB | M12c |
+| CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 128 KB (`index-DJmEKrAu.css`, entrée HTML) | M12c |
+| Chunk calendar JS (gzip) | — | 9,4 KB (`index-8cW3NOWj.js`) | M12c |
+| Chunk calendar CSS (gzip) | — | 3,2 KB (`index-D1nMcXjX.css`) | M12c |
+| Chunk habits JS (gzip) | — | 4,1 KB (`index-BgS5sSdR.js`) | M12c |
 | Nombre de chunks JS | 1 | 9 | M01 |
 | Polices woff2 (dist) | — | ~122 KB (7 fichiers) | M04 |
-| Precache PWA | — | 1084 KiB (23 entrées) | M12b |
+| Precache PWA | — | 1088 KiB (23 entrées) | M12c |
 
 Variation bundle M05 : +4,3 KB brut sur le chunk d'entrée JS (275 vs 270 M04) — hors tolérance ±2 KB
 mais +1,5 KB gzip seulement ; justifié par markup SVG inline (houle, ancre, coche) et fonctions tide
@@ -487,6 +488,29 @@ et zéro `#c9a227` dans `tasks/style.css`.
 - `git diff --stat` périmètre : `habits/view-panels.js`, `habits/style.css`, `habits/index.js`, `habits-events.js`
 - Commits : `feat:` panneaux dialog centrés ; `chore:` clôture M12b
 
+### Rituel AVANT M12c (2026-07-07)
+
+- Smoke : 20/20 modules, 4/4 shell
+- Unit : 63/63 (11 fichiers)
+- Lint : 0 erreur
+- Build entrée : 292 KB brut (`index-CL4CWTZx.js`), 82 KB gzip
+- CSS entrée : 126 KB brut (`index-D1tyxsGw.css`), 21 KB gzip
+- Chunk habits JS : 11,6 KB brut (`index-Blcmr5pq.js`), 4,1 KB gzip
+- Precache : 1084 KiB
+
+### Rituel APRÈS M12c (2026-07-07)
+
+- Smoke : 20/20 modules, 4/4 shell
+- Unit : 65/65 (12 fichiers, +2 tests list-drag-reorder)
+- Lint : 0 erreur
+- Build entrée : 295 KB brut (`index-C7Rt5db-.js`), 83 KB gzip (+3 KB brut, +0,6 KB gzip — module drag partagé)
+- CSS entrée : 128 KB brut (`index-DJmEKrAu.css`), 21 KB gzip (+2 KB, en-tête + poignées + FLIP)
+- Chunk habits JS : 11,6 KB brut (`index-BgS5sSdR.js`), 4,1 KB gzip (inchangé)
+- Precache : 1088 KiB (+4 KiB)
+- Grep contrôle : 0 `Modifier toutes` / `bulk-form` dans `view-panels.js` ; 0 `!important` et 0 couleur en dur dans `habits/style.css`
+- `git diff --stat` périmètre : `core/list-drag-reorder.js`, `habits/view-panels.js`, `habits/index.js`, `habits/style.css`
+- Commits : `feat:` module drag partagé ; `feat:` en-tête + réorganisation ; `chore:` clôture M12c
+
 ### Simulation quota plein (procédure dev, M02)
 
 1. `npm run preview`, ouvrir l'app dans le navigateur.
@@ -714,6 +738,17 @@ Vérification automatisée équivalente : `npm run test:unit` — tests `save() 
 - M12b : règle CHECKLIST-SORTIE-MODULE § Modales déjà en place — confirmée par
   cette mission corrective. Validation manuelle attendue (iPhone scrollé en bas,
   ouverture « + Nouveau mouillage » et « ⚙️ Mon animal », 4 thèmes).
+- M12c : en-tête panneau gérer — titre seul sur sa ligne, actions en dessous
+  (`habits__panel-head`) ; libellés « Réorganiser » / « Terminé » (remplace
+  l'ancien mode édition en masse bulk-form, retiré).
+- M12c : `reorderHabits(orderedIds)` remplace l'usage principal de `moveHabit`
+  (conservé pour repli clavier ↑/↓). Drag via `core/list-drag-reorder.js`
+  (Pointer Events + FLIP), transplanté depuis `composant-liste-drag-reorder.html`.
+- M12c : patron **glisser-déposer réutilisable** — premier candidat identifié pour
+  Mémo (réordonner des post-its). Flèches ↑/↓ restent en repli clavier/accessibilité
+  (visibles au focus ou en mode réorganisation), jamais en interaction principale.
+- M12c : `touch-action: pan-y` sur les lignes, `touch-action: none` sur la poignée.
+  Fin de la série Habitudes (M12 → M12c). Validation manuelle groupée attendue.
 
 ---
 
