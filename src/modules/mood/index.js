@@ -1,11 +1,19 @@
 import './style.css';
 import { save, load } from '../../core/storage.js';
+import { createOceanCanvas } from './ocean-canvas.js';
+import {
+  SKY_BY_MOOD,
+  PERIOD_OPTIONS,
+  describeSea,
+  buildGalleryBuckets,
+  getIsoDate
+} from './scene.js';
 import {
   WEEKDAY_SHORT,
-  createMoodView,
-  createDashboardMoodWidget,
-  createHistory,
-  formatDateShortFr
+  createMoodShell,
+  createGalleryHtml,
+  createDetailHtml,
+  createDashboardMoodWidget
 } from './view.js';
 
 const STORAGE_KEY = 'mood:entries';
@@ -26,32 +34,18 @@ const ENERGY_LEVELS = [
   { value: 5, emoji: '🚀', label: 'Optimal' }
 ];
 
-const PERIOD_OPTIONS = [
-  { id: '7', label: '7 jours', days: 7 },
-  { id: '30', label: '30 jours', days: 30 },
-  { id: '90', label: '3 mois', days: 90 },
-  { id: '365', label: '1 an', days: 365 },
-  { id: 'all', label: 'Tout', days: null }
-];
-
 const WEEKDAY_LONG = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
 
 let rootContainer = null;
 let entries = [];
-let selectedMood = null;
-let selectedEnergy = null;
+let selectedMood = 3;
+let selectedEnergy = 3;
 let noteText = '';
-let selectedPeriod = '7';
-let historyDisplayCount = 40;
+let selectedPeriod = 'week';
+let ocean = null;
 let onRootClick = null;
-let onFormSubmit = null;
 let onRootInput = null;
-let onPointHover = null;
-let onHistoryScroll = null;
-
-function getIsoDate(date = new Date()) {
-  return date.toISOString().slice(0, 10);
-}
+let themeObserver = null;
 
 function normalizeEntry(entry) {
   if (!entry || typeof entry !== 'object') return null;
@@ -79,16 +73,14 @@ function readEntries() {
   if (!Array.isArray(raw)) return [];
   let needsSave = false;
   const normalized = raw
-    .map((e) => {
-      const entry = normalizeEntry(e);
-      if (!entry) return null;
-      if (!e?.id) needsSave = true;
-      return entry;
+    .map((entry) => {
+      const normalizedEntry = normalizeEntry(entry);
+      if (!normalizedEntry) return null;
+      if (!entry?.id) needsSave = true;
+      return normalizedEntry;
     })
     .filter(Boolean);
-  if (needsSave) {
-    save(STORAGE_KEY, normalized);
-  }
+  if (needsSave) save(STORAGE_KEY, normalized);
   return normalized.sort((a, b) => b.timestamp - a.timestamp);
 }
 
@@ -103,10 +95,6 @@ function getLevel(levels, value) {
 function average(values) {
   if (!values.length) return null;
   return values.reduce((sum, value) => sum + value, 0) / values.length;
-}
-
-function getSelectedPeriodDays() {
-  return PERIOD_OPTIONS.find((option) => option.id === selectedPeriod)?.days ?? 7;
 }
 
 function getPeriodCutoffIso(nbDays) {
@@ -141,20 +129,6 @@ function buildEntry() {
   };
 }
 
-function findTodayEntry() {
-  const today = getIsoDate();
-  return entries.find((entry) => entry.date === today) || null;
-}
-
-function getRecentHistory(periodDays) {
-  let filtered = [...entries];
-  if (periodDays !== null) {
-    const cutoffIso = getPeriodCutoffIso(periodDays);
-    filtered = filtered.filter((entry) => entry.date >= cutoffIso);
-  }
-  return filtered.sort((a, b) => b.timestamp - a.timestamp);
-}
-
 function enrichChartPoint(base) {
   const moodRounded = base.mood != null ? Math.min(5, Math.max(1, Math.round(base.mood))) : null;
   const energyRounded = base.energy != null ? Math.min(5, Math.max(1, Math.round(base.energy))) : null;
@@ -164,19 +138,6 @@ function enrichChartPoint(base) {
     moodEmoji: base.moodEmoji || (moodRounded ? getLevel(MOOD_LEVELS, moodRounded).emoji : ''),
     energyEmoji: base.energyEmoji || (energyRounded ? getLevel(ENERGY_LEVELS, energyRounded).emoji : '')
   };
-}
-
-function getWeekStartIso(date) {
-  const weekStart = new Date(`${getIsoDate(date)}T12:00:00`);
-  const weekday = weekStart.getDay();
-  const diff = weekday === 0 ? -6 : 1 - weekday;
-  weekStart.setDate(weekStart.getDate() + diff);
-  return getIsoDate(weekStart);
-}
-
-function formatMonthShort(dateString) {
-  const date = new Date(`${dateString}T12:00:00`);
-  return new Intl.DateTimeFormat('fr-FR', { month: 'short' }).format(date).replace(/\.$/, '');
 }
 
 function getChartDaysDaily(nbDays) {
@@ -196,85 +157,12 @@ function getChartDaysDaily(nbDays) {
         dayShort: nbDays <= 7 ? WEEKDAY_SHORT[date.getDay()] : String(date.getDate()),
         mood: dayEntry?.mood ?? null,
         energy: dayEntry?.energy ?? null,
-        note: dayEntry?.note || '',
-        moodEmoji: dayEntry?.moodEmoji || '',
-        energyEmoji: dayEntry?.energyEmoji || '',
-        hasData: Boolean(dayEntry),
-        isWeekly: false
+        hasData: Boolean(dayEntry)
       })
     );
   }
 
   return days;
-}
-
-function getChartWeeks(nbDays) {
-  const byDate = new Map(entries.map((entry) => [entry.date, entry]));
-  const today = new Date();
-  today.setHours(12, 0, 0, 0);
-
-  let rangeStart;
-  if (nbDays === null) {
-    const sortedDates = [...entries].map((entry) => entry.date).sort();
-    rangeStart = sortedDates[0] ? new Date(`${sortedDates[0]}T12:00:00`) : new Date(today);
-  } else {
-    rangeStart = new Date(today);
-    rangeStart.setDate(rangeStart.getDate() - (nbDays - 1));
-  }
-
-  let cursorIso = getWeekStartIso(rangeStart);
-  const todayIso = getIsoDate(today);
-  const weeks = [];
-
-  while (cursorIso <= todayIso) {
-    const weekEntries = [];
-    const cursorDate = new Date(`${cursorIso}T12:00:00`);
-
-    for (let offset = 0; offset < 7; offset += 1) {
-      const day = new Date(cursorDate);
-      day.setDate(day.getDate() + offset);
-      const iso = getIsoDate(day);
-      if (iso > todayIso) break;
-      const dayEntry = byDate.get(iso);
-      if (dayEntry) weekEntries.push(dayEntry);
-    }
-
-    const avgMood = average(weekEntries.map((entry) => entry.mood));
-    const avgEnergy = average(weekEntries.map((entry) => entry.energy));
-    const notes = weekEntries
-      .map((entry) => String(entry.note || '').trim())
-      .filter(Boolean);
-
-    weeks.push(
-      enrichChartPoint({
-        date: cursorIso,
-        dayShort: formatMonthShort(cursorIso),
-        mood: avgMood,
-        energy: avgEnergy,
-        note: notes.join(' · '),
-        hasData: weekEntries.length > 0,
-        isWeekly: true
-      })
-    );
-
-    const nextWeek = new Date(`${cursorIso}T12:00:00`);
-    nextWeek.setDate(nextWeek.getDate() + 7);
-    cursorIso = getIsoDate(nextWeek);
-  }
-
-  let lastMonth = '';
-  return weeks.map((week) => {
-    const month = formatMonthShort(week.date);
-    const label = month !== lastMonth ? month : '';
-    lastMonth = month;
-    return { ...week, dayShort: label };
-  });
-}
-
-function getChartDays(nbDays = 7) {
-  const aggregateWeekly = nbDays === null || nbDays >= 90;
-  if (aggregateWeekly) return getChartWeeks(nbDays);
-  return getChartDaysDaily(nbDays);
 }
 
 function computeMoodTrend() {
@@ -313,112 +201,155 @@ function computeDominantMoodEmoji() {
   return dominant;
 }
 
-function updateTooltipFromPoint(target) {
-  if (!rootContainer || !(target instanceof SVGElement)) return;
-  const tooltip = rootContainer.querySelector('[data-mood-tooltip]');
-  if (!(tooltip instanceof HTMLElement)) return;
+function queryStage() {
+  return rootContainer?.querySelector('[data-mood-stage]') ?? null;
+}
 
-  const hasData = target.dataset.hasData === 'true';
-  const date = target.dataset.date || '';
-  const isWeekly = target.dataset.isWeekly === 'true';
+function applyMoodToScene() {
+  const stage = queryStage();
+  if (!(stage instanceof HTMLElement)) return;
 
-  if (!hasData) {
-    tooltip.textContent = `${formatDateShortFr(date)} · Pas de donnée pour ce jour.`;
-    return;
+  const moodValue = selectedMood ?? 3;
+  const energyValue = selectedEnergy ?? 3;
+  const sky = SKY_BY_MOOD[moodValue];
+  stage.style.setProperty('--sky-top', sky.sky[0]);
+  stage.style.setProperty('--sky-bot', sky.sky[1]);
+  stage.style.setProperty('--sun', sky.sun);
+
+  const moodLevel = getLevel(MOOD_LEVELS, moodValue);
+  const energyLevel = getLevel(ENERGY_LEVELS, energyValue);
+
+  const cap = rootContainer?.querySelector('[data-mood-cap]');
+  const sub = rootContainer?.querySelector('[data-mood-sub]');
+  if (cap) cap.textContent = describeSea(moodValue, energyValue);
+  if (sub) sub.textContent = `${moodLevel.emoji} ${moodLevel.label} · ${energyLevel.emoji} ${energyLevel.label}`;
+
+  ocean?.setEnergyMultiplier(energyValue);
+}
+
+function updateSegmentButtons() {
+  if (!rootContainer) return;
+
+  for (const button of rootContainer.querySelectorAll('[data-mood-select]')) {
+    if (!(button instanceof HTMLButtonElement)) continue;
+    const kind = button.dataset.moodSelect;
+    const value = Number(button.dataset.value);
+    const selected = kind === 'mood' ? selectedMood : selectedEnergy;
+    button.setAttribute('aria-pressed', String(value === selected));
   }
 
-  const moodRaw = target.dataset.mood || '-';
-  const energyRaw = target.dataset.energy || '-';
-  const moodDisplay = isWeekly && Number.isFinite(Number(moodRaw)) ? Number(moodRaw).toFixed(1) : moodRaw;
-  const energyDisplay = isWeekly && Number.isFinite(Number(energyRaw)) ? Number(energyRaw).toFixed(1) : energyRaw;
-  const moodEmoji = target.dataset.moodEmoji || '';
-  const energyEmoji = target.dataset.energyEmoji || '';
-  const note = (target.dataset.note || '').trim();
-  const prefix = isWeekly ? 'Semaine du ' : '';
+  const moodVal = rootContainer.querySelector('[data-mood-val-label]');
+  const energyVal = rootContainer.querySelector('[data-energy-val-label]');
+  if (moodVal) {
+    moodVal.textContent =
+      selectedMood != null ? getLevel(MOOD_LEVELS, selectedMood).label : '—';
+  }
+  if (energyVal) {
+    energyVal.textContent =
+      selectedEnergy != null ? getLevel(ENERGY_LEVELS, selectedEnergy).label : '—';
+  }
 
-  tooltip.textContent = `${prefix}${formatDateShortFr(date)} · ${moodEmoji} Humeur ${moodDisplay}/5 · ${energyEmoji} Énergie ${energyDisplay}/5 · ${note || 'Sans note'}`;
+  const saveBtn = rootContainer.querySelector('[data-mood-save]');
+  if (saveBtn instanceof HTMLButtonElement) {
+    saveBtn.disabled = selectedMood == null || selectedEnergy == null;
+  }
 }
 
-function updateHistoryList() {
+function renderGallery() {
   if (!rootContainer) return;
 
-  const periodDays = getSelectedPeriodDays();
-  const allHistory = getRecentHistory(periodDays);
-  const visibleHistory = allHistory.slice(0, historyDisplayCount);
-  const hasMore = allHistory.length > visibleHistory.length;
+  const buckets = buildGalleryBuckets(entries, selectedPeriod);
+  const gallery = createGalleryHtml(buckets, selectedPeriod, MOOD_LEVELS, ENERGY_LEVELS);
+  const title = rootContainer.querySelector('[data-mood-gallery-title]');
+  const days = rootContainer.querySelector('[data-mood-days]');
+  const periods = rootContainer.querySelector('[data-mood-periods]');
 
-  const historySection = rootContainer.querySelector('[data-mood-history]');
-  if (!(historySection instanceof HTMLElement)) return;
-
-  const title = historySection.querySelector('[data-mood-history-title]');
-  const periodLabel = PERIOD_OPTIONS.find((option) => option.id === selectedPeriod)?.label || '7 jours';
-  if (title) title.textContent = `Historique · ${periodLabel}`;
-
-  const body = historySection.querySelector('[data-mood-history-body]');
-  if (!(body instanceof HTMLElement)) return;
-
-  const previousList = body.querySelector('[data-mood-history-list]');
-  const previousScrollTop = previousList instanceof HTMLElement ? previousList.scrollTop : 0;
-
-  body.innerHTML = createHistory(visibleHistory, { hasMore });
-
-  const nextList = body.querySelector('[data-mood-history-list]');
-  if (nextList instanceof HTMLElement) nextList.scrollTop = previousScrollTop;
+  if (title) title.textContent = gallery.title;
+  if (days instanceof HTMLElement) {
+    days.style.gridTemplateColumns = `repeat(${gallery.gridCols}, minmax(0, 1fr))`;
+    days.innerHTML = gallery.cells;
+  }
+  if (periods) {
+    for (const button of periods.querySelectorAll('[data-mood-period]')) {
+      if (!(button instanceof HTMLButtonElement)) continue;
+      button.setAttribute('aria-pressed', String(button.dataset.moodPeriod === selectedPeriod));
+    }
+  }
 }
 
-function refreshView({ preserveHistoryScroll = false } = {}) {
+function hideDetail() {
+  const detail = rootContainer?.querySelector('[data-mood-detail]');
+  if (detail instanceof HTMLElement) {
+    detail.hidden = true;
+    detail.innerHTML = '';
+  }
+}
+
+function showDetail(bucket) {
+  const detail = rootContainer?.querySelector('[data-mood-detail]');
+  if (!(detail instanceof HTMLElement)) return;
+  detail.innerHTML = createDetailHtml(bucket, MOOD_LEVELS, ENERGY_LEVELS);
+  detail.hidden = false;
+}
+
+function mountView() {
   if (!rootContainer) return;
 
-  const historyList = rootContainer.querySelector('[data-mood-history-list]');
-  const previousScrollTop = preserveHistoryScroll && historyList instanceof HTMLElement ? historyList.scrollTop : 0;
-
-  const periodDays = getSelectedPeriodDays();
-  const allHistory = getRecentHistory(periodDays);
-  const todayEntry = findTodayEntry();
-
-  rootContainer.innerHTML = createMoodView({
-    todayEntry,
+  rootContainer.innerHTML = createMoodShell({
     moodLevels: MOOD_LEVELS,
     energyLevels: ENERGY_LEVELS,
     selectedMood,
     selectedEnergy,
     note: noteText,
-    chartDays: getChartDays(periodDays),
-    history: allHistory.slice(0, historyDisplayCount),
-    historyTotal: allHistory.length,
     periodOptions: PERIOD_OPTIONS,
-    selectedPeriod,
-    chartIsWeekly: periodDays === null || periodDays >= 90
+    selectedPeriod
   });
 
-  if (preserveHistoryScroll) {
-    const nextList = rootContainer.querySelector('[data-mood-history-list]');
-    if (nextList instanceof HTMLElement) nextList.scrollTop = previousScrollTop;
+  const stage = queryStage();
+  const canvas = rootContainer.querySelector('[data-mood-canvas]');
+  if (stage instanceof HTMLElement && canvas instanceof HTMLCanvasElement) {
+    ocean = createOceanCanvas(stage, canvas, {
+      onSaveGestureEnd: () => {
+        const saveBtn = rootContainer?.querySelector('[data-mood-save]');
+        if (saveBtn instanceof HTMLButtonElement) saveBtn.disabled = false;
+      }
+    });
+    ocean.setEnergyMultiplier(selectedEnergy ?? 3);
+    ocean.start();
   }
-}
 
-function applyTodayEntryToForm() {
-  const todayEntry = findTodayEntry();
-  if (!todayEntry) return;
-  selectedMood = todayEntry.mood;
-  selectedEnergy = todayEntry.energy;
-  noteText = todayEntry.note || '';
-  refreshView();
+  applyMoodToScene();
+  renderGallery();
 }
 
 function saveTodayEntry() {
   if (selectedMood == null || selectedEnergy == null) return;
+
   const nextEntry = buildEntry();
   const todayIndex = entries.findIndex((entry) => entry.date === nextEntry.date);
-  if (todayIndex >= 0) {
-    entries[todayIndex] = nextEntry;
-  } else {
-    entries.push(nextEntry);
-  }
+  if (todayIndex >= 0) entries[todayIndex] = nextEntry;
+  else entries.push(nextEntry);
   entries.sort((a, b) => b.timestamp - a.timestamp);
   persistEntries();
+
   noteText = '';
-  refreshView();
+  const noteField = rootContainer?.querySelector('[data-mood-note]');
+  if (noteField instanceof HTMLTextAreaElement) noteField.value = '';
+
+  selectedPeriod = 'week';
+  renderGallery();
+  hideDetail();
+
+  const ack = rootContainer?.querySelector('[data-mood-ack]');
+  if (ack instanceof HTMLElement) {
+    ack.classList.remove('mood__stage-ack--go');
+    void ack.offsetWidth;
+    ack.classList.add('mood__stage-ack--go');
+  }
+
+  const saveBtn = rootContainer?.querySelector('[data-mood-save]');
+  if (saveBtn instanceof HTMLButtonElement) saveBtn.disabled = true;
+  ocean?.playSaveAnimation();
 }
 
 function bindEvents() {
@@ -428,23 +359,15 @@ function bindEvents() {
     const target = event.target;
     if (!(target instanceof Element)) return;
 
-    const periodChip = target.closest('[data-mood-period]');
-    if (periodChip instanceof HTMLButtonElement) {
-      const nextPeriod = periodChip.dataset.moodPeriod;
+    const periodBtn = target.closest('[data-mood-period]');
+    if (periodBtn instanceof HTMLButtonElement) {
+      const nextPeriod = periodBtn.dataset.moodPeriod;
       if (!nextPeriod || nextPeriod === selectedPeriod) return;
       selectedPeriod = nextPeriod;
-      historyDisplayCount = 40;
-      refreshView();
+      hideDetail();
+      renderGallery();
       return;
     }
-
-    const chartPoint = target.closest('[data-mood-point]');
-    if (chartPoint instanceof SVGElement) {
-      updateTooltipFromPoint(chartPoint);
-      return;
-    }
-
-    if (!(target instanceof HTMLElement)) return;
 
     const selectButton = target.closest('[data-mood-select]');
     if (selectButton instanceof HTMLButtonElement) {
@@ -453,15 +376,30 @@ function bindEvents() {
       if (!Number.isFinite(value)) return;
       if (kind === 'mood') selectedMood = Math.min(5, Math.max(1, value));
       if (kind === 'energy') selectedEnergy = Math.min(5, Math.max(1, value));
-      refreshView();
+      updateSegmentButtons();
+      applyMoodToScene();
       return;
     }
 
-    const editTodayButton = target.closest('[data-mood-edit-today]');
-    if (editTodayButton instanceof HTMLButtonElement) {
-      applyTodayEntryToForm();
-      rootContainer.querySelector('[data-mood-form]')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const saveBtn = target.closest('[data-mood-save]');
+    if (saveBtn instanceof HTMLButtonElement) {
+      saveTodayEntry();
+      return;
     }
+
+    const dayBtn = target.closest('[data-mood-day]');
+    if (dayBtn instanceof HTMLButtonElement) {
+      showDetail({
+        m: Number(dayBtn.dataset.mood),
+        e: Number(dayBtn.dataset.energy),
+        note: dayBtn.dataset.note || '',
+        date: dayBtn.dataset.date || '',
+        count: Number(dayBtn.dataset.count) || 1
+      });
+      return;
+    }
+
+    if (target.closest('[data-mood-day-empty]')) hideDetail();
   };
 
   onRootInput = (event) => {
@@ -471,45 +409,14 @@ function bindEvents() {
     noteText = target.value;
   };
 
-  onFormSubmit = (event) => {
-    const target = event.target;
-    if (!(target instanceof HTMLFormElement)) return;
-    if (!target.matches('[data-mood-form]')) return;
-    event.preventDefault();
-
-    const noteField = target.querySelector('[data-mood-note]');
-    if (noteField instanceof HTMLTextAreaElement) noteText = noteField.value;
-    saveTodayEntry();
-  };
-
-  onPointHover = (event) => {
-    const target = event.target;
-    if (!(target instanceof SVGElement)) return;
-    if (!target.matches('[data-mood-point]')) return;
-    updateTooltipFromPoint(target);
-  };
-
-  onHistoryScroll = (event) => {
-    const target = event.target;
-    if (!(target instanceof HTMLElement)) return;
-    if (!target.matches('[data-mood-history-list]')) return;
-    if (target.dataset.hasMore !== 'true') return;
-    if (target.scrollTop + target.clientHeight < target.scrollHeight - 48) return;
-
-    const periodDays = getSelectedPeriodDays();
-    const total = getRecentHistory(periodDays).length;
-    if (historyDisplayCount >= total) return;
-
-    historyDisplayCount = Math.min(total, historyDisplayCount + 40);
-    updateHistoryList();
-  };
-
   rootContainer.addEventListener('click', onRootClick);
   rootContainer.addEventListener('input', onRootInput);
-  rootContainer.addEventListener('submit', onFormSubmit);
-  rootContainer.addEventListener('mouseover', onPointHover);
-  rootContainer.addEventListener('focusin', onPointHover);
-  rootContainer.addEventListener('scroll', onHistoryScroll, true);
+
+  themeObserver = new MutationObserver(() => {
+    applyMoodToScene();
+    ocean?.renderIdleFrame();
+  });
+  themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 }
 
 const moodModule = {
@@ -520,38 +427,38 @@ const moodModule = {
   init(container) {
     rootContainer = container;
     entries = readEntries();
-    selectedMood = null;
-    selectedEnergy = null;
+    selectedMood = 3;
+    selectedEnergy = 3;
     noteText = '';
-    selectedPeriod = '7';
-    historyDisplayCount = 40;
-    refreshView();
+    selectedPeriod = 'week';
+
+    const todayEntry = entries.find((entry) => entry.date === getIsoDate());
+    if (todayEntry) {
+      selectedMood = todayEntry.mood;
+      selectedEnergy = todayEntry.energy;
+      noteText = todayEntry.note || '';
+    }
+
+    mountView();
     bindEvents();
   },
 
   destroy() {
+    themeObserver?.disconnect();
+    themeObserver = null;
+
     if (rootContainer && onRootClick) rootContainer.removeEventListener('click', onRootClick);
     if (rootContainer && onRootInput) rootContainer.removeEventListener('input', onRootInput);
-    if (rootContainer && onFormSubmit) rootContainer.removeEventListener('submit', onFormSubmit);
-    if (rootContainer && onPointHover) {
-      rootContainer.removeEventListener('mouseover', onPointHover);
-      rootContainer.removeEventListener('focusin', onPointHover);
-    }
-    if (rootContainer && onHistoryScroll) {
-      rootContainer.removeEventListener('scroll', onHistoryScroll, true);
-    }
 
+    ocean?.destroy();
+    ocean = null;
     onRootClick = null;
     onRootInput = null;
-    onFormSubmit = null;
-    onPointHover = null;
-    onHistoryScroll = null;
     entries = [];
-    selectedMood = null;
-    selectedEnergy = null;
+    selectedMood = 3;
+    selectedEnergy = 3;
     noteText = '';
-    selectedPeriod = '7';
-    historyDisplayCount = 40;
+    selectedPeriod = 'week';
 
     if (rootContainer) {
       rootContainer.innerHTML = '';
@@ -567,7 +474,7 @@ const moodModule = {
 
     const widget = createDashboardMoodWidget({
       todayEntry: today,
-      chartDays: getChartDays(7),
+      chartDays: getChartDaysDaily(7),
       moodTrend: computeMoodTrend(),
       dominantMoodEmoji: computeDominantMoodEmoji()
     });
