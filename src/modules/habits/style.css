@@ -750,6 +750,13 @@
   align-content: start;
 }
 
+/* M12g : dialog top-layer × overflow:auto clippe la ligne transformée sur WebKit.
+   Pendant le drag, lever le clip sans toucher au scroll au repos. */
+.habits__panel-card:has(.list-drag-reorder__row--dragging),
+.habits__pet-card:has(.list-drag-reorder__row--dragging) {
+  overflow: visible;
+}
+
 .habits__panel-head {
   display: flex;
   flex-direction: column;
