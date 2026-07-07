@@ -3,7 +3,7 @@
 > Ce fichier est la mémoire du chantier. L'agent le lit au début de chaque
 > mission et le met à jour à la fin. Il doit rester factuel et concis.
 
-**Dernière mise à jour :** 2026-07-07 — M10
+**Dernière mise à jour :** 2026-07-07 — M10b
 
 ---
 
@@ -29,6 +29,7 @@
 | M09b | Corrections groupées Capture & Respiration | ✅ faite (en attente validation Cédric) | 2026-07-06 |
 | M09c | Respiration : sync eau démarrage + pause | ✅ faite (en attente validation Cédric) | 2026-07-06 |
 | M10 | Refonte Agenda : la marée du jour | ✅ faite (en attente validation Cédric) | 2026-07-07 |
+| M10b | Agenda : modale centrée, boutons + espacement haut | ✅ faite (en attente validation Cédric) | 2026-07-07 |
 
 Statuts : ⬜ à faire · 🔶 en cours · ✅ faite et validée par Cédric · 🛑 bloquée
 
@@ -41,17 +42,17 @@ sans justification écrite.*
 
 | Métrique | Baseline (M00) | Dernière valeur | Mission |
 |---|---|---|---|
-| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M10 |
-| Tests unitaires | 22/22 passés (2 fichiers) | 51/51 passés (8 fichiers) | M10 |
-| Lint | 0 erreur | 0 erreur | M10 |
-| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 285 KB (`index-AIDZr5vu.js`) | M10 |
-| JS initial (gzip) | 243 KB | 78 KB | M10 |
-| CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 117 KB (`index-DNCpuRtL.css`, entrée HTML) | M10 |
-| Chunk calendar JS (gzip) | — | 9,3 KB (`index-qjB2kswj.js`) | M10 |
-| Chunk calendar CSS (gzip) | — | 3,1 KB (`index-DccqHnTP.css`) | M10 |
+| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M10b |
+| Tests unitaires | 22/22 passés (2 fichiers) | 51/51 passés (8 fichiers) | M10b |
+| Lint | 0 erreur | 0 erreur | M10b |
+| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 285 KB (`index-C9S-lv1L.js`) | M10b |
+| JS initial (gzip) | 243 KB | 78 KB | M10b |
+| CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 117 KB (`index-JBBUZz1k.css`, entrée HTML) | M10b |
+| Chunk calendar JS (gzip) | — | 9,3 KB (`index-DnseyYGl.js`) | M10b |
+| Chunk calendar CSS (gzip) | — | 3,2 KB (`index-BM-95gr2.css`) | M10b |
 | Nombre de chunks JS | 1 | 9 | M01 |
 | Polices woff2 (dist) | — | ~122 KB (7 fichiers) | M04 |
-| Precache PWA | — | 1067 KiB (23 entrées) | M10 |
+| Precache PWA | — | 1068 KiB (23 entrées) | M10b |
 
 Variation bundle M05 : +4,3 KB brut sur le chunk d'entrée JS (275 vs 270 M04) — hors tolérance ±2 KB
 mais +1,5 KB gzip seulement ; justifié par markup SVG inline (houle, ancre, coche) et fonctions tide
@@ -325,6 +326,27 @@ et zéro `#c9a227` dans `tasks/style.css`.
 - `git diff --stat` : `calendar/` (tide.js, tide.test.js, index.js, view.js, style.css)
 - Commits : `feat:` marée + couloirs ; `feat:` semaine liste + mois carte + approche ; `feat:` modales dialog ; `refactor:` nettoyage ; `chore:` clôture M10
 
+### Rituel AVANT M10b (2026-07-07)
+
+- Smoke : 20/20 modules, 4/4 shell
+- Unit : 51/51 (8 fichiers)
+- Lint : 0 erreur
+- Build entrée : 285 KB brut (`index-AIDZr5vu.js`), 78 KB gzip
+- CSS entrée : 117 KB brut (`index-DNCpuRtL.css`), 19 KB gzip
+- Precache : 1067 KiB
+
+### Rituel APRÈS M10b (2026-07-07)
+
+- Smoke : 20/20 modules, 4/4 shell
+- Unit : 51/51 (8 fichiers)
+- Lint : 0 erreur
+- Build entrée : 285 KB brut (`index-C9S-lv1L.js`), 78 KB gzip (inchangé)
+- CSS entrée : 117 KB brut (`index-JBBUZz1k.css`), 19 KB gzip (+0,05 KB, padding-top safe-area)
+- Chunk calendar CSS : 15,5 KB brut (`index-BM-95gr2.css`), 3,2 KB gzip (+0,1 KB, animation wrapper + boutons)
+- Precache : 1068 KiB (+1 KiB)
+- `git diff --stat` : `calendar/style.css` + `core/styles.css` uniquement
+- Commits : `fix:` modale centrée + boutons ; `fix:` padding-top safe-area ; `chore:` clôture M10b
+
 ### Simulation quota plein (procédure dev, M02)
 
 1. `npm run preview`, ouvrir l'app dans le navigateur.
@@ -480,6 +502,16 @@ Vérification automatisée équivalente : `npm run test:unit` — tests `save() 
 - M10 : `tide.js` extrait (`assignLanes`, calculs position) + 7 tests unitaires. CSS agenda
   réduit ~1625 → ~930 lignes, 0 `!important`. Prochaine étape possible : mission balai
   harmonisation largeurs `--module-max-width` sur tous les modules.
+- M10b : patron modale complété — **ne jamais animer le `<dialog>` lui-même** (`transform`
+  casse le centrage top layer via `margin:auto`) ; animer un wrapper interne (`-card`).
+  Backdrop reste sur le dialog.
+- M10b : boutons `.cal__btn` — `--text-primary` par défaut, `--text-on-accent` forcé sur
+  primary (:hover/:active inclus), danger explicite.
+- M10b : padding-top `calc(env(safe-area-inset-top) + var(--space-4))` sur
+  `#app-module-content` en layout mobile-bar — **première pierre harmonisation** (tous
+  modules). Mission balai `--module-max-width` + revue espacements à planifier.
+- M10b : wrappers `-card` déjà présents en M10 (`view.js` inchangé). Validation groupée
+  M10 + M10b attendue.
 
 ---
 
