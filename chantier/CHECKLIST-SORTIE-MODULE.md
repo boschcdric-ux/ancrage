@@ -23,6 +23,14 @@ considérer un module comme "terminé", tant que le contexte est frais.
 - [ ] `<dialog>` ouvert par `showModal()` JS uniquement — jamais `open` en HTML.
 - [ ] Jamais animer le `<dialog>` lui-même — animer un wrapper interne.
 - [ ] `width:min(...);margin:auto` — jamais `width:100%` sur le dialog.
+- [ ] **Panneaux/panels PRÉEXISTANTS non touchés par la refonte** (ex. un
+      `<aside>` en `position:fixed` avec `top/right/bottom` codés en dur,
+      un ancien menu de gestion, un réglage secondaire) : vérifier s'ils
+      utilisent encore l'ancien pattern (pas de centrage, pas de backdrop).
+      Une refonte ne doit pas laisser de côté les fenêtres annexes du
+      module sous prétexte qu'elles existaient avant — les recenser
+      explicitement et les convertir au pattern `<dialog>` dans la même
+      mission, ou noter la dette si reportée à une mission dédiée.
 
 ## Animations
 - [ ] Élément animé PERSISTANT (pas recréé par un innerHTML/re-render).
