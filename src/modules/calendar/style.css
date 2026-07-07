@@ -817,6 +817,14 @@
   width: 100%;
 }
 
+.cal__composer-field input[type="date"],
+.cal__composer-field input[type="time"],
+.cal__composer-row input[type="date"],
+.cal__composer-row input[type="time"] {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
 .cal__composer-more-toggle {
   font-size: 0.8rem;
   color: var(--text-muted);
