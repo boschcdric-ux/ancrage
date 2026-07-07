@@ -3,7 +3,7 @@
 > Ce fichier est la mémoire du chantier. L'agent le lit au début de chaque
 > mission et le met à jour à la fin. Il doit rester factuel et concis.
 
-**Dernière mise à jour :** 2026-07-07 — M10c
+**Dernière mise à jour :** 2026-07-07 — M10d
 
 ---
 
@@ -31,6 +31,7 @@
 | M10 | Refonte Agenda : la marée du jour | ✅ faite (en attente validation Cédric) | 2026-07-07 |
 | M10b | Agenda : modale centrée, boutons + espacement haut | ✅ faite (en attente validation Cédric) | 2026-07-07 |
 | M10c | Agenda : modale en mode modal (showModal) | ✅ faite (en attente validation Cédric) | 2026-07-07 |
+| M10d | Agenda : fonds thématisés + fin récurrence | ✅ faite (en attente validation Cédric) | 2026-07-07 |
 
 Statuts : ⬜ à faire · 🔶 en cours · ✅ faite et validée par Cédric · 🛑 bloquée
 
@@ -43,17 +44,17 @@ sans justification écrite.*
 
 | Métrique | Baseline (M00) | Dernière valeur | Mission |
 |---|---|---|---|
-| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M10c |
-| Tests unitaires | 22/22 passés (2 fichiers) | 51/51 passés (8 fichiers) | M10c |
-| Lint | 0 erreur | 0 erreur | M10c |
-| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 285 KB (`index-zyQQYnVE.js`) | M10c |
-| JS initial (gzip) | 243 KB | 78 KB | M10c |
-| CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 117 KB (`index-JBBUZz1k.css`, entrée HTML) | M10c |
-| Chunk calendar JS (gzip) | — | 9,4 KB (`index-CtJM2E8J.js`) | M10c |
-| Chunk calendar CSS (gzip) | — | 3,2 KB (`index-Ci4y9893.css`) | M10c |
+| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M10d |
+| Tests unitaires | 22/22 passés (2 fichiers) | 51/51 passés (8 fichiers) | M10d |
+| Lint | 0 erreur | 0 erreur | M10d |
+| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 285 KB (`index-BqDbErep.js`) | M10d |
+| JS initial (gzip) | 243 KB | 78 KB | M10d |
+| CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 117 KB (`index-JBBUZz1k.css`, entrée HTML) | M10d |
+| Chunk calendar JS (gzip) | — | 9,4 KB (`index-Bh1zGYw8.js`) | M10d |
+| Chunk calendar CSS (gzip) | — | 3,2 KB (`index-CKvWhBag.css`) | M10d |
 | Nombre de chunks JS | 1 | 9 | M01 |
 | Polices woff2 (dist) | — | ~122 KB (7 fichiers) | M04 |
-| Precache PWA | — | 1068 KiB (23 entrées) | M10c |
+| Precache PWA | — | 1068 KiB (23 entrées) | M10d |
 
 Variation bundle M05 : +4,3 KB brut sur le chunk d'entrée JS (275 vs 270 M04) — hors tolérance ±2 KB
 mais +1,5 KB gzip seulement ; justifié par markup SVG inline (houle, ancre, coche) et fonctions tide
@@ -371,6 +372,28 @@ et zéro `#c9a227` dans `tasks/style.css`.
 - `git diff --stat` : `calendar/view.js` + `calendar/index.js` + `calendar/style.css` uniquement
 - Commits : `fix:` showModal sans open HTML ; `chore:` clôture M10c
 
+### Rituel AVANT M10d (2026-07-07)
+
+- Smoke : 20/20 modules, 4/4 shell
+- Unit : 51/51 (8 fichiers)
+- Lint : 0 erreur
+- Build entrée : 285 KB brut (`index-zyQQYnVE.js`), 78 KB gzip
+- CSS entrée : 117 KB brut (`index-JBBUZz1k.css`), 19 KB gzip
+- Precache : 1068 KiB
+
+### Rituel APRÈS M10d (2026-07-07)
+
+- Smoke : 20/20 modules, 4/4 shell
+- Unit : 51/51 (8 fichiers)
+- Lint : 0 erreur
+- Build entrée : 285 KB brut (`index-BqDbErep.js`), 78 KB gzip (inchangé)
+- CSS entrée : 117 KB brut (`index-JBBUZz1k.css`), 19 KB gzip (inchangé)
+- Chunk calendar CSS : 15,7 KB brut (`index-CKvWhBag.css`), 3,2 KB gzip (+0,02 KB, fonds token)
+- Chunk calendar JS : 32 KB brut (`index-Bh1zGYw8.js`), 9,4 KB gzip (inchangé)
+- Precache : 1068 KiB (inchangé)
+- `git diff --stat` : `calendar/style.css` uniquement
+- Commits : `fix:` fonds thématisés + largeur input ; `chore:` clôture M10d
+
 ### Simulation quota plein (procédure dev, M02)
 
 1. `npm run preview`, ouvrir l'app dans le navigateur.
@@ -546,6 +569,15 @@ Vérification automatisée équivalente : `npm run test:unit` — tests `save() 
 - M10c : classe `cal--modal-open` sur `.cal` masque le bouton sticky « + Poser » tant
   qu'une modale est ouverte (sync après render + handler `close` backdrop/Échap).
 - M10c : fin de la refonte Agenda. Validation groupée M10 + M10b + M10c attendue.
+- M10d : `.cal__cell` — `background: var(--bg-tertiary)` (défaut navigateur des `<button>`
+  restait clair en Encre/Crépuscule). `.cal__seg-btn` — `background: transparent` + `border: none`.
+  `.cal__app-item` — idem (boutons « En approche »). Jours hors-mois : opacité 0,4.
+- M10d : `.cal__composer-field input` ajouté au sélecteur largeur modale — le champ Fin récurrence
+  (`type="date"`) débordait faute de `width:100%` / `box-sizing`.
+- M10d : leçon — tout élément de fond doit déclarer un `background` à base de token ; ne jamais
+  compter sur un fond implicite (invisible en thème clair, cassé en thème sombre) ; à vérifier dans
+  l'audit des prochains modules.
+- M10d : série Agenda terminée (M10 → M10d). Validation groupée attendue.
 
 ---
 
@@ -572,6 +604,9 @@ Vérification automatisée équivalente : `npm run test:unit` — tests `save() 
   qui conserve un `requestAnimationFrame` — hors périmètre strict M08d ; la ceinture CSS
   compense. Si flash persiste sur iPhone, micro-correctif sur cette ligne. **Résolu en M08e**
   (retrait `popovertarget`, ouverture 100 % JS).
+- M10d : bouton d'aide « ? » de chaque module — (a) chevauche des éléments selon le module
+  (ex. flotte sur « Mois » dans l'Agenda) et (b) contenus d'aide obsolètes après refontes.
+  Candidat mission transversale « aide contextuelle » (repositionnement + réécriture).
 
 ---
 
