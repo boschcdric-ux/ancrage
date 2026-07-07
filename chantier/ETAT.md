@@ -3,7 +3,7 @@
 > Ce fichier est la mémoire du chantier. L'agent le lit au début de chaque
 > mission et le met à jour à la fin. Il doit rester factuel et concis.
 
-**Dernière mise à jour :** 2026-07-07 — M10d
+**Dernière mise à jour :** 2026-07-07 — M10e
 
 ---
 
@@ -32,6 +32,7 @@
 | M10b | Agenda : modale centrée, boutons + espacement haut | ✅ faite (en attente validation Cédric) | 2026-07-07 |
 | M10c | Agenda : modale en mode modal (showModal) | ✅ faite (en attente validation Cédric) | 2026-07-07 |
 | M10d | Agenda : fonds thématisés + fin récurrence | ✅ faite (en attente validation Cédric) | 2026-07-07 |
+| M10e | Agenda : input date iOS déborde | ✅ faite (en attente validation Cédric) | 2026-07-07 |
 
 Statuts : ⬜ à faire · 🔶 en cours · ✅ faite et validée par Cédric · 🛑 bloquée
 
@@ -44,17 +45,17 @@ sans justification écrite.*
 
 | Métrique | Baseline (M00) | Dernière valeur | Mission |
 |---|---|---|---|
-| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M10d |
-| Tests unitaires | 22/22 passés (2 fichiers) | 51/51 passés (8 fichiers) | M10d |
-| Lint | 0 erreur | 0 erreur | M10d |
-| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 285 KB (`index-BqDbErep.js`) | M10d |
-| JS initial (gzip) | 243 KB | 78 KB | M10d |
-| CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 117 KB (`index-JBBUZz1k.css`, entrée HTML) | M10d |
-| Chunk calendar JS (gzip) | — | 9,4 KB (`index-Bh1zGYw8.js`) | M10d |
-| Chunk calendar CSS (gzip) | — | 3,2 KB (`index-CKvWhBag.css`) | M10d |
+| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M10e |
+| Tests unitaires | 22/22 passés (2 fichiers) | 51/51 passés (8 fichiers) | M10e |
+| Lint | 0 erreur | 0 erreur | M10e |
+| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 285 KB (`index-BWAfFFr1.js`) | M10e |
+| JS initial (gzip) | 243 KB | 78 KB | M10e |
+| CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 117 KB (`index-JBBUZz1k.css`, entrée HTML) | M10e |
+| Chunk calendar JS (gzip) | — | 9,4 KB (`index-86JbBOWl.js`) | M10e |
+| Chunk calendar CSS (gzip) | — | 3,2 KB (`index-D1nMcXjX.css`) | M10e |
 | Nombre de chunks JS | 1 | 9 | M01 |
 | Polices woff2 (dist) | — | ~122 KB (7 fichiers) | M04 |
-| Precache PWA | — | 1068 KiB (23 entrées) | M10d |
+| Precache PWA | — | 1068 KiB (23 entrées) | M10e |
 
 Variation bundle M05 : +4,3 KB brut sur le chunk d'entrée JS (275 vs 270 M04) — hors tolérance ±2 KB
 mais +1,5 KB gzip seulement ; justifié par markup SVG inline (houle, ancre, coche) et fonctions tide
@@ -394,6 +395,28 @@ et zéro `#c9a227` dans `tasks/style.css`.
 - `git diff --stat` : `calendar/style.css` uniquement
 - Commits : `fix:` fonds thématisés + largeur input ; `chore:` clôture M10d
 
+### Rituel AVANT M10e (2026-07-07)
+
+- Smoke : 20/20 modules, 4/4 shell
+- Unit : 51/51 (8 fichiers)
+- Lint : 0 erreur
+- Build entrée : 285 KB brut (`index-BqDbErep.js`), 78 KB gzip
+- CSS entrée : 117 KB brut (`index-JBBUZz1k.css`), 19 KB gzip
+- Precache : 1068 KiB
+
+### Rituel APRÈS M10e (2026-07-07)
+
+- Smoke : 20/20 modules, 4/4 shell
+- Unit : 51/51 (8 fichiers)
+- Lint : 0 erreur
+- Build entrée : 285 KB brut (`index-BWAfFFr1.js`), 78 KB gzip (inchangé)
+- CSS entrée : 117 KB brut (`index-JBBUZz1k.css`), 19 KB gzip (inchangé)
+- Chunk calendar CSS : 15,9 KB brut (`index-D1nMcXjX.css`), 3,2 KB gzip (+0,05 KB, appearance none date/time)
+- Chunk calendar JS : 32 KB brut (`index-86JbBOWl.js`), 9,4 KB gzip (inchangé)
+- Precache : 1068 KiB (inchangé)
+- `git diff --stat` : `calendar/style.css` uniquement
+- Commits : `fix:` appearance none inputs date/heure ; `chore:` clôture M10e
+
 ### Simulation quota plein (procédure dev, M02)
 
 1. `npm run preview`, ouvrir l'app dans le navigateur.
@@ -578,6 +601,10 @@ Vérification automatisée équivalente : `npm run test:unit` — tests `save() 
   compter sur un fond implicite (invisible en thème clair, cassé en thème sombre) ; à vérifier dans
   l'audit des prochains modules.
 - M10d : série Agenda terminée (M10 → M10d). Validation groupée attendue.
+- M10e : `<input type="date"/"time">` dans la modale agenda — `-webkit-appearance:none` +
+  `appearance:none` pour neutraliser la largeur intrinsèque iOS Safari (le widget natif ignore
+  `width:100%`). Règle à appliquer d'office dans tout futur module avec champs date/heure.
+- M10e : série Agenda close (M10 → M10e). Validation groupée attendue.
 
 ---
 
