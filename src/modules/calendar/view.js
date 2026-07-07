@@ -365,11 +365,11 @@ function createApproachSection(approachEvents) {
 
 function createDetailDialog(state) {
   if (!state.open || !state.event) {
-    return '<dialog class="cal__detail" data-cal-detail-dialog hidden></dialog>';
+    return '<dialog class="cal__detail" data-cal-detail-dialog></dialog>';
   }
   const event = state.event;
   return `
-    <dialog class="cal__detail" data-cal-detail-dialog open>
+    <dialog class="cal__detail" data-cal-detail-dialog>
       <div class="cal__detail-card cal__detail-card--${event.color}">
         <div class="cal__detail-title">${escapeHtml(event.title)}</div>
         <div class="cal__detail-when">${escapeHtml(formatDetailDateRange(event))}</div>
@@ -402,7 +402,7 @@ function createComposerDialog(state) {
       : '';
 
   return `
-    <dialog class="cal__composer" data-cal-composer-dialog ${state.open ? 'open' : ''}>
+    <dialog class="cal__composer" data-cal-composer-dialog>
       <form class="cal__composer-card" data-calendar-form>
         ${buildEventFormFields(state.form, formState)}
         <div class="cal__composer-actions">
