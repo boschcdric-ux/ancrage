@@ -22,6 +22,12 @@ export function initSwipeDetection(refs) {
   swipeRefs = refs;
 }
 
+function setModuleParallaxWillChange(active) {
+  const moduleParallaxInner = swipeRefs?.getModuleParallaxInner?.();
+  if (!(moduleParallaxInner instanceof HTMLElement)) return;
+  moduleParallaxInner.classList.toggle('app-module-parallax--will-change', active);
+}
+
 export function resetModulePanVisuals() {
   const modulePanLayer = swipeRefs?.getModulePanLayer?.();
   const moduleParallaxInner = swipeRefs?.getModuleParallaxInner?.();
@@ -29,6 +35,7 @@ export function resetModulePanVisuals() {
   if (!(modulePanLayer instanceof HTMLElement)) return;
   modulePanLayer.classList.remove('app-module-pan-layer--spring');
   modulePanLayer.style.transform = '';
+  setModuleParallaxWillChange(false);
   if (moduleParallaxInner instanceof HTMLElement) {
     moduleParallaxInner.style.transform = '';
   }
@@ -43,6 +50,7 @@ export function setModulePanFromDx(dx) {
   const moduleParallaxInner = swipeRefs?.getModuleParallaxInner?.();
   const moduleEdgeGlowEl = swipeRefs?.getModuleEdgeGlowEl?.();
   if (!(modulePanLayer instanceof HTMLElement) || !(moduleParallaxInner instanceof HTMLElement)) return;
+  setModuleParallaxWillChange(true);
   const w = window.innerWidth || 360;
   const max = w * MODULE_PAN_MAX_RATIO;
   const clamped = Math.max(Math.min(dx, max), -max);
@@ -71,6 +79,7 @@ export function springModulePanToZero() {
     return;
   }
   modulePanLayer.classList.add('app-module-pan-layer--spring');
+  setModuleParallaxWillChange(true);
   modulePanLayer.style.transform = 'translateX(0) translateZ(0)';
   if (moduleParallaxInner instanceof HTMLElement) {
     moduleParallaxInner.style.transform = 'translateX(0) translateZ(0)';
