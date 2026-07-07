@@ -3,7 +3,7 @@
 > Ce fichier est la mémoire du chantier. L'agent le lit au début de chaque
 > mission et le met à jour à la fin. Il doit rester factuel et concis.
 
-**Dernière mise à jour :** 2026-07-06 — M09c
+**Dernière mise à jour :** 2026-07-07 — M10
 
 ---
 
@@ -28,6 +28,7 @@
 | M09 | Signature Respiration : respirer avec la mer | ✅ faite (en attente validation Cédric) | 2026-07-06 |
 | M09b | Corrections groupées Capture & Respiration | ✅ faite (en attente validation Cédric) | 2026-07-06 |
 | M09c | Respiration : sync eau démarrage + pause | ✅ faite (en attente validation Cédric) | 2026-07-06 |
+| M10 | Refonte Agenda : la marée du jour | ✅ faite (en attente validation Cédric) | 2026-07-07 |
 
 Statuts : ⬜ à faire · 🔶 en cours · ✅ faite et validée par Cédric · 🛑 bloquée
 
@@ -40,15 +41,17 @@ sans justification écrite.*
 
 | Métrique | Baseline (M00) | Dernière valeur | Mission |
 |---|---|---|---|
-| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M09c |
-| Tests unitaires | 22/22 passés (2 fichiers) | 44/44 passés (7 fichiers) | M09c |
-| Lint | 0 erreur | 0 erreur | M09c |
-| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 285 KB (`index-YgXT2QBw.js`) | M09c |
-| JS initial (gzip) | 243 KB | 78 KB | M09c |
-| CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 117 KB (`index-DNCpuRtL.css`, entrée HTML) | M09c |
+| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M10 |
+| Tests unitaires | 22/22 passés (2 fichiers) | 51/51 passés (8 fichiers) | M10 |
+| Lint | 0 erreur | 0 erreur | M10 |
+| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 285 KB (`index-AIDZr5vu.js`) | M10 |
+| JS initial (gzip) | 243 KB | 78 KB | M10 |
+| CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 117 KB (`index-DNCpuRtL.css`, entrée HTML) | M10 |
+| Chunk calendar JS (gzip) | — | 9,3 KB (`index-qjB2kswj.js`) | M10 |
+| Chunk calendar CSS (gzip) | — | 3,1 KB (`index-DccqHnTP.css`) | M10 |
 | Nombre de chunks JS | 1 | 9 | M01 |
 | Polices woff2 (dist) | — | ~122 KB (7 fichiers) | M04 |
-| Precache PWA | — | 1080 KiB (23 entrées) | M09c |
+| Precache PWA | — | 1067 KiB (23 entrées) | M10 |
 
 Variation bundle M05 : +4,3 KB brut sur le chunk d'entrée JS (275 vs 270 M04) — hors tolérance ±2 KB
 mais +1,5 KB gzip seulement ; justifié par markup SVG inline (houle, ancre, coche) et fonctions tide
@@ -299,6 +302,29 @@ et zéro `#c9a227` dans `tasks/style.css`.
 - `git diff --stat` : uniquement `breathing/index.js` (+26 lignes)
 - Commits : `fix:` sync eau démarrage + pause ; `chore:` clôture M09c
 
+### Rituel AVANT M10 (2026-07-07)
+
+- Smoke : 20/20 modules, 4/4 shell
+- Unit : 44/44 (7 fichiers)
+- Lint : 0 erreur
+- Build entrée : 285 KB brut (`index-YgXT2QBw.js`), 78 KB gzip
+- CSS entrée : 117 KB brut (`index-DNCpuRtL.css`), 19 KB gzip
+- Precache : 1080 KiB
+
+### Rituel APRÈS M10 (2026-07-07)
+
+- Smoke : 20/20 modules, 4/4 shell
+- Unit : 51/51 (8 fichiers, +7 tests `assignLanes` / marée)
+- Lint : 0 erreur
+- Build entrée : 285 KB brut (`index-AIDZr5vu.js`), 78 KB gzip (inchangé — module lazy)
+- CSS entrée : 117 KB brut (`index-DNCpuRtL.css`), 19 KB gzip (inchangé)
+- Chunk calendar JS : 32 KB brut (`index-qjB2kswj.js`), 9,3 KB gzip (vs ~49 KB / 11 KB avant refonte)
+- Chunk calendar CSS : 15 KB brut (`index-DccqHnTP.css`), 3,1 KB gzip (vs ~27 KB / 4,5 KB avant)
+- Precache : 1067 KiB (−13 KiB, allègement CSS agenda)
+- Grep contrôle : 0 `!important`, 0 couleur en dur dans `calendar/style.css`
+- `git diff --stat` : `calendar/` (tide.js, tide.test.js, index.js, view.js, style.css)
+- Commits : `feat:` marée + couloirs ; `feat:` semaine liste + mois carte + approche ; `feat:` modales dialog ; `refactor:` nettoyage ; `chore:` clôture M10
+
 ### Simulation quota plein (procédure dev, M02)
 
 1. `npm run preview`, ouvrir l'app dans le navigateur.
@@ -441,6 +467,19 @@ Vérification automatisée équivalente : `npm run test:unit` — tests `save() 
 - M09c : leçon — toute transition CSS doit être reprise en main à la pause (geler la valeur
   réellement peinte) ; laisser un état initial se peindre (rAF) avant la transition suivante
   sur un élément neuf (même règle que flash popover M08d). Saga Respiration M09→M09c finalisée.
+- M10 : Agenda refondu (4e gros chantier). Marée = 4e emploi de l'eau (mesure / accueille /
+  guide / **situe dans le temps**). Vue Jour = colonne marée 7h–23h, couloirs `assignLanes`,
+  ticker 60 s avec mutations `--now-y` (élément `.cal__tide` persistant, pas de re-render).
+- M10 : Vue Semaine = liste verticale 7 jours (puces), pas de grille heures×jours. Vue Mois =
+  pastilles max 3 + compteur. Section « En approche » avec distance visuelle far/horizon.
+- M10 : Modales `<dialog>` centrées (`width:min(...);margin:auto`, `::backdrop` flou) pour détail
+  et composeur — nouveau patron canonique fenêtre focalisée (jamais `width:100%` sur dialog).
+- M10 : Ancre ⚓ transition douce `is-hot` hors aujourd'hui ; bouton « + Poser » sticky ;
+  largeur `min(420px, 100%)` ; champs saisie ≥ 16 px. Logique métier inchangée (récurrences,
+  notifications, lien tâches, `normalizeEvent`). Widget dashboard conservé.
+- M10 : `tide.js` extrait (`assignLanes`, calculs position) + 7 tests unitaires. CSS agenda
+  réduit ~1625 → ~930 lignes, 0 `!important`. Prochaine étape possible : mission balai
+  harmonisation largeurs `--module-max-width` sur tous les modules.
 
 ---
 
