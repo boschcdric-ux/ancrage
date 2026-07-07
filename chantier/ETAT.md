@@ -3,7 +3,7 @@
 > Ce fichier est la mémoire du chantier. L'agent le lit au début de chaque
 > mission et le met à jour à la fin. Il doit rester factuel et concis.
 
-**Dernière mise à jour :** 2026-07-07 — STOP (aucune mission ⬜)
+**Dernière mise à jour :** 2026-07-07 — M12g faite (validation Cédric en attente)
 
 ---
 
@@ -40,6 +40,7 @@
 | M12d | Habitudes : modale fantôme, scroll perdu, FLIP muet | ✅ faite (validation Cédric en attente) | 2026-07-07 |
 | M12e | Habitudes : ligne drag invisible iOS | ✅ faite (validation Cédric en attente) | 2026-07-07 |
 | M12f | Habitudes : drag invisible (ancêtre transformé) | ✅ faite (validation Cédric en attente) | 2026-07-07 |
+| M12g | Habitudes : audit profond drag invisible | ✅ faite (validation Cédric en attente) | 2026-07-07 |
 
 Statuts : ⬜ à faire · 🔶 en cours · ✅ faite et validée par Cédric · 🛑 bloquée
 
@@ -52,18 +53,18 @@ sans justification écrite.*
 
 | Métrique | Baseline (M00) | Dernière valeur | Mission |
 |---|---|---|---|
-| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M12f |
-| Tests unitaires | 22/22 passés (2 fichiers) | 65/65 passés (12 fichiers) | M12f |
-| Lint | 0 erreur | 0 erreur | M12f |
-| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 295 KB (`index-sVOjzSqx.js`) | M12f |
-| JS initial (gzip) | 243 KB | 83 KB | M12f |
-| CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 128 KB (`index-yNyuf_7H.css`, entrée HTML) | M12f |
-| Chunk calendar JS (gzip) | — | 9,4 KB (`index-PR58ytKf.js`) | M12f |
-| Chunk calendar CSS (gzip) | — | 3,2 KB (`index-D1nMcXjX.css`) | M12f |
-| Chunk habits JS (gzip) | — | 4,1 KB (`index-CB-ZlIOC.js`) | M12f |
+| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M12g |
+| Tests unitaires | 22/22 passés (2 fichiers) | 69/69 passés (13 fichiers) | M12g |
+| Lint | 0 erreur | 0 erreur | M12g |
+| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 296 KB (`index-CA83T29P.js`) | M12g |
+| JS initial (gzip) | 243 KB | 83 KB | M12g |
+| CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 128 KB (`index-DIq6iWtC.css`, entrée HTML) | M12g |
+| Chunk calendar JS (gzip) | — | 9,4 KB (`index-D3RZlEyX.js`) | M12g |
+| Chunk calendar CSS (gzip) | — | 3,2 KB (`index-D1nMcXjX.css`) | M12g |
+| Chunk habits JS (gzip) | — | 4,1 KB (`index-CupoYESh.js`) | M12g |
 | Nombre de chunks JS | 1 | 9 | M01 |
 | Polices woff2 (dist) | — | ~122 KB (7 fichiers) | M04 |
-| Precache PWA | — | 1089 KiB (23 entrées) | M12f |
+| Precache PWA | — | 1089 KiB (23 entrées) | M12g |
 
 Variation bundle M05 : +4,3 KB brut sur le chunk d'entrée JS (275 vs 270 M04) — hors tolérance ±2 KB
 mais +1,5 KB gzip seulement ; justifié par markup SVG inline (houle, ancre, coche) et fonctions tide
@@ -583,6 +584,35 @@ et zéro `#c9a227` dans `tasks/style.css`.
 - `git diff --stat` périmètre : `habits/style.css` uniquement (retrait transform résiduel keyframe)
 - Commits : `fix:` transform résiduel keyframe modale ; `chore:` clôture M12f
 
+### Rituel AVANT M12g (2026-07-07)
+
+- Smoke : 20/20 modules, 4/4 shell
+- Unit : 65/65 (12 fichiers)
+- Lint : 0 erreur
+- Build entrée : 295 KB brut (`index-sVOjzSqx.js`), 83 KB gzip
+- CSS entrée : 128 KB brut (`index-yNyuf_7H.css`), 21 KB gzip
+- Chunk habits JS : 11,6 KB brut (`index-CB-ZlIOC.js`), 4,1 KB gzip
+- Precache : 1089 KiB
+
+### Rituel APRÈS M12g (2026-07-07)
+
+- Smoke : 20/20 modules, 4/4 shell
+- Unit : 69/69 (13 fichiers, +4 tests swipe-detection will-change)
+- Lint : 0 erreur
+- Build entrée : 296 KB brut (`index-CA83T29P.js`), 83 KB gzip (+0,2 KB brut — toggle classe parallax)
+- CSS entrée : 128 KB brut (`index-DIq6iWtC.css`), 21 KB gzip (+0,2 KB — règle `:has` overflow drag)
+- Chunk habits JS : 11,6 KB brut (`index-CupoYESh.js`), 4,1 KB gzip (inchangé)
+- Precache : 1089 KiB (inchangé)
+- Sonde WebKit A/B (`scripts/m12g-webkit-drag-probe.mjs`) : cause prouvée =
+  `<dialog>` top-layer × `overflow:auto` sur carte modale (hit-test ligne invisible
+  sans correctif ; restauré avec `overflow:visible` pendant drag). `will-change`
+  permanent parallax écarté comme cause unique (même symptôme avec/sans). Correctifs :
+  `:has(.list-drag-reorder__row--dragging){overflow:visible}` sur `.habits__panel-card` ;
+  `will-change:transform` sur `#app-module-parallax` uniquement pendant pan swipe (socle).
+- Grep contrôle : 0 `!important` et 0 couleur en dur dans `habits/style.css`
+- Commits : `fix:` overflow drag modale ; `fix:` will-change parallax conditionnel ;
+  `test:` swipe-detection ; `chore:` clôture M12g
+
 ### Simulation quota plein (procédure dev, M02)
 
 1. `npm run preview`, ouvrir l'app dans le navigateur.
@@ -854,6 +884,24 @@ Vérification automatisée équivalente : `npm run test:unit` — tests `save() 
   Calque GPU de la ligne (M12e) conservé, inoffensif.
 - M12f : série Habitudes close (M12 → M12f). Validation manuelle groupée attendue
   (drag iPhone lent/rapide liste longue scrollée, animation ouverture modale, 4 thèmes).
+- M12g : cause drag invisible **prouvée empiriquement** (sonde WebKit A/B) =
+  interaction `<dialog>` top-layer × `overflow:auto` sur `.habits__panel-card` : la ligne
+  transformée reste dimensionnée mais n'est plus peinte (hit-test échoue). Restaurée par
+  `overflow:visible` pendant le drag (`:has(.list-drag-reorder__row--dragging)`) ou en
+  plaçant la liste hors modale. `isolation:isolate` sur `#app-module-content` et
+  `will-change:transform` permanent sur `#app-module-parallax` **écartés** comme causes
+  suffisantes seules (même symptôme avec/sans dans la sonde).
+- M12g : correctifs retenus — (1) overflow visible conditionnel sur carte modale Habitudes ;
+  (2) `will-change:transform` sur `#app-module-parallax` uniquement pendant pan/swipe
+  horizontal (classe `app-module-parallax--will-change`, retirée au repos) — défense socle
+  pour futurs drags/animations, sans régression navigation swipe attendue.
+- M12g : règle transverse — tout drag par `transform` à haute fréquence dans une modale
+  `<dialog>` doit vérifier les ancêtres `overflow` (pas seulement transforms/keyframes) ;
+  vérifier aussi la pile de composition du socle (`will-change`, `isolation`).
+- M12g : repli flèches ↑/↓ **non activé** — correctif CSS ciblé suffisant en sonde ;
+  validation iPhone réelle requise avant de clore définitivement la série Habitudes.
+- M12g : fin investigation série Habitudes (M12 → M12g). Sonde rejouable :
+  `scripts/m12g-webkit-drag-probe.mjs` (+ `m12g-drag-probe.html`).
 
 ---
 
@@ -880,9 +928,8 @@ Vérification automatisée équivalente : `npm run test:unit` — tests `save() 
   qui conserve un `requestAnimationFrame` — hors périmètre strict M08d ; la ceinture CSS
   compense. Si flash persiste sur iPhone, micro-correctif sur cette ligne. **Résolu en M08e**
   (retrait `popovertarget`, ouverture 100 % JS).
-- M12f : annexe `composant-liste-drag-reorder.html` indiquée « déjà alignée » dans la
-  mission mais conserve encore `transform` dans le `to` de `panel-in` — candidat micro-mission
-  annexe (hors périmètre M12f strict).
+- M12f : annexe `composant-liste-drag-reorder.html` — **alignée M12g** (note cause
+  overflow × dialog + correctifs prod documentés).
 - M10d : bouton d'aide « ? » de chaque module — (a) chevauche des éléments selon le module
   (ex. flotte sur « Mois » dans l'Agenda) et (b) contenus d'aide obsolètes après refontes.
   Candidat mission transversale « aide contextuelle » (repositionnement + réécriture).
@@ -893,12 +940,4 @@ Vérification automatisée équivalente : `npm run test:unit` — tests `save() 
 
 *Rempli uniquement en cas de STOP. Vidé une fois le blocage levé par Cédric.*
 
-- **2026-07-07 — Aucune mission ⬜ disponible.** Le tableau de bord liste M00→M12f
-  toutes en ✅ (M12→M12f : « faite, validation Cédric en attente »). Aucun
-  document `chantier/M13-*.md` (ni autre mission ⬜) n'existe dans le dépôt.
-  Rituel AVANT relancé (baseline saine, identique M12f) : smoke 20/20 + 4/4 shell,
-  unit 65/65, lint 0, build OK (entrée 295 KB / 83 KB gzip, precache 1089 KiB).
-  **Question pour Cédric :** (1) valider manuellement la série Habitudes M12→M12f
-  (§7 00-REGLES) ; (2) rédiger et ajouter au tableau la prochaine mission (candidats
-  notés en Découvertes : micro-mission annexe drag-reorder, harmonisation largeurs,
-  aide contextuelle « ? », module Mémo, etc.).
+*(vide)*
