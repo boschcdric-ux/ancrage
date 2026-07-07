@@ -658,7 +658,11 @@
   color: var(--text-muted);
 }
 
-/* Bouton Poser */
+/* Bouton Poser — masqué tant qu'une modale est ouverte */
+.cal--modal-open .cal__addbtn {
+  display: none;
+}
+
 .cal__addbtn {
   position: sticky;
   bottom: 14px;

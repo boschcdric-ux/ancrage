@@ -767,6 +767,13 @@ function syncDialogsAfterRender() {
   if (eventForm.open) openComposerDialog();
 }
 
+function syncModalOpenClass() {
+  const cal = rootContainer?.querySelector('.cal');
+  if (cal instanceof HTMLElement) {
+    cal.classList.toggle('cal--modal-open', detailPanel.open || eventForm.open);
+  }
+}
+
 function afterDayRender() {
   updateTideDom();
   const isToday = toYmd(referenceDate) === toYmd(new Date());
@@ -786,6 +793,7 @@ function render() {
   rootContainer.innerHTML = createCalendarView(buildViewModel());
   syncCalendarFormMorePanelAfterRender();
   syncDialogsAfterRender();
+  syncModalOpenClass();
   if (viewMode === 'day') afterDayRender();
   else stopTideTicker();
 }
@@ -931,6 +939,7 @@ function bindEvents() {
     if (target.matches('[data-cal-composer-dialog]')) {
       eventForm = { open: false, mode: 'create', eventId: null, form: createDefaultForm(new Date()) };
     }
+    syncModalOpenClass();
   };
 
   rootContainer.addEventListener('click', clickHandler);
