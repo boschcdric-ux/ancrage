@@ -289,3 +289,14 @@ Historique des modifications du chantier `chantier/redesign`.
 - Annexe `composant-liste-drag-reorder.html` déjà alignée (M12d). Périmètre : CSS uniquement.
 - CSS entrée : +0,1 KB gzip. JS et chunk habits inchangés. Total 65/65.
 - Série Habitudes close (M12 → M12e). Validation manuelle iPhone (drag lent/rapide, 4 thèmes) attendue.
+
+### M12f — Habitudes : drag invisible (ancêtre transformé)
+
+- Vraie cause iOS : `habits-panel-in` en `fill-mode: both` laissait un `transform`
+  résiduel (`scale(1)`) sur `.habits__panel-card` (`overflow: auto`), ce qui empêchait
+  WebKit de peindre la ligne draguée. M12e (calque GPU sur la ligne) ne pouvait pas
+  contourner un contexte fautif créé par l'ancêtre.
+- Correctif : retrait du `transform` de l'image finale `to` — la carte revient à
+  `transform: none` après l'animation d'entrée. Calque GPU ligne (M12e) conservé.
+- Périmètre : `habits/style.css` uniquement. Bundle et tests inchangés (65/65).
+- Série Habitudes close (M12 → M12f). Validation manuelle iPhone prioritaire attendue.
