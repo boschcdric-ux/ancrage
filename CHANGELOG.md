@@ -224,3 +224,21 @@ Historique des modifications du chantier `chantier/redesign`.
 - Tests : +4 (ocean-canvas helpers, buildGalleryBuckets). Total 55/55.
 - Bundle entrée : +2 KB brut / +2 KB gzip (moteur canvas). CSS entrée : +3 KB.
 - Validation manuelle (iPhone, 4 thèmes, mouvement réduit) attendue.
+
+### M12 — Refonte Habitudes : les mouillages
+
+- Vue **Aujourd'hui** : cartes mouillages (eau montante, bascule emoji→⚓, ondes, compteur retours
+  / mois). Entrée en cascade. Tap = jeter l'ancre sans `render()` global (classes `done` /
+  `just-done` sur la carte existante).
+- Vue **Régularité** : constellation 35 jours par habitude (points bioluminescents = retours,
+  cercles vides = jours prévus manqués sans reproche, points discrets = hors fréquence).
+- Bandeau jour : jauge circulaire animée + messages encourageants (jamais « en retard »).
+- Retrait affichage streak — `getReturnsCount()` (fenêtre 30 jours) remplace la série
+  ininterrompue. `getConsecutiveDays()` conservée mais non affichée.
+- Modèle `habits:list` + `habits:completions` inchangé. petSlot / onboarding animal conservés.
+  Widget dashboard inchangé.
+- Découpage : `logic.js`, `habits-store.js`, `habits-events.js`, `view-panels.js`.
+- Tests : +8 (`logic.test.js`). Total 63/63.
+- Bundle entrée : +3,6 KB brut / +1 KB gzip. CSS entrée : +5 KB. Chunk habits : 4,1 KB gzip.
+- Première application de `CHECKLIST-SORTIE-MODULE.md`. Validation manuelle (iPhone, taps
+  rapides, 4 thèmes) attendue.
