@@ -17,48 +17,63 @@ function attachListDragReorder({ listEl, rowSelector, handleSelector, getOrder, 
 
   let drag = null;
 
+  function currentLayoutTop(row, parentListEl) {
+    return row.offsetTop - parentListEl.offsetTop + parentListEl.getBoundingClientRect().top;
+  }
+
+  function applyDragTransform(ev) {
+    const parentListEl = drag.row.parentElement;
+    const targetVisualTop = ev.clientY - drag.grabOffset;
+    const layoutTop = currentLayoutTop(drag.row, parentListEl);
+    drag.row.style.transform = `translateY(${targetVisualTop - layoutTop}px)`;
+  }
+
   function onDragMove(ev) {
     if (!drag) return;
-    const dy = ev.clientY - drag.startY;
-    drag.row.style.transform = `translateY(${dy}px)`;
+    const parentListEl = drag.row.parentElement;
+    applyDragTransform(ev);
 
-    const others = [...listEl.querySelectorAll(rowSelector)].filter((r) => r !== drag.row);
+    const rows = [...parentListEl.querySelectorAll(rowSelector)];
+    const others = rows.filter((r) => r !== drag.row);
     const pointerY = ev.clientY;
-    let curIndex = drag.order.indexOf(drag.id);
+    const curIndex = drag.order.indexOf(drag.id);
     let targetIndex = curIndex;
 
-    others.forEach((row) => {
-      const rect = row.getBoundingClientRect();
+    others.forEach((r) => {
+      const rect = r.getBoundingClientRect();
       const mid = rect.top + rect.height / 2;
-      const idx = drag.order.indexOf(row.dataset.id);
+      const idx = drag.order.indexOf(r.dataset.id);
       if (pointerY < mid && idx < curIndex) targetIndex = Math.min(targetIndex, idx);
       if (pointerY > mid && idx > curIndex) targetIndex = Math.max(targetIndex, idx);
     });
-
     if (targetIndex === curIndex) return;
 
-    const before = new Map(others.map((row) => [row, row.getBoundingClientRect()]));
+    const before = new Map(others.map((r) => [r, r.getBoundingClientRect()]));
+
     const [moved] = drag.order.splice(curIndex, 1);
     drag.order.splice(targetIndex, 0, moved);
 
-    drag.order.forEach((id) => {
-      if (id === drag.id) return;
-      const row = listEl.querySelector(`${rowSelector}[data-id="${id}"]`);
-      if (row) listEl.appendChild(row);
-    });
-    listEl.appendChild(drag.row);
+    const nextId = drag.order[targetIndex + 1];
+    const nextEl = nextId
+      ? parentListEl.querySelector(`${rowSelector}[data-id="${nextId}"]`)
+      : null;
+    parentListEl.insertBefore(drag.row, nextEl);
 
-    others.forEach((row) => {
-      const prev = before.get(row);
-      const next = row.getBoundingClientRect();
+    applyDragTransform(ev);
+
+    others.forEach((r) => {
+      const prev = before.get(r);
+      const next = r.getBoundingClientRect();
       const deltaY = prev.top - next.top;
       if (!deltaY) return;
-      row.style.transition = 'none';
-      row.style.transform = `translateY(${deltaY}px)`;
+      r.style.transition = 'none';
+      r.style.transform = `translateY(${deltaY}px)`;
       requestAnimationFrame(() => {
-        row.style.transition = '';
-        row.classList.add('list-drag-reorder__row--settle');
-        row.style.transform = '';
+        requestAnimationFrame(() => {
+          r.style.transition = '';
+          r.classList.add('list-drag-reorder__row--settle');
+          r.style.transform = '';
+        });
       });
     });
   }
@@ -79,13 +94,13 @@ function attachListDragReorder({ listEl, rowSelector, handleSelector, getOrder, 
 
     drag = {
       id,
-      startY: ev.clientY,
       row,
+      pointerId: ev.pointerId,
+      grabOffset: ev.clientY - row.getBoundingClientRect().top,
       order: getOrder()
     };
     row.setPointerCapture(ev.pointerId);
     row.classList.add('list-drag-reorder__row--dragging');
-    row.style.transform = 'translateY(0)';
     window.addEventListener('pointermove', onDragMove);
     window.addEventListener('pointerup', onDragEnd, { once: true });
   }
