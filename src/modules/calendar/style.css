@@ -704,8 +704,8 @@
   -webkit-backdrop-filter: blur(3px);
 }
 
-.cal__detail[open],
-.cal__composer[open] {
+.cal__detail[open] .cal__detail-card,
+.cal__composer[open] .cal__composer-card {
   animation: cal-modal-in var(--duration-normal) var(--ease-out) both;
 }
 
@@ -874,7 +874,7 @@
   font-weight: var(--font-bold);
   background: var(--bg-tertiary);
   border: 1px solid var(--border);
-  color: var(--text-secondary);
+  color: var(--text-primary);
   cursor: pointer;
   transition:
     background var(--duration-fast) var(--ease-default),
@@ -891,11 +891,14 @@
   border-color: transparent;
 }
 
-.cal__btn--primary:hover {
+.cal__btn--primary:hover,
+.cal__btn--primary:active {
   background: var(--accent-hover);
+  color: var(--text-on-accent);
 }
 
 .cal__btn--danger {
+  background: var(--bg-tertiary);
   color: var(--danger);
   border-color: var(--danger);
 }
@@ -919,9 +922,9 @@
     animation: none;
   }
 
-  .cal__detail[open],
+  .cal__detail[open] .cal__detail-card,
   .cal__detail[open]::backdrop,
-  .cal__composer[open],
+  .cal__composer[open] .cal__composer-card,
   .cal__composer[open]::backdrop,
   .cal__evt--new {
     animation-duration: 1ms;
