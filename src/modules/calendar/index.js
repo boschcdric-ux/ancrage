@@ -1,28 +1,39 @@
 import './style.css';
 import { load, save, generateUUID } from '../../core/storage.js';
 import { createCalendarView, createCalendarWidget, createDefaultForm, formatInputDate } from './view.js';
+import {
+  assignLanes,
+  computeTideNowY,
+  dateToMinutes,
+  DAY_END_HOUR,
+  DAY_START_HOUR,
+  eventHeightPx,
+  eventTopPx,
+  isEventCompact,
+  occurrenceEndMinutes,
+  occurrenceStartMinutes
+} from './tide.js';
 
 const STORAGE_KEY = 'calendar:events';
 const TASKS_STORAGE_KEY = 'tasks:items';
 const NOTIFICATION_PROMPT_KEY = 'calendar:notifications:prompted';
 const SEMANTIC_COLORS = ['accent', 'success', 'warning', 'danger', 'info'];
-const HOURS = Array.from({ length: 15 }, (_, index) => index + 8);
-const DAY_TIMELINE_START_HOUR = 7;
-const DAY_TIMELINE_END_HOUR = 23;
-const DAY_TIMELINE_HOUR_COUNT = DAY_TIMELINE_END_HOUR - DAY_TIMELINE_START_HOUR + 1;
 
 let rootContainer = null;
 let events = [];
-let viewMode = 'month';
+let viewMode = 'day';
 let referenceDate = new Date();
 let detailPanel = { open: false, eventId: null };
 let eventForm = { open: false, mode: 'create', eventId: null, form: createDefaultForm(new Date()) };
 let clickHandler = null;
 let submitHandler = null;
 let changeHandler = null;
+let closeHandler = null;
 let notificationTimers = [];
 let midnightRefreshTimer = null;
-let jumpMenuOpen = false;
+let tideTicker = null;
+let didAutoScrollToday = false;
+let newEventHighlightKey = null;
 
 function toDateTime(dateStr, timeStr) {
   const time = timeStr || '00:00';
@@ -172,7 +183,7 @@ function getOccurrencesInRange(rangeStart, rangeEnd) {
       const startDateTime = toDateTime(toYmd(cursor), event.startTime);
       const endDateTime = getOccurrenceEnd(event, startDateTime);
       occurrences.push({
-        id: event.id,
+        id: `${event.id}:${toYmd(cursor)}`,
         baseEventId: event.id,
         occurrenceDate: toYmd(cursor),
         occurrenceDateTime: startDateTime.toISOString(),
@@ -199,9 +210,7 @@ function getVisibleRange() {
 
   const startMonth = startOfMonth(referenceDate);
   const endMonth = endOfMonth(referenceDate);
-  const start = startOfWeek(startMonth);
-  const end = endOfWeek(endMonth);
-  return { start, end };
+  return { start: startOfWeek(startMonth), end: endOfWeek(endMonth) };
 }
 
 function createMonthModel(occurrences, range) {
@@ -226,18 +235,15 @@ function createMonthModel(occurrences, range) {
       isToday: ymd === today,
       events: (map.get(ymd) || []).map((item) => ({
         id: item.baseEventId,
-        occurrenceDateTime: item.occurrenceDateTime,
-        title: item.title,
-        color: item.color,
-        hasTask: item.hasTask,
-        isRecurring: item.isRecurring
+        color: item.color
       }))
     });
     cursor.setDate(cursor.getDate() + 1);
   }
 
   const weekdays = Array.from({ length: 7 }, (_, index) => addDays(startOfWeek(referenceDate), index));
-  return { days, weekdays };
+  const monthLabel = new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' }).format(referenceDate);
+  return { days, weekdays, monthLabel: monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1) };
 }
 
 function parseYmdLocal(ymd) {
@@ -246,93 +252,93 @@ function parseYmdLocal(ymd) {
   return new Date(parts[0], parts[1] - 1, parts[2]);
 }
 
+function formatTimeLabel(date) {
+  return new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' }).format(date);
+}
+
 function createDayModel(occurrences, dayDate) {
   const dayYmd = toYmd(startOfDay(dayDate));
   const today = toYmd(new Date());
-  const hours = Array.from({ length: DAY_TIMELINE_HOUR_COUNT }, (_, index) => DAY_TIMELINE_START_HOUR + index);
-  const timelineStart = toDateTime(dayYmd, `${String(DAY_TIMELINE_START_HOUR).padStart(2, '0')}:00`);
-  const timelineEnd = new Date(timelineStart.getTime() + DAY_TIMELINE_HOUR_COUNT * 60 * 60 * 1000);
-  const totalMs = timelineEnd - timelineStart;
-
   const dayOccurrences = occurrences.filter((item) => item.occurrenceDate === dayYmd);
+  const lanes = assignLanes(dayOccurrences);
 
-  const events = dayOccurrences
+  const dayStartMin = DAY_START_HOUR * 60;
+  const dayEndMin = DAY_END_HOUR * 60 + 30;
+
+  const mappedEvents = dayOccurrences
     .map((item) => {
-      const rawStart = item.startDateTime;
-      const rawEnd = item.endDateTime > item.startDateTime ? item.endDateTime : item.startDateTime;
-      const clipStart = rawStart < timelineStart ? timelineStart : rawStart;
-      const clipEnd = rawEnd > timelineEnd ? timelineEnd : rawEnd;
-      if (clipEnd <= timelineStart || clipStart >= timelineEnd) return null;
+      const startMin = occurrenceStartMinutes(item);
+      const endMin = occurrenceEndMinutes(item);
+      if (endMin < dayStartMin || startMin > dayEndMin) return null;
 
-      const topPercent = ((clipStart - timelineStart) / totalMs) * 100;
-      const heightPercent = ((clipEnd - clipStart) / totalMs) * 100;
-      const timeLabel = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' }).format(rawStart);
+      const laneInfo = lanes.get(item.id) || { lane: 0, lanes: 1 };
+      const topPx = eventTopPx(startMin);
+      const heightPx = eventHeightPx(startMin, endMin);
+      const endTimeLabel =
+        item.endDateTime > item.startDateTime ? formatTimeLabel(item.endDateTime).replace(':', 'h') : '';
 
       return {
         id: item.baseEventId,
         occurrenceDateTime: item.occurrenceDateTime,
         title: item.title,
         color: item.color,
-        hasTask: item.hasTask,
-        isRecurring: item.isRecurring,
-        timeLabel,
-        topPercent,
-        heightPercent: Math.max(heightPercent, 2.8)
+        timeLabel: formatTimeLabel(item.startDateTime),
+        endTimeLabel,
+        lane: laneInfo.lane,
+        lanes: laneInfo.lanes,
+        topPx,
+        heightPx,
+        compact: isEventCompact(heightPx),
+        startMin,
+        endMin,
+        isNew: newEventHighlightKey === `${item.baseEventId}:${item.occurrenceDateTime}`
       };
     })
     .filter(Boolean)
-    .sort((a, b) => a.topPercent - b.topPercent);
+    .sort((a, b) => a.topPx - b.topPx);
 
-  let nowLinePercent = null;
-  if (dayYmd === today) {
-    const now = new Date();
-    if (now >= timelineStart && now <= timelineEnd) {
-      nowLinePercent = ((now - timelineStart) / totalMs) * 100;
-    }
-  }
-
-  return { dayYmd, isToday: dayYmd === today, hours, events, nowLinePercent };
+  return { dayYmd, isToday: dayYmd === today, events: mappedEvents };
 }
 
-function createWeekModel(occurrences, range) {
+function createWeekListModel(occurrences, range) {
   const today = toYmd(new Date());
+  const now = new Date();
+  const dowFormatter = new Intl.DateTimeFormat('fr-FR', { weekday: 'short' });
+
   const days = Array.from({ length: 7 }, (_, index) => {
     const date = addDays(range.start, index);
-    return {
-      date: toYmd(date),
-      dateObject: date,
-      isToday: toYmd(date) === today
-    };
-  });
-
-  const weekEvents = occurrences
-    .filter((item) => {
-      const hour = item.startDateTime.getHours();
-      return hour >= 8 && hour <= 22;
-    })
-    .map((item) => {
-      const hour = item.startDateTime.getHours();
-      const minutes = item.startDateTime.getMinutes();
-      const column = new Date(item.occurrenceDate).getDay() || 7;
-      const durationMs = Math.max(item.endDateTime - item.startDateTime, 30 * 60 * 1000);
-      const rowStart = Math.max(1, (hour - 8) * 2 + Math.floor(minutes / 30) + 1);
-      const rowSpan = Math.max(1, Math.round(durationMs / (30 * 60 * 1000)));
-
-      return {
+    const ymd = toYmd(date);
+    const dayEvents = occurrences
+      .filter((item) => item.occurrenceDate === ymd)
+      .sort((a, b) => a.startDateTime - b.startDateTime)
+      .map((item) => ({
         id: item.baseEventId,
         occurrenceDateTime: item.occurrenceDateTime,
         title: item.title,
         color: item.color,
-        column,
-        rowStart,
-        rowSpan,
-        hasTask: item.hasTask,
-        isRecurring: item.isRecurring,
-        timeLabel: new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' }).format(item.startDateTime)
-      };
-    });
+        timeLabel: formatTimeLabel(item.startDateTime),
+        isPast: ymd === today && item.endDateTime <= now
+      }));
 
-  return { days, hours: HOURS, events: weekEvents };
+    return {
+      date: ymd,
+      dateObject: date,
+      isToday: ymd === today,
+      dow: dowFormatter.format(date).replace('.', ''),
+      dayNum: date.getDate(),
+      events: dayEvents
+    };
+  });
+
+  const weekLabel = (() => {
+    const end = addDays(range.start, 6);
+    const sameMonth = range.start.getMonth() === end.getMonth();
+    const startPart = `${range.start.getDate()}${sameMonth ? '' : ` ${new Intl.DateTimeFormat('fr-FR', { month: 'short' }).format(range.start).replace('.', '')}`}`;
+    const endPart = `${end.getDate()} ${new Intl.DateTimeFormat('fr-FR', { month: 'long' }).format(end)}`;
+    return `Semaine du ${startPart} au ${endPart}`;
+  })();
+
+  return { days, weekLabel };
 }
 
 function getTaskLabel(taskId) {
@@ -362,32 +368,70 @@ function getUpcoming(limit = 3) {
     .slice(0, limit);
 }
 
-function formatWhenLabel(date) {
-  const today = startOfDay(new Date());
-  const tomorrow = addDays(today, 1);
-  const d = startOfDay(date);
-  if (d.getTime() === today.getTime()) return "Aujourd'hui";
-  if (d.getTime() === tomorrow.getTime()) return 'Demain';
-  return new Intl.DateTimeFormat('fr-FR', { weekday: 'short', day: '2-digit', month: 'short' }).format(date);
+function getApproachEvents(limit = 6) {
+  const now = new Date();
+  const todayYmd = toYmd(now);
+  const todayStart = startOfDay(now);
+  const rangeEnd = addDays(now, 45);
+
+  return getOccurrencesInRange(now, rangeEnd)
+    .filter((item) => {
+      if (item.occurrenceDate === todayYmd) return item.endDateTime > now;
+      return item.startDateTime >= todayStart;
+    })
+    .slice(0, limit)
+    .map((occ) => {
+      const dayDiff = Math.round((startOfDay(occ.startDateTime) - todayStart) / 86400000);
+      let whenLabel;
+      if (dayDiff === 0) whenLabel = "aujourd'hui";
+      else if (dayDiff === 1) whenLabel = 'demain';
+      else {
+        whenLabel = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric' }).format(occ.startDateTime);
+      }
+      const distanceClass = dayDiff > 7 ? 'horizon' : dayDiff > 2 ? 'far' : '';
+      return {
+        id: occ.baseEventId,
+        title: occ.title,
+        color: occ.color,
+        whenLabel,
+        timeLabel: formatTimeLabel(occ.startDateTime),
+        dayDiff,
+        distanceClass,
+        occurrenceDate: occ.occurrenceDate
+      };
+    });
 }
 
-function openCreatePanel(date, time = '08:00') {
-  const draftDate = toDateTime(date, time);
+function isAnchorHot() {
+  const today = startOfDay(new Date());
+  if (viewMode === 'day') return toYmd(referenceDate) !== toYmd(today);
+  if (viewMode === 'week') return toYmd(startOfWeek(referenceDate)) !== toYmd(startOfWeek(today));
+  return (
+    referenceDate.getFullYear() !== today.getFullYear() || referenceDate.getMonth() !== today.getMonth()
+  );
+}
+
+function openCreatePanel(date, time) {
+  const draftDate = toDateTime(date, time || formatTimeLabel(new Date()));
   const form = createDefaultForm(draftDate);
   detailPanel = { open: false, eventId: null };
   eventForm = { open: true, mode: 'create', eventId: null, form };
   render();
+  openComposerDialog();
 }
 
 function openDetailPanel(eventId) {
   detailPanel = { open: true, eventId };
+  eventForm = { ...eventForm, open: false };
   render();
+  openDetailDialog();
 }
 
 function openEditPanel(eventId) {
   const event = events.find((item) => item.id === eventId);
   if (!event) return;
   detailPanel = { open: false, eventId: null };
+  closeDetailDialogElement();
   eventForm = {
     open: true,
     mode: 'edit',
@@ -407,16 +451,45 @@ function openEditPanel(eventId) {
     }
   };
   render();
+  openComposerDialog();
 }
 
 function closeDetailPanel() {
+  closeDetailDialogElement();
   detailPanel = { open: false, eventId: null };
-  render();
 }
 
 function closeEventForm() {
+  closeComposerDialogElement();
   eventForm = { open: false, mode: 'create', eventId: null, form: createDefaultForm(new Date()) };
-  render();
+}
+
+function closeDetailDialogElement() {
+  const dialog = rootContainer?.querySelector('[data-cal-detail-dialog]');
+  if (dialog instanceof HTMLDialogElement && dialog.open) dialog.close();
+}
+
+function closeComposerDialogElement() {
+  const dialog = rootContainer?.querySelector('[data-cal-composer-dialog]');
+  if (dialog instanceof HTMLDialogElement && dialog.open) dialog.close();
+}
+
+function openDetailDialog() {
+  requestAnimationFrame(() => {
+    const dialog = rootContainer?.querySelector('[data-cal-detail-dialog]');
+    if (dialog instanceof HTMLDialogElement && !dialog.open) dialog.showModal();
+  });
+}
+
+function openComposerDialog() {
+  requestAnimationFrame(() => {
+    const dialog = rootContainer?.querySelector('[data-cal-composer-dialog]');
+    if (dialog instanceof HTMLDialogElement && !dialog.open) {
+      dialog.showModal();
+      const titleInput = dialog.querySelector('input[name="title"]');
+      if (titleInput instanceof HTMLInputElement) titleInput.focus();
+    }
+  });
 }
 
 function createEventFromForm(formData, eventId = null) {
@@ -468,14 +541,25 @@ function savePanelEvent(formElement) {
     return;
   }
 
+  const wasCreate = eventForm.mode === 'create';
   if (eventForm.mode === 'edit') {
     events = events.map((item) => (item.id === payload.id ? payload : item));
   } else {
     events.push(payload);
+    newEventHighlightKey = `${payload.id}:${toDateTime(payload.startDate, payload.startTime).toISOString()}`;
   }
   persistEvents();
   scheduleNotifications();
-  closeEventForm();
+  closeComposerDialogElement();
+  eventForm = { open: false, mode: 'create', eventId: null, form: createDefaultForm(new Date()) };
+  referenceDate = parseYmdLocal(payload.startDate);
+  viewMode = 'day';
+  render();
+  if (wasCreate) {
+    requestAnimationFrame(() => {
+      newEventHighlightKey = null;
+    });
+  }
 }
 
 function deleteEvent(eventId) {
@@ -484,6 +568,8 @@ function deleteEvent(eventId) {
   if (events.length === before) return;
   persistEvents();
   scheduleNotifications();
+  closeDetailDialogElement();
+  closeComposerDialogElement();
   detailPanel = { open: false, eventId: null };
   eventForm = { open: false, mode: 'create', eventId: null, form: createDefaultForm(new Date()) };
   render();
@@ -513,9 +599,7 @@ function scheduleNotifications() {
     const notifyAt = new Date(occ.startDateTime.getTime() - occ.event.reminder * 60 * 1000);
     const delay = notifyAt.getTime() - Date.now();
     if (delay <= 0) continue;
-    const messageTime = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' }).format(
-      occ.startDateTime
-    );
+    const messageTime = formatTimeLabel(occ.startDateTime);
     const timerId = setTimeout(() => {
       new Notification(occ.title, { body: `Début à ${messageTime}` });
     }, delay);
@@ -530,14 +614,79 @@ function scheduleMidnightRefresh() {
 
   midnightRefreshTimer = setTimeout(() => {
     scheduleNotifications();
+    if (viewMode === 'day' && toYmd(referenceDate) === toYmd(new Date())) {
+      updateTideDom();
+    }
     scheduleMidnightRefresh();
   }, msUntilMidnight);
 }
 
+function stopTideTicker() {
+  if (tideTicker != null) {
+    clearInterval(tideTicker);
+    tideTicker = null;
+  }
+}
+
+function startTideTicker() {
+  stopTideTicker();
+  tideTicker = window.setInterval(() => updateTideDom(), 60000);
+}
+
+function updateTideDom() {
+  if (!rootContainer || viewMode !== 'day') return;
+  const tide = rootContainer.querySelector('[data-cal-tide]');
+  if (!(tide instanceof HTMLElement)) return;
+
+  const dayYmd = toYmd(referenceDate);
+  const isToday = dayYmd === toYmd(new Date());
+  const now = new Date();
+  const nowMin = dateToMinutes(now);
+  const y = isToday ? `${computeTideNowY(nowMin)}px` : '0px';
+
+  tide.style.setProperty('--now-y', y);
+
+  const tidePast = rootContainer.querySelector('[data-cal-tide-past]');
+  const tideLine = rootContainer.querySelector('[data-cal-tide-line]');
+  const tideNow = rootContainer.querySelector('[data-cal-tide-now]');
+  if (tidePast instanceof HTMLElement) tidePast.hidden = !isToday;
+  if (tideLine instanceof HTMLElement) tideLine.hidden = !isToday;
+  if (tideNow instanceof HTMLElement) {
+    tideNow.hidden = !isToday;
+    if (isToday) tideNow.textContent = formatTimeLabel(now);
+  }
+
+  rootContainer.querySelectorAll('[data-cal-evt]').forEach((node) => {
+    if (!(node instanceof HTMLElement)) return;
+    const timeEl = node.querySelector('.cal__evt-time');
+    const timeText = timeEl?.textContent || '';
+    const startPart = timeText.split('–')[0].trim();
+    const [sh, sm] = startPart.split(':').map((v) => Number(v.replace('h', '')));
+    const startMin = Number.isFinite(sh) ? sh * 60 + (sm || 0) : 0;
+    const endPart = timeText.includes('–') ? timeText.split('–')[1]?.trim() : '';
+    const endMin = endPart
+      ? (() => {
+          const [eh, em] = endPart.split(':').map((v) => Number(v.replace('h', '')));
+          return Number.isFinite(eh) ? eh * 60 + (em || 0) : startMin + 45;
+        })()
+      : startMin + 45;
+
+    node.classList.toggle('cal__evt--past', isToday && endMin <= nowMin);
+    node.classList.toggle('cal__evt--now', isToday && nowMin >= startMin && nowMin < endMin);
+  });
+}
+
+function scrollToNowLine() {
+  const line = rootContainer?.querySelector('[data-cal-tide-line]');
+  if (line instanceof HTMLElement) {
+    line.scrollIntoView({ block: 'center', behavior: 'auto' });
+  }
+}
+
 function navigatePeriod(direction) {
-  jumpMenuOpen = false;
   if (direction === 'today') {
     referenceDate = new Date();
+    didAutoScrollToday = false;
     render();
     return;
   }
@@ -550,18 +699,6 @@ function navigatePeriod(direction) {
     copy.setDate(copy.getDate() + (direction === 'next' ? 7 : -7));
   }
   referenceDate = copy;
-  render();
-}
-
-function jumpToPeriod(monthValue, yearValue) {
-  const month = Number(monthValue);
-  const year = Number(yearValue);
-  if (!Number.isInteger(month) || month < 0 || month > 11) return;
-  if (!Number.isInteger(year) || year < 1970 || year > 9999) return;
-  const next = new Date(referenceDate);
-  next.setFullYear(year, month, 1);
-  referenceDate = next;
-  jumpMenuOpen = false;
   render();
 }
 
@@ -588,9 +725,8 @@ function buildDetailPanelModel() {
 }
 
 function buildEventFormModel() {
-  if (!eventForm.open) return { open: false };
   return {
-    open: true,
+    open: eventForm.open,
     mode: eventForm.mode,
     eventId: eventForm.eventId,
     form: eventForm.form,
@@ -600,33 +736,19 @@ function buildEventFormModel() {
 }
 
 function buildViewModel() {
-  const eventFormModel = buildEventFormModel();
-  if (eventFormModel.open) {
-    return { eventForm: eventFormModel, detailPanel: { open: false } };
-  }
-
   const range = getVisibleRange();
   const occurrences = getOccurrencesInRange(range.start, range.end);
-  const upcoming = getUpcoming(3).map((occurrence) => ({
-    whenLabel: formatWhenLabel(occurrence.startDateTime),
-    title: occurrence.title,
-    timeLabel: new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' }).format(occurrence.startDateTime)
-  }));
-
-  const monthModel = viewMode === 'month' ? createMonthModel(occurrences, range) : null;
-  const weekModel = viewMode === 'week' ? createWeekModel(occurrences, range) : null;
-  const dayModel = viewMode === 'day' ? createDayModel(occurrences, referenceDate) : null;
 
   return {
-    eventForm: eventFormModel,
+    eventForm: buildEventFormModel(),
     viewMode,
     referenceDate: referenceDate.toISOString(),
-    month: monthModel,
-    week: weekModel,
-    day: dayModel,
-    upcoming,
-    jumpMenuOpen,
-    detailPanel: buildDetailPanelModel()
+    month: viewMode === 'month' ? createMonthModel(occurrences, range) : null,
+    week: viewMode === 'week' ? createWeekListModel(occurrences, range) : null,
+    day: viewMode === 'day' ? createDayModel(occurrences, referenceDate) : null,
+    approach: getApproachEvents(6),
+    detailPanel: buildDetailPanelModel(),
+    anchorHot: isAnchorHot()
   };
 }
 
@@ -634,15 +756,28 @@ function syncCalendarFormMorePanelAfterRender() {
   const panel = rootContainer?.querySelector('[data-calendar-form-more-panel]');
   const btn = rootContainer?.querySelector('[data-calendar-form-more]');
   if (!(panel instanceof HTMLElement) || !(btn instanceof HTMLButtonElement)) return;
-  const isWide = typeof window.matchMedia === 'function' && window.matchMedia('(min-width: 768px)').matches;
-  if (isWide) {
-    panel.classList.add('is-open');
-    panel.removeAttribute('aria-hidden');
+  panel.classList.remove('is-open');
+  panel.setAttribute('aria-hidden', 'true');
+  btn.setAttribute('aria-expanded', 'false');
+  btn.textContent = "Plus d'options";
+}
+
+function syncDialogsAfterRender() {
+  if (detailPanel.open) openDetailDialog();
+  if (eventForm.open) openComposerDialog();
+}
+
+function afterDayRender() {
+  updateTideDom();
+  const isToday = toYmd(referenceDate) === toYmd(new Date());
+  if (isToday) {
+    startTideTicker();
+    if (!didAutoScrollToday) {
+      didAutoScrollToday = true;
+      requestAnimationFrame(() => scrollToNowLine());
+    }
   } else {
-    panel.classList.remove('is-open');
-    panel.setAttribute('aria-hidden', 'true');
-    btn.setAttribute('aria-expanded', 'false');
-    btn.textContent = "+ Plus d'options ▾";
+    stopTideTicker();
   }
 }
 
@@ -650,6 +785,9 @@ function render() {
   if (!rootContainer) return;
   rootContainer.innerHTML = createCalendarView(buildViewModel());
   syncCalendarFormMorePanelAfterRender();
+  syncDialogsAfterRender();
+  if (viewMode === 'day') afterDayRender();
+  else stopTideTicker();
 }
 
 function bindEvents() {
@@ -658,6 +796,21 @@ function bindEvents() {
   clickHandler = (event) => {
     const target = event.target instanceof Element ? event.target : null;
     if (!target) return;
+
+    const colorBtn = target.closest('[data-cal-color]');
+    if (colorBtn instanceof HTMLButtonElement) {
+      const value = colorBtn.dataset.calColor;
+      const hidden = rootContainer?.querySelector('[data-cal-color-input]');
+      if (hidden instanceof HTMLInputElement && value) {
+        hidden.value = value;
+        rootContainer?.querySelectorAll('[data-cal-color]').forEach((btn) => {
+          if (btn instanceof HTMLButtonElement) {
+            btn.setAttribute('aria-pressed', btn === colorBtn ? 'true' : 'false');
+          }
+        });
+      }
+      return;
+    }
 
     const viewBtn = target.closest('[data-view-mode]');
     if (viewBtn instanceof HTMLButtonElement) {
@@ -675,29 +828,23 @@ function bindEvents() {
       return;
     }
 
-    const jumpMenuToggleBtn = target.closest('[data-open-jump-menu]');
-    if (jumpMenuToggleBtn instanceof HTMLButtonElement) {
-      jumpMenuOpen = !jumpMenuOpen;
-      render();
-      return;
-    }
-
-    const jumpApplyBtn = target.closest('[data-jump-apply]');
-    if (jumpApplyBtn instanceof HTMLButtonElement) {
-      const monthSelect = rootContainer?.querySelector('[data-jump-month]');
-      const yearSelect = rootContainer?.querySelector('[data-jump-year]');
-      if (monthSelect instanceof HTMLSelectElement && yearSelect instanceof HTMLSelectElement) {
-        jumpToPeriod(monthSelect.value, yearSelect.value);
-      }
-      return;
-    }
-
-    if (jumpMenuOpen) {
-      const clickedInsideMenu = target.closest('[data-jump-menu]');
-      if (!clickedInsideMenu) {
-        jumpMenuOpen = false;
+    const composerOpen = target.closest('[data-cal-open-composer]');
+    if (composerOpen) {
+      const dialog = rootContainer?.querySelector('[data-cal-composer-dialog]');
+      if (dialog instanceof HTMLDialogElement && dialog.open) {
+        closeEventForm();
         render();
+      } else {
+        openCreatePanel(toYmd(referenceDate));
       }
+      return;
+    }
+
+    const approachBtn = target.closest('[data-approach-open]');
+    if (approachBtn instanceof HTMLElement && approachBtn.dataset.approachOpen) {
+      referenceDate = parseYmdLocal(approachBtn.dataset.approachOpen);
+      viewMode = 'day';
+      render();
       return;
     }
 
@@ -710,26 +857,9 @@ function bindEvents() {
 
     const dayCell = target.closest('[data-day-cell]');
     if (dayCell instanceof HTMLElement && dayCell.dataset.dayCell) {
-      if (viewMode === 'month' || viewMode === 'week') {
-        referenceDate = parseYmdLocal(dayCell.dataset.dayCell);
-        viewMode = 'day';
-        jumpMenuOpen = false;
-        render();
-        return;
-      }
-      openCreatePanel(dayCell.dataset.dayCell, '09:00');
-      return;
-    }
-
-    const dayEmptyAdd = target.closest('[data-day-empty-add]');
-    if (dayEmptyAdd instanceof HTMLElement && dayEmptyAdd.dataset.dayEmptyAdd) {
-      openCreatePanel(dayEmptyAdd.dataset.dayEmptyAdd, '09:00');
-      return;
-    }
-
-    const slot = target.closest('[data-slot-date]');
-    if (slot instanceof HTMLElement && slot.dataset.slotDate && slot.dataset.slotTime) {
-      openCreatePanel(slot.dataset.slotDate, slot.dataset.slotTime);
+      referenceDate = parseYmdLocal(dayCell.dataset.dayCell);
+      viewMode = 'day';
+      render();
       return;
     }
 
@@ -740,15 +870,11 @@ function bindEvents() {
         const open = !panel.classList.contains('is-open');
         panel.classList.toggle('is-open', open);
         moreBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
-        moreBtn.textContent = open ? "− Moins d'options ▴" : "+ Plus d'options ▾";
+        moreBtn.textContent = open ? "Moins d'options" : "Plus d'options";
+        panel.toggleAttribute('aria-hidden', !open);
         if (open) {
-          panel.removeAttribute('aria-hidden');
           const first = panel.querySelector('[data-calendar-more-first]');
-          if (first instanceof HTMLElement) {
-            requestAnimationFrame(() => first.focus());
-          }
-        } else {
-          panel.setAttribute('aria-hidden', 'true');
+          if (first instanceof HTMLElement) requestAnimationFrame(() => first.focus());
         }
       }
       return;
@@ -757,12 +883,14 @@ function bindEvents() {
     const closeBtn = target.closest('[data-panel-close]');
     if (closeBtn) {
       closeDetailPanel();
+      render();
       return;
     }
 
     const formBackBtn = target.closest('[data-calendar-form-back]');
     if (formBackBtn) {
       closeEventForm();
+      render();
       return;
     }
 
@@ -792,29 +920,30 @@ function bindEvents() {
     savePanelEvent(target);
   };
 
-  changeHandler = (event) => {
-    const target = event.target;
-    if (!(target instanceof HTMLSelectElement)) return;
-    if (!target.matches('[data-jump-month], [data-jump-year]')) return;
+  changeHandler = () => {};
 
-    const monthSelect = rootContainer?.querySelector('[data-jump-month]');
-    const yearSelect = rootContainer?.querySelector('[data-jump-year]');
-    if (!(monthSelect instanceof HTMLSelectElement) || !(yearSelect instanceof HTMLSelectElement)) return;
-    jumpToPeriod(monthSelect.value, yearSelect.value);
+  closeHandler = (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLDialogElement)) return;
+    if (target.matches('[data-cal-detail-dialog]')) {
+      detailPanel = { open: false, eventId: null };
+    }
+    if (target.matches('[data-cal-composer-dialog]')) {
+      eventForm = { open: false, mode: 'create', eventId: null, form: createDefaultForm(new Date()) };
+    }
   };
 
   rootContainer.addEventListener('click', clickHandler);
   rootContainer.addEventListener('submit', submitHandler);
   rootContainer.addEventListener('change', changeHandler);
+  rootContainer.addEventListener('close', closeHandler);
 }
 
 function formatWidgetLine(occurrence) {
   const day = new Intl.DateTimeFormat('fr-FR', { weekday: 'short', day: '2-digit', month: 'short' })
     .format(occurrence.startDateTime)
     .replace('.', '');
-  const hour = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' })
-    .format(occurrence.startDateTime)
-    .replace(':', 'h');
+  const hour = formatTimeLabel(occurrence.startDateTime).replace(':', 'h');
   return `${day} · ${hour} · ${occurrence.title}`;
 }
 
@@ -834,9 +963,11 @@ const calendarModule = {
   },
 
   destroy() {
+    stopTideTicker();
     if (rootContainer && clickHandler) rootContainer.removeEventListener('click', clickHandler);
     if (rootContainer && submitHandler) rootContainer.removeEventListener('submit', submitHandler);
     if (rootContainer && changeHandler) rootContainer.removeEventListener('change', changeHandler);
+    if (rootContainer && closeHandler) rootContainer.removeEventListener('close', closeHandler);
     clearNotificationTimers();
     if (midnightRefreshTimer != null) {
       clearTimeout(midnightRefreshTimer);
@@ -846,7 +977,9 @@ const calendarModule = {
     clickHandler = null;
     submitHandler = null;
     changeHandler = null;
-    jumpMenuOpen = false;
+    closeHandler = null;
+    didAutoScrollToday = false;
+    newEventHighlightKey = null;
     detailPanel = { open: false, eventId: null };
     eventForm = { open: false, mode: 'create', eventId: null, form: createDefaultForm(new Date()) };
     events = [];
