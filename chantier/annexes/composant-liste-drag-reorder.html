@@ -40,7 +40,10 @@ input{font-family:inherit;font-size:max(1rem,16px);color:var(--text-primary)}
 width:min(420px,calc(100vw - 32px));margin:auto;max-height:min(82vh,620px)}
 .panel::backdrop{background:rgba(4,10,16,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
 .panel[open] .panel__card{animation:panel-in var(--dnorm) var(--ease-out) both}
-@keyframes panel-in{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+/* NB iOS : pas de transform dans l'image finale -> la carte revient à
+   transform:none après l'entrée. Un transform résiduel sur un ancêtre
+   en overflow:auto fait disparaître l'enfant draggé sur WebKit. */
+@keyframes panel-in{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1}}
 .panel__card{background:var(--bg-secondary);border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow);
 padding:16px;max-height:min(82vh,620px);overflow:auto;box-sizing:border-box;display:flex;flex-direction:column;gap:16px}
 
