@@ -3,7 +3,7 @@
 > Ce fichier est la mémoire du chantier. L'agent le lit au début de chaque
 > mission et le met à jour à la fin. Il doit rester factuel et concis.
 
-**Dernière mise à jour :** 2026-07-07 — M12g faite (validation Cédric en attente)
+**Dernière mise à jour :** 2026-07-07 — M12h faite (validation Cédric en attente)
 
 ---
 
@@ -41,6 +41,7 @@
 | M12e | Habitudes : ligne drag invisible iOS | ✅ faite (validation Cédric en attente) | 2026-07-07 |
 | M12f | Habitudes : drag invisible (ancêtre transformé) | ✅ faite (validation Cédric en attente) | 2026-07-07 |
 | M12g | Habitudes : audit profond drag invisible | ✅ faite (validation Cédric en attente) | 2026-07-07 |
+| M12h | Habitudes : réorganisation hors modale (vue dédiée) | ✅ faite (validation Cédric en attente) | 2026-07-07 |
 
 Statuts : ⬜ à faire · 🔶 en cours · ✅ faite et validée par Cédric · 🛑 bloquée
 
@@ -53,18 +54,18 @@ sans justification écrite.*
 
 | Métrique | Baseline (M00) | Dernière valeur | Mission |
 |---|---|---|---|
-| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M12g |
-| Tests unitaires | 22/22 passés (2 fichiers) | 69/69 passés (13 fichiers) | M12g |
-| Lint | 0 erreur | 0 erreur | M12g |
-| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 296 KB (`index-CA83T29P.js`) | M12g |
-| JS initial (gzip) | 243 KB | 83 KB | M12g |
-| CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 128 KB (`index-DIq6iWtC.css`, entrée HTML) | M12g |
-| Chunk calendar JS (gzip) | — | 9,4 KB (`index-D3RZlEyX.js`) | M12g |
-| Chunk calendar CSS (gzip) | — | 3,2 KB (`index-D1nMcXjX.css`) | M12g |
-| Chunk habits JS (gzip) | — | 4,1 KB (`index-CupoYESh.js`) | M12g |
+| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M12h |
+| Tests unitaires | 22/22 passés (2 fichiers) | 69/69 passés (13 fichiers) | M12h |
+| Lint | 0 erreur | 0 erreur | M12h |
+| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 296 KB (`index-Cpgtky3q.js`) | M12h |
+| JS initial (gzip) | 243 KB | 83 KB | M12h |
+| CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 129 KB (`index-C0k1qZ-Z.css`, entrée HTML) | M12h |
+| Chunk calendar JS (gzip) | — | 9,4 KB (`index-CjilaMva.js`) | M12h |
+| Chunk calendar CSS (gzip) | — | 3,2 KB (`index-D1nMcXjX.css`) | M12h |
+| Chunk habits JS (gzip) | — | 4,1 KB (`index-BLnBeiFL.js`) | M12h |
 | Nombre de chunks JS | 1 | 9 | M01 |
 | Polices woff2 (dist) | — | ~122 KB (7 fichiers) | M04 |
-| Precache PWA | — | 1089 KiB (23 entrées) | M12g |
+| Precache PWA | — | 1090 KiB (23 entrées) | M12h |
 
 Variation bundle M05 : +4,3 KB brut sur le chunk d'entrée JS (275 vs 270 M04) — hors tolérance ±2 KB
 mais +1,5 KB gzip seulement ; justifié par markup SVG inline (houle, ancre, coche) et fonctions tide
@@ -613,6 +614,32 @@ et zéro `#c9a227` dans `tasks/style.css`.
 - Commits : `fix:` overflow drag modale ; `fix:` will-change parallax conditionnel ;
   `test:` swipe-detection ; `chore:` clôture M12g
 
+### Rituel AVANT M12h (2026-07-07)
+
+- Smoke : 20/20 modules, 4/4 shell
+- Unit : 69/69 (13 fichiers)
+- Lint : 0 erreur
+- Build entrée : 296 KB brut (`index-CA83T29P.js`), 83 KB gzip
+- CSS entrée : 128 KB brut (`index-DIq6iWtC.css`), 21 KB gzip
+- Chunk habits JS : 11,6 KB brut (`index-CupoYESh.js`), 4,1 KB gzip
+- Precache : 1089 KiB
+
+### Rituel APRÈS M12h (2026-07-07)
+
+- Smoke : 20/20 modules, 4/4 shell
+- Unit : 69/69 (13 fichiers)
+- Lint : 0 erreur
+- Build entrée : 296 KB brut (`index-Cpgtky3q.js`), 83 KB gzip (+0,5 KB brut — vue réorganiser)
+- CSS entrée : 129 KB brut (`index-C0k1qZ-Z.css`), 21 KB gzip (+0,4 KB — styles vue dédiée, retrait hack `:has`)
+- Chunk habits JS : 11,6 KB brut (`index-BLnBeiFL.js`), 4,1 KB gzip (inchangé)
+- Precache : 1090 KiB (+1 KiB)
+- Grep contrôle : 0 `:has` dans `habits/style.css` ; 0 `!important` et 0 couleur en dur
+- Changement de terrain : réorganisation sort de la modale `<dialog>` vers une vue plein module
+  (`reorderViewOpen`, `createReorderView`) — drag hors top-layer, scroll naturel de
+  `#app-module-content`. Hack M12g `:has(overflow:visible)` retiré (régression scroll modale).
+  `will-change` parallax conditionnel (M12g) conservé.
+- Commits : `feat:` vue réorganiser hors modale ; `chore:` clôture M12h
+
 ### Simulation quota plein (procédure dev, M02)
 
 1. `npm run preview`, ouvrir l'app dans le navigateur.
@@ -902,6 +929,14 @@ Vérification automatisée équivalente : `npm run test:unit` — tests `save() 
   validation iPhone réelle requise avant de clore définitivement la série Habitudes.
 - M12g : fin investigation série Habitudes (M12 → M12g). Sonde rejouable :
   `scripts/m12g-webkit-drag-probe.mjs` (+ `m12g-drag-probe.html`).
+- M12h : résolution définitive saga drag Habitudes — cause prouvée (M12g) =
+  `<dialog>` top-layer × `overflow:auto` insoluble proprement de l'intérieur ;
+  décision = changement de terrain : réorganisation dans une vue dédiée hors modale
+  (`reorderViewOpen` + `createReorderView`), modale Gérer simplifiée (plus de mode
+  inline). Hack M12g `:has(overflow:visible)` retiré (régression scroll). Règle
+  transverse définitive : **jamais de drag par transform à haute fréquence à l'intérieur
+  d'un `<dialog>` scrollable** — concevoir ces interactions dans le flux normal du module
+  (vaut pour Mémo). Série Habitudes réellement close (M12 → M12h).
 
 ---
 

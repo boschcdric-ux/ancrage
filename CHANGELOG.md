@@ -315,3 +315,16 @@ Historique des modifications du chantier `chantier/redesign`.
 - Tests : +4 (`swipe-detection.test.js`). Total 69/69. Repli flèches ↑/↓ non activé.
 - Bundle entrée : +0,2 KB brut / gzip stable. CSS entrée : +0,2 KB. Precache inchangé.
 - Fin investigation série Habitudes (M12 → M12g). Validation iPhone drag modale attendue.
+
+### M12h — Habitudes : réorganisation hors modale (vue dédiée)
+
+- Retrait du hack M12g `:has(.list-drag-reorder__row--dragging){overflow:visible}` —
+  régression scroll modale (saut vers le haut au pointerdown en bas de liste).
+- Changement de terrain : « Réorganiser » ferme la modale Gérer et ouvre une vue plein
+  module (`createReorderView`, état `reorderViewOpen`) — drag hors `<dialog>` top-layer,
+  scroll naturel de `#app-module-content`. « Terminé » rouvre la modale Gérer.
+- Modale Gérer simplifiée : plus de mode réorganisation inline (`bulkEditMode` retiré).
+- `core/list-drag-reorder.js` inchangé. `will-change` parallax conditionnel (M12g) conservé.
+- Bundle entrée : +0,5 KB brut / gzip stable. CSS entrée : +0,4 KB. Chunk habits inchangé.
+- Total 69/69. Grep : 0 `:has` dans `habits/style.css`.
+- Série Habitudes réellement close (M12 → M12h). Validation iPhone drag vue dédiée attendue.
