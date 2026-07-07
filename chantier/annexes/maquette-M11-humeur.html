@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="encre">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maquette M11 FINALE — Humeur : l'état de la mer</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   MAQUETTE M11 FINALE — Humeur : l'état de la mer
+   - Scène océan vivante en Canvas (houle + reflet en continu,
+     soliton uniquement au moment de consigner)
+   - Deux curseurs indépendants : humeur (lumière) / énergie (houle)
+   - Note libre
+   - Galerie multi-périodes : Semaine / Mois / 3 mois / Année
+   RÈGLE DE CONTAINMENT : rien ne doit jamais déborder de son
+   conteneur, quel que soit l'écran (leçon Agenda M10b/c/d/e).
+   ============================================================ */
+:root, [data-theme="encre"]{--bg-primary:#0a1017;--bg-secondary:#101a24;--bg-tertiary:#16232f;--bg-hover:#1c2c3b;--text-primary:#e9f1f4;--text-secondary:#9db4c0;--text-muted:#8299a6;--accent:#45e0b0;--accent-hover:#63eec2;--accent-soft:rgba(69,224,176,.15);--text-on-accent:#04241a;--border:rgba(233,241,244,.08);--shadow:0 4px 24px rgba(2,8,14,.5);
+ --sky-top:#1a2c3e;--sky-bot:#0a1520;--w1:#0e2838;--w2:#1a4f5a;--w3:#358078;--crest:#5ab8a4;--foam:#bff6e4;--sun:#ffe9b0}
+[data-theme="garrigue"]{--bg-primary:#f2eee6;--bg-secondary:#faf7f0;--bg-tertiary:#eae4d8;--bg-hover:#e2dccd;--text-primary:#26301f;--text-secondary:#55614a;--text-muted:#5f6b53;--accent:#4d6b3c;--accent-hover:#3e5a2f;--accent-soft:rgba(77,107,60,.12);--text-on-accent:#f5f8ef;--border:rgba(38,48,31,.10);--shadow:0 4px 24px rgba(90,80,60,.15);--sky-top:#a7c4c0;--sky-bot:#7ba09a;--w1:#3c665e;--w2:#5c9078;--w3:#8fc0a0;--crest:#a9d8b8;--foam:#f2fff2;--sun:#fff2c0}
+[data-theme="crepuscule"]{--bg-primary:#171015;--bg-secondary:#201620;--bg-tertiary:#291d29;--bg-hover:#322434;--text-primary:#f4e9e4;--text-secondary:#c3aaa4;--text-muted:#a89089;--accent:#f0a35e;--accent-hover:#f5b678;--accent-soft:rgba(240,163,94,.15);--text-on-accent:#2b1706;--border:rgba(244,233,228,.08);--shadow:0 4px 24px rgba(10,4,10,.5);--sky-top:#3e2a44;--sky-bot:#241628;--w1:#2e1c33;--w2:#6e3f60;--w3:#b3708a;--crest:#d98fa0;--foam:#ffd9c0;--sun:#ffcb8a}
+[data-theme="maree"]{--bg-primary:#e8edeb;--bg-secondary:#f4f7f6;--bg-tertiary:#dee6e3;--bg-hover:#d4dedb;--text-primary:#1d2b2d;--text-secondary:#48605f;--text-muted:#536c6a;--accent:#146b66;--accent-hover:#0f5752;--accent-soft:rgba(20,107,102,.10);--text-on-accent:#eaf5f3;--border:rgba(29,43,45,.10);--shadow:0 4px 24px rgba(60,85,82,.15);--sky-top:#a6cfc8;--sky-bot:#79aaa2;--w1:#245e57;--w2:#37897e;--w3:#6fc0ac;--crest:#93d4bf;--foam:#eafff8;--sun:#e8fff8}
+:root{--font-family:'Atkinson Hyperlegible',system-ui,sans-serif;--font-display:'Bricolage Grotesque',var(--font-family);
+--radius-sm:6px;--radius-md:12px;--radius-lg:18px;--radius-full:9999px;--dfast:140ms;--dnorm:320ms;--dslow:500ms;
+--ease-spring:cubic-bezier(.34,1.45,.64,1);--ease-out:cubic-bezier(.16,1,.3,1)}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{max-width:100%;overflow-x:hidden}
+body{font-family:var(--font-family);background:var(--bg-primary);color:var(--text-primary);
+display:flex;flex-direction:column;align-items:center;padding:20px 12px 60px;gap:14px;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;color:inherit;background:none;border:none;cursor:pointer;font-size:inherit}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+input,textarea{font-family:inherit;font-size:max(1rem,16px);color:var(--text-primary)}
+
+.demo-bar{width:min(420px,100%);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.demo-bar__title{font-family:var(--font-display);font-weight:600;font-size:.9rem;color:var(--text-secondary)}
+.theme-chips{display:flex;gap:7px}
+.theme-chip{width:26px;height:26px;border-radius:50%;background:var(--pv);border:2px solid var(--border)}
+.theme-chip[aria-pressed="true"]{border-color:var(--accent);transform:scale(1.12)}
+.motion-toggle{font-size:.74rem;color:var(--text-secondary);border:1px solid var(--border);background:var(--bg-secondary);padding:5px 10px;border-radius:var(--radius-full)}
+.motion-toggle[aria-pressed="true"]{background:var(--accent);color:var(--text-on-accent);border-color:transparent}
+
+/* Conteneur module : largeur standard harmonisée, JAMAIS 100% brut */
+.module{width:min(420px,100%);max-width:100%;display:flex;flex-direction:column;gap:14px;box-sizing:border-box}
+.head__title{font-family:var(--font-display);font-weight:700;font-size:1.5rem;letter-spacing:-.015em}
+.head__sub{font-size:.84rem;color:var(--text-secondary);margin-top:2px}
+
+/* ---------- LA SCÈNE (canvas océan vivant) ---------- */
+.stage{position:relative;height:210px;width:100%;max-width:100%;border-radius:22px;overflow:hidden;
+border:1px solid var(--border);box-shadow:var(--shadow);
+background:linear-gradient(to bottom,var(--sky-top) 0%,var(--sky-bot) 58%,var(--w1) 58%);
+transform:translateZ(0);isolation:isolate;box-sizing:border-box}
+.stage canvas{position:absolute;inset:0;width:100%;height:100%;z-index:2;transform:translateZ(0);display:block}
+.stage__sun{position:absolute;top:22px;left:50%;transform:translateX(-50%);width:66px;height:66px;border-radius:50%;z-index:1;pointer-events:none;
+background:radial-gradient(circle at 50% 50%,#fff 0%,var(--sun) 22%,rgba(255,255,255,0) 62%),radial-gradient(circle at 50% 50%,var(--sun) 0%,transparent 78%);
+filter:blur(.5px);opacity:.9}
+.stage__sun::after{content:'';position:absolute;inset:-40%;border-radius:50%;background:radial-gradient(circle,var(--sun),transparent 60%);opacity:.35;filter:blur(6px)}
+.stage__cap{position:absolute;top:12px;left:16px;font-family:var(--font-display);font-weight:700;font-size:1.02rem;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.5);z-index:6;max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stage__sub{position:absolute;top:38px;left:16px;font-size:.78rem;color:rgba(255,255,255,.88);text-shadow:0 1px 4px rgba(0,0,0,.5);z-index:6;max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stage__ack{position:absolute;left:8px;right:8px;bottom:14px;text-align:center;z-index:7;pointer-events:none;
+font-family:var(--font-display);font-weight:700;font-size:.88rem;color:#fff;text-shadow:0 1px 10px rgba(0,0,0,.55);opacity:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stage__ack.go{animation:ack 1600ms var(--ease-out) .2s both}
+@keyframes ack{0%{opacity:0;transform:translateY(12px) scale(.96)}22%{opacity:1;transform:translateY(0) scale(1)}80%{opacity:1}100%{opacity:0;transform:translateY(-6px)}}
+
+/* ---------- CURSEURS ---------- */
+.controls{background:var(--bg-secondary);border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow);
+padding:18px 16px;display:flex;flex-direction:column;gap:20px;box-sizing:border-box;width:100%;max-width:100%}
+.slider{display:flex;flex-direction:column;gap:9px;min-width:0}
+.slider__head{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.slider__name{font-size:.74rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted)}
+.slider__val{font-family:var(--font-display);font-weight:700;font-size:.95rem;color:var(--accent);white-space:nowrap}
+.seg{display:flex;gap:5px;width:100%}
+.seg__btn{flex:1;min-width:0;padding:11px 2px;border-radius:var(--radius-md);border:1px solid var(--border);
+background:var(--bg-tertiary);color:var(--text-secondary);font-size:1.2rem;line-height:1;
+transition:background var(--dfast),border-color var(--dfast),transform var(--dfast) var(--ease-spring)}
+.seg__btn:hover{background:var(--bg-hover)}
+.seg__btn[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);transform:translateY(-2px)}
+.seg__cap{display:block;font-size:.56rem;font-weight:700;color:var(--text-muted);margin-top:4px;letter-spacing:.01em;
+overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.seg__btn[aria-pressed="true"] .seg__cap{color:var(--accent)}
+
+.note-field{display:flex;flex-direction:column;gap:8px;min-width:0}
+.note-field textarea{background:var(--bg-tertiary);border:1px solid var(--border);border-radius:var(--radius-md);
+padding:11px 13px;min-height:60px;resize:vertical;line-height:1.4;width:100%;max-width:100%;box-sizing:border-box}
+.note-field textarea::placeholder{color:var(--text-muted)}
+
+.save-btn{width:100%;padding:14px;border-radius:var(--radius-md);background:var(--accent);color:var(--text-on-accent);
+font-weight:700;font-size:.95rem;transition:transform var(--dfast) var(--ease-spring),background var(--dfast);box-sizing:border-box}
+.save-btn:active{transform:scale(.97)}
+.save-btn:disabled{opacity:.55;cursor:not-allowed}
+
+/* ---------- GALERIE MULTI-PÉRIODES ---------- */
+.gallery{background:var(--bg-secondary);border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow);
+padding:16px 14px;box-sizing:border-box;width:100%;max-width:100%}
+.gallery__head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.gallery__title{font-size:.74rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted)}
+.periods{display:flex;gap:3px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:var(--radius-full);padding:3px;flex-wrap:wrap}
+.periods__btn{padding:5px 9px;border-radius:var(--radius-full);font-size:.7rem;color:var(--text-secondary);
+transition:background var(--dfast),color var(--dfast);white-space:nowrap}
+.periods__btn[aria-pressed="true"]{background:var(--accent);color:var(--text-on-accent);font-weight:700}
+
+.days{display:grid;gap:6px;width:100%}
+.day{aspect-ratio:.72;border-radius:var(--radius-md);overflow:hidden;position:relative;border:1px solid var(--border);cursor:pointer;
+min-width:0;transition:transform var(--dfast) var(--ease-spring)}
+.day:hover{transform:translateY(-2px)}
+.day__scene{position:absolute;inset:0;background:linear-gradient(to bottom,var(--d-sky-top),var(--d-sky-bot))}
+.day__water{position:absolute;left:0;right:0;bottom:0;height:42%;background:var(--d-water)}
+.day__wave{position:absolute;left:0;right:0;bottom:38%;height:var(--d-amp,2px);background:var(--d-wave,rgba(255,255,255,.3));border-radius:50%;opacity:.7}
+.day__dow{position:absolute;top:3px;left:0;right:0;text-align:center;font-size:.56rem;font-weight:700;color:rgba(255,255,255,.9);text-shadow:0 1px 2px rgba(0,0,0,.6);z-index:2}
+.day--empty{background:var(--bg-tertiary);border-style:dashed}
+.day--empty .day__scene,.day--empty .day__water{display:none}
+.day--today{border-color:var(--accent);border-width:2px}
+.day__tip{position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;
+font-size:.52rem;color:#fff;opacity:0;background:rgba(0,0,0,.3);transition:opacity var(--dfast);z-index:3;text-shadow:0 1px 2px #000}
+.day:hover .day__tip{opacity:1}
+
+.detail{margin-top:12px;padding:12px;border-radius:var(--radius-md);background:var(--bg-tertiary);border:1px solid var(--border);
+display:none;box-sizing:border-box;width:100%;max-width:100%}
+.detail.show{display:block;animation:fade var(--dnorm) var(--ease-out)}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.detail__date{font-family:var(--font-display);font-weight:700;font-size:.92rem;text-transform:capitalize}
+.detail__meta{font-size:.8rem;color:var(--text-secondary);margin-top:4px}
+.detail__note{font-size:.84rem;color:var(--text-primary);margin-top:8px;line-height:1.5;font-style:italic;
+word-break:break-word}
+
+.reduce-motion{}
+.demo-note{width:min(420px,100%);max-width:100%;font-size:.76rem;line-height:1.5;color:var(--text-muted);text-align:center}
+</style>
+</head>
+<body>
+
+<div class="demo-bar">
+  <span class="demo-bar__title">M11 FINALE · Humeur</span>
+  <div class="theme-chips" role="group" aria-label="Thèmes">
+    <button class="theme-chip" data-t="encre" style="--pv:linear-gradient(135deg,#101a24 55%,#45e0b0 55%)" aria-pressed="true" aria-label="Encre"></button>
+    <button class="theme-chip" data-t="garrigue" style="--pv:linear-gradient(135deg,#faf7f0 55%,#4d6b3c 55%)" aria-pressed="false" aria-label="Garrigue"></button>
+    <button class="theme-chip" data-t="crepuscule" style="--pv:linear-gradient(135deg,#201620 55%,#f0a35e 55%)" aria-pressed="false" aria-label="Crépuscule"></button>
+    <button class="theme-chip" data-t="maree" style="--pv:linear-gradient(135deg,#f4f7f6 55%,#146b66 55%)" aria-pressed="false" aria-label="Marée basse"></button>
+  </div>
+  <button class="motion-toggle" id="motion" aria-pressed="false">Réduire le mouvement</button>
+</div>
+
+<main class="module" aria-label="Module Humeur — maquette finale">
+
+  <div>
+    <h1 class="head__title">Humeur</h1>
+    <p class="head__sub">Compose ta mer du jour. Aucune n'est meilleure qu'une autre.</p>
+  </div>
+
+  <!-- La scène : océan vivant (canvas) -->
+  <div class="stage" id="stage">
+    <span class="stage__cap" id="capLabel"></span>
+    <span class="stage__sub" id="subLabel"></span>
+    <div class="stage__sun"></div>
+    <canvas id="oceanCanvas"></canvas>
+    <span class="stage__ack" id="ack">Ta mer est consignée.</span>
+  </div>
+
+  <!-- Curseurs -->
+  <section class="controls">
+    <div class="slider">
+      <div class="slider__head">
+        <span class="slider__name">Humeur — la lumière</span>
+        <span class="slider__val" id="moodVal"></span>
+      </div>
+      <div class="seg" id="moodSeg" role="group" aria-label="Humeur"></div>
+    </div>
+    <div class="slider">
+      <div class="slider__head">
+        <span class="slider__name">Énergie — la houle</span>
+        <span class="slider__val" id="energyVal"></span>
+      </div>
+      <div class="seg" id="energySeg" role="group" aria-label="Énergie"></div>
+    </div>
+    <div class="note-field">
+      <span class="slider__name">Un mot sur ta journée (optionnel)</span>
+      <textarea id="note" placeholder="Ce qui a coloré ta mer aujourd'hui…"></textarea>
+    </div>
+    <button class="save-btn" id="saveBtn">Consigner ma mer</button>
+  </section>
+
+  <!-- Galerie multi-périodes -->
+  <section class="gallery">
+    <div class="gallery__head">
+      <h2 class="gallery__title" id="galleryTitle">La mer des jours</h2>
+      <div class="periods" id="periods" role="group" aria-label="Période"></div>
+    </div>
+    <div class="days" id="days"></div>
+    <div class="detail" id="detail"></div>
+  </section>
+
+</main>
+
+<p class="demo-note">
+  L'océan vit en continu (houle + reflet doux) — aucune consommation
+  notable au repos. Quand tu consignes, une vague traverse et s'échoue à
+  droite dans une gerbe d'écume, puis tout s'apaise. Règle les deux
+  curseurs : la scène réagit (couleur du ciel = humeur, amplitude de la
+  houle de fond = énergie) SANS jamais recréer le canvas.
+</p>
+
+<script>
+(function(){
+'use strict';
+const $=id=>document.getElementById(id);
+
+/* ============================================================
+   PARTIE 1 — Échelles, palette par humeur, état applicatif
+   ============================================================ */
+const MOOD=[{v:1,e:'😕',label:'Difficile'},{v:2,e:'😐',label:'Mitigé'},{v:3,e:'🙂',label:'Correct'},{v:4,e:'😊',label:'Bien'},{v:5,e:'✨',label:'Lumineux'}];
+const ENERGY=[{v:1,e:'🪫',label:'Vide'},{v:2,e:'😮‍💨',label:'Basse'},{v:3,e:'🔋',label:'Correcte'},{v:4,e:'⚡',label:'Haute'},{v:5,e:'🚀',label:'Débordante'}];
+/* palettes de scène selon l'humeur (le "sky/water" varie, injecté en CSS vars sur --sky-top etc via le thème actif */
+const SKY_BY_MOOD={
+ 1:{sky:['#141b26','#0a0f16'],sun:'#7f95c0'},
+ 2:{sky:['#1c2836','#0d1520'],sun:'#c9d2e0'},
+ 3:{sky:['#243244','#101c28'],sun:'#ffe9b0'},
+ 4:{sky:['#33526a','#182838'],sun:'#ffe6a0'},
+ 5:{sky:['#4a7a92','#1f3a48'],sun:'#fff4d0'}
+};
+let mood=3, energy=3;
+
+function describeSea(m,e){
+  const light=m<=2?'Ciel bas':m===3?'Ciel voilé':m===4?'Belle lumière':'Grand soleil';
+  const sea=e<=1?'mer d\u2019huile':e===2?'mer calme':e===3?'houle légère':e===4?'houle vive':'grande houle';
+  return `${light}, ${sea}`;
+}
+function applyMoodToScene(){
+  const sky=SKY_BY_MOOD[mood];
+  const stage=$('stage');
+  stage.style.setProperty('--sky-top',sky.sky[0]);
+  stage.style.setProperty('--sky-bot',sky.sky[1]);
+  stage.style.setProperty('--sun',sky.sun);
+  const m=MOOD[mood-1],en=ENERGY[energy-1];
+  $('capLabel').textContent=describeSea(mood,energy);
+  $('subLabel').textContent=`${m.e} ${m.label} · ${en.e} ${en.label}`;
+}
+
+/* ============================================================
+   PARTIE 2 — Moteur océan (Canvas, Gerstner + soliton)
+   Deux régimes : REPOS (houle légère + reflet, en continu, quel
+   que soit l'état de l'app) / GESTE (soliton qui traverse + écume).
+   Le canvas N'EST JAMAIS recréé par un tap sur les curseurs —
+   seules les variables JS (mood/energy/baseAmp) changent.
+   ============================================================ */
+const stage=$('stage'),C=$('oceanCanvas'),X=C.getContext('2d');
+let w,h,DPR=Math.min(2,devicePixelRatio||1);
+const N=78;
+const P=new Float32Array(N*2);
+const T=[[320,3.8,0.5,0],[150,2,1.1,2.1],[72,1,1.8,4]];
+const SOL={x:-150,v:0.4,amp:18,sigma:95,k:0.048,q:0.65,on:false,hit:false};
+const drops=[];const MAX=70;
+let baseAmpMul=1; // dérivé de l'énergie : la houle de fond est plus ample si énergie haute
+
+function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+function resize(){w=stage.clientWidth;h=stage.clientHeight;C.width=w*DPR;C.height=h*DPR;X.setTransform(DPR,0,0,DPR,0,0);}
+addEventListener('resize',()=>{resize();});
+
+function geo(t,lift){
+  const lvl=h*0.6,buf=70,step=(w+buf*2)/(N-1);
+  const sx=SOL.x,sa=lift*SOL.amp,sw2=2*SOL.sigma*SOL.sigma;
+  for(let i=0;i<N;i++){
+    const x0=-buf+step*i;let x=x0,y=lvl;
+    for(let j=0;j<3;j++){
+      const L=T[j],k=2*Math.PI/L[0],th=k*x0-t*L[2]+L[3];
+      const amp=L[1]*baseAmpMul;
+      x-=Math.sin(th)*amp;y+=Math.cos(th)*amp;
+    }
+    if(lift>0){
+      const d=x0-sx,g=Math.exp(-d*d/sw2),p=SOL.k*d;
+      y-=g*sa*Math.cos(p);x+=g*sa*SOL.q*Math.sin(p);
+      if(d<-15){const wE=Math.exp(d/40);y-=wE*2.2*lift*Math.sin(-d*0.12);}
+    }
+    P[i*2]=x;P[i*2+1]=y;
+  }
+}
+function drawGlint(){
+  const lvl=h*0.6,cx=w*0.5,sun=css('--sun');
+  const now=performance.now()/1000;
+  const bottom=h*0.99,rows=14;
+  X.save();X.globalCompositeOperation='screen';
+  for(let i=0;i<rows;i++){
+    const f=i/(rows-1),y=lvl+(bottom-lvl)*f,spread=8+f*46;
+    const flick=0.45+0.55*Math.abs(Math.sin(now*2.2+i*1.7));
+    const alpha=(0.18*(1-f)+0.05)*flick;
+    const touches=1+(i%3===0?2:1);
+    for(let tk=0;tk<touches;tk++){
+      const wob=Math.sin(now*1.6+i*0.9+tk*2.1)*spread*0.5;
+      const tw=spread*(0.35+Math.random()*0.3);
+      const tx=cx+wob-tw/2,th=2+f*2;
+      X.globalAlpha=alpha*(0.7+Math.random()*0.3);X.fillStyle=sun;
+      X.beginPath();X.ellipse(tx+tw/2,y,tw/2,th/2,0,0,Math.PI*2);X.fill();
+    }
+  }
+  X.globalAlpha=1;X.restore();
+}
+function drawWater(){
+  const c1=css('--w1'),c2=css('--w2'),c3=css('--w3'),fm=css('--foam'),cr=css('--crest');
+  for(const [dy,col] of [[16,c1],[8,c2],[0,c3]]){
+    X.beginPath();X.moveTo(0,h);X.lineTo(P[0],P[1]+dy);
+    for(let i=1;i<N;i++){const px=P[(i-1)*2],py=P[(i-1)*2+1],x=P[i*2],y=P[i*2+1];X.quadraticCurveTo(px,py+dy,(px+x)/2,(py+y)/2+dy);}
+    X.lineTo(w,h);X.closePath();X.fillStyle=col;X.fill();
+  }
+  drawGlint();
+  X.beginPath();X.moveTo(P[0],P[1]);
+  for(let i=1;i<N;i++){const px=P[(i-1)*2],py=P[(i-1)*2+1],x=P[i*2],y=P[i*2+1];X.quadraticCurveTo(px,py,(px+x)/2,(py+y)/2);}
+  X.strokeStyle=fm;X.lineWidth=1.3;X.lineCap='round';X.lineJoin='round';X.shadowColor=cr;X.shadowBlur=3;X.stroke();X.shadowBlur=0;
+}
+function burst(x,y,n){for(let i=0;i<n;i++){if(drops.length>=MAX)drops.shift();const a=-Math.PI/2+(Math.random()-0.5)*Math.PI*0.8,s=1.5+Math.random()*3.5;drops.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,r:1.1+Math.random()*1.6,life:1});}}
+function dropsStep(dt){
+  const dtN=dt/16.67,g=0.14*dtN,lvl=h*0.6,fm=css('--foam');
+  for(let i=drops.length-1;i>=0;i--){
+    const d=drops[i];d.vy+=g;d.vx*=0.985;d.x+=d.vx*dtN;d.y+=d.vy*dtN;d.life-=0.012*dtN;
+    if(d.y>=lvl-1&&d.vy>0){d.y=lvl-1;d.vy*=-0.38;d.vx*=0.5;if(Math.abs(d.vy)<0.5){drops.splice(i,1);continue;}}
+    if(d.life<=0||d.y>h+20)drops.splice(i,1);
+  }
+  X.fillStyle=fm;for(const d of drops){X.globalAlpha=Math.min(1,d.life*1.3);X.beginPath();X.arc(d.x,d.y,d.r,0,Math.PI*2);X.fill();}X.globalAlpha=1;
+}
+const ease=x=>1-Math.pow(1-x,3);
+
+let run=false,t0=0,last=0,rafId=null,idleRAF=null;
+let reduced=matchMedia('(prefers-reduced-motion:reduce)').matches;
+
+function frame(t,lift){geo(t/1000,lift);X.clearRect(0,0,w,h);drawWater();dropsStep(16.67);}
+function idleLoop(t){if(reduced)return;frame(t,0);idleRAF=requestAnimationFrame(idleLoop);}
+function startIdle(){cancelAnimationFrame(idleRAF);if(reduced){resize();frame(performance.now(),0);return;}idleRAF=requestAnimationFrame(idleLoop);}
+function renderIdle(){resize();frame(performance.now(),0);}
+
+function loop(t){
+  if(!last)last=t;const dt=Math.min(32,t-last);last=t;
+  let lift=0;const e=t-t0,RISE=220,HOLD=1200,FALL=500,TOT=RISE+HOLD+FALL;
+  if(e<RISE)lift=ease(e/RISE);else if(e<RISE+HOLD)lift=1;else if(e<TOT)lift=1-ease((e-RISE-HOLD)/FALL);
+  else{run=false;SOL.on=false;$('saveBtn').disabled=false;}
+  if(SOL.on){
+    SOL.x+=SOL.v*dt;
+    if(!SOL.hit&&SOL.x>=w-5){SOL.hit=true;SOL.on=false;burst(w-3,h*0.6-2,18);setTimeout(()=>burst(w-3-Math.random()*20,h*0.6-2,7),120);setTimeout(()=>burst(w-3-Math.random()*20,h*0.6-2,5),250);}
+  }
+  frame(t,lift);
+  if(run||drops.length){rafId=requestAnimationFrame(loop);}else{last=0;startIdle();}
+}
+
+/* Le SEUL point d'entrée qui déclenche le grand geste */
+function playSaveAnimation(){
+  const f=$('ack');f.classList.remove('go');void f.offsetWidth;f.classList.add('go');
+  if(reduced){renderIdle();return;}
+  cancelAnimationFrame(idleRAF);
+  SOL.on=true;SOL.x=-150;SOL.hit=false;drops.length=0;
+  t0=performance.now();last=0;run=true;
+  $('saveBtn').disabled=true;
+  rafId=requestAnimationFrame(loop);
+}
+
+/* ============================================================
+   PARTIE 3 — Curseurs : changent SEULEMENT des variables JS/CSS,
+   ne touchent JAMAIS au DOM du canvas ni ne le recréent.
+   ============================================================ */
+function buildSeg(container,items,selected,onPick){
+  container.innerHTML='';
+  items.forEach(it=>{
+    const b=document.createElement('button');
+    b.type='button';b.className='seg__btn';
+    b.setAttribute('aria-pressed',String(it.v===selected));
+    b.setAttribute('aria-label',it.label);
+    b.innerHTML=`${it.e}<span class="seg__cap">${it.label}</span>`;
+    b.addEventListener('click',()=>onPick(it.v));
+    container.appendChild(b);
+  });
+}
+function renderControls(){
+  buildSeg($('moodSeg'),MOOD,mood,v=>{mood=v;renderControls();applyMoodToScene();});
+  buildSeg($('energySeg'),ENERGY,energy,v=>{energy=v;baseAmpMul=0.4+ (v-1)*0.35;renderControls();applyMoodToScene();});
+  $('moodVal').textContent=MOOD[mood-1].label;
+  $('energyVal').textContent=ENERGY[energy-1].label;
+}
+
+/* ============================================================
+   PARTIE 4 — Galerie multi-périodes (Semaine/Mois/3 mois/Année)
+   ============================================================ */
+const DOW=['L','M','M','J','V','S','D'];
+const MONTHS=['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'];
+const NOTES=['Réveil difficile.','Belle énergie.','Tête ailleurs.','Vidé.','Grand jour.','Serein.','Journée dense.',''];
+function seededEntries(){
+  const out=[];const today=new Date();
+  for(let i=364;i>=0;i--){
+    const dt=new Date(today);dt.setDate(dt.getDate()-i);
+    const season=Math.sin((dt.getMonth()/12)*Math.PI*2);const base=3+season*1.1;
+    const m=Math.max(1,Math.min(5,Math.round(base+(Math.random()-0.5)*2)));
+    const e=Math.max(1,Math.min(5,Math.round(base+(Math.random()-0.5)*2.4)));
+    out.push({date:dt,m,e,note:Math.random()<0.25?NOTES[Math.floor(Math.random()*NOTES.length)]:''});
+  }
+  out[out.length-1]=null;return out;
+}
+let entries=seededEntries();
+let period='week';
+const PERIODS=[['week','Semaine'],['month','Mois'],['quarter','3 mois'],['year','Année']];
+/* petites vignettes de galerie : mini palette dérivée de SKY_BY_MOOD */
+function miniSky(m){return SKY_BY_MOOD[m];}
+function waveShade(e){const shades={1:'rgba(255,255,255,.10)',2:'rgba(255,255,255,.16)',3:'rgba(255,255,255,.22)',4:'rgba(255,255,255,.30)',5:'rgba(255,255,255,.4)'};return shades[e];}
+function waterShade(m){const s=miniSky(m);return s.sky[1];}
+
+function buildPeriods(){
+  const wrap=$('periods');wrap.innerHTML='';
+  PERIODS.forEach(([id,label])=>{
+    const b=document.createElement('button');
+    b.type='button';b.className='periods__btn';b.textContent=label;
+    b.setAttribute('aria-pressed',String(id===period));
+    b.addEventListener('click',()=>{period=id;renderGallery();});
+    wrap.appendChild(b);
+  });
+}
+function buildBuckets(){
+  const done=entries.filter(x=>x&&x.m!=null);
+  if(period==='week'){
+    return entries.slice(-7).map((x,i,arr)=>{
+      const isToday=i===arr.length-1;
+      if(!x||x.m==null)return {empty:true,label:isToday?'auj.':DOW[i],today:isToday};
+      return {m:x.m,e:x.e,note:x.note,label:['dim.','lun.','mar.','mer.','jeu.','ven.','sam.'][x.date.getDay()],today:isToday,count:1};
+    });
+  }
+  const config={month:{days:30,buckets:6},quarter:{days:90,buckets:12},year:{days:365,buckets:12}}[period];
+  const slice=done.slice(-config.days);
+  const per=Math.ceil(slice.length/config.buckets)||1;
+  const out=[];
+  for(let i=0;i<slice.length;i+=per){
+    const chunk=slice.slice(i,i+per);
+    const m=Math.round(chunk.reduce((s,x)=>s+x.m,0)/chunk.length);
+    const e=Math.round(chunk.reduce((s,x)=>s+x.e,0)/chunk.length);
+    const first=chunk[0].date,last=chunk[chunk.length-1].date;
+    const label=period==='year'?MONTHS[first.getMonth()].slice(0,4):`${first.getDate()}/${first.getMonth()+1}`;
+    out.push({m,e,note:'',label,count:chunk.length});
+  }
+  return out;
+}
+function renderGallery(){
+  buildPeriods();
+  $('galleryTitle').textContent=period==='week'?'La mer des jours':'La mer, en moyenne';
+  const wrap=$('days');wrap.innerHTML='';
+  const buckets=buildBuckets();
+  const cols=period==='week'?7:Math.min(12,buckets.length);
+  wrap.style.gridTemplateColumns=`repeat(${cols},minmax(0,1fr))`;
+  buckets.forEach(b=>{
+    const cell=document.createElement('button');cell.type='button';
+    if(b.empty){
+      cell.className='day day--empty'+(b.today?' day--today':'');
+      cell.innerHTML=`<span class="day__dow" style="color:var(--text-muted);text-shadow:none">${b.label}</span>`;
+      cell.addEventListener('click',()=>$('detail').classList.remove('show'));
+    }else{
+      const sky=miniSky(b.m);
+      cell.className='day'+(b.today?' day--today':'');
+      cell.style.setProperty('--d-sky-top',sky.sky[0]);
+      cell.style.setProperty('--d-sky-bot',sky.sky[1]);
+      cell.style.setProperty('--d-water',waterShade(b.m));
+      cell.style.setProperty('--d-amp',(2+b.e*2)+'px');
+      cell.style.setProperty('--d-wave',waveShade(b.e));
+      cell.innerHTML=`<span class="day__dow">${b.label}</span>
+        <div class="day__scene"></div><div class="day__water"></div><div class="day__wave"></div>
+        <div class="day__tip">${MOOD[b.m-1].e}${ENERGY[b.e-1].e}</div>`;
+      cell.addEventListener('click',()=>showDetail(b));
+    }
+    wrap.appendChild(cell);
+  });
+}
+function showDetail(b){
+  const det=$('detail');
+  const m=MOOD[b.m-1],en=ENERGY[b.e-1];
+  const head=b.count>1?`Moyenne sur ${b.count} jours`:describeSea(b.m,b.e);
+  det.innerHTML=`<div class="detail__date">${head}</div>
+    <div class="detail__meta">${describeSea(b.m,b.e)} — ${m.e} ${m.label} · ${en.e} ${en.label}</div>
+    ${b.note?`<div class="detail__note">« ${b.note} »</div>`:''}`;
+  det.classList.add('show');
+}
+
+/* ============================================================
+   PARTIE 5 — Consigner : anime la vague, met à jour aujourd'hui,
+   rafraîchit UNIQUEMENT la galerie (jamais la scène/canvas).
+   ============================================================ */
+$('saveBtn').addEventListener('click',()=>{
+  entries[entries.length-1]={date:new Date(),m:mood,e:energy,note:$('note').value.trim()};
+  period='week';
+  renderGallery();          // ne touche que la galerie
+  playSaveAnimation();      // ne touche que le canvas — jamais un innerHTML global
+});
+
+/* ---------- Thèmes + mouvement (n'affecte jamais le canvas lui-même) ---------- */
+document.querySelectorAll('[data-t]').forEach(b=>b.addEventListener('click',()=>{
+  document.documentElement.dataset.theme=b.dataset.t;
+  document.querySelectorAll('[data-t]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+  applyMoodToScene();
+  if(reduced)renderIdle();
+}));
+const mtoggle=$('motion');
+mtoggle.addEventListener('click',()=>{
+  const on=mtoggle.getAttribute('aria-pressed')!=='true';
+  mtoggle.setAttribute('aria-pressed',String(on));
+  reduced=on;
+  if(on){cancelAnimationFrame(idleRAF);renderIdle();}else startIdle();
+});
+if(matchMedia('(prefers-reduced-motion:reduce)').matches){mtoggle.setAttribute('aria-pressed','true');reduced=true;}
+
+/* ---------- Démarrage ---------- */
+renderControls();
+applyMoodToScene();
+renderGallery();
+resize();
+startIdle();
+})();
+</script>
+</body>
+</html>
