@@ -7,6 +7,8 @@ considérer un module comme "terminé", tant que le contexte est frais.
 - [ ] Aucun fichier du module > ~400 lignes (sinon découper : view/logic/style
       ou sous-modules par responsabilité). Rappel dette ancienne à traiter en
       fin de chantier : budget/index.js (1333L), recipes/index.js (1177L).
+      **Preuve requise, pas une estimation** : coller la sortie de
+      `wc -l src/modules/<module>/*.js` dans le compte-rendu de clôture.
 - [ ] Zéro `!important` dans le CSS du module.
 - [ ] Zéro couleur en dur : tout passe par les tokens de thème.
 - [ ] Tout élément de fond déclare un `background` token (jamais implicite —
