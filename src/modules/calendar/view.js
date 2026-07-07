@@ -1,4 +1,10 @@
 import { escapeHtml, formatInputDate, formatInputTime } from '../../core/format.js';
+import {
+  DAY_END_HOUR,
+  DAY_START_HOUR,
+  DAY_TIMELINE_HOUR_COUNT,
+  HOUR_HEIGHT_PX
+} from './tide.js';
 
 const REMINDER_MINUTE_PRESETS = [0, 5, 10, 15, 30, 60, 120, 1440];
 
@@ -13,20 +19,16 @@ function buildReminderMinuteOptions(currentRaw) {
 
 function buildEventFormFields(form, state) {
   const reminderOptions = buildReminderMinuteOptions(form.reminder);
-  const colorRadios = state.colorOptions
+  const colorSwatches = state.colorOptions
     .map(
       (opt) => `
-        <label class="calendar-panel__color-swatch">
-          <input
-            type="radio"
-            name="color"
-            value="${escapeHtml(opt.value)}"
-            class="calendar-panel__color-input"
-            ${opt.value === form.color ? 'checked' : ''}
-          />
-          <span class="calendar-panel__sr-only">${escapeHtml(opt.label)}</span>
-          <span class="calendar-panel__color-dot calendar-panel__color-dot--${escapeHtml(opt.value)}" aria-hidden="true"></span>
-        </label>
+        <button
+          type="button"
+          class="cal__swatch cal__swatch--${escapeHtml(opt.value)}"
+          data-cal-color="${escapeHtml(opt.value)}"
+          aria-label="${escapeHtml(opt.label)}"
+          aria-pressed="${opt.value === form.color ? 'true' : 'false'}"
+        ></button>
       `
     )
     .join('');
@@ -39,64 +41,49 @@ function buildEventFormFields(form, state) {
     .join('');
 
   return `
-    <div class="calendar-panel__form-step">
-      <label class="calendar-panel__field">
-        <span>Titre *</span>
-        <input type="text" name="title" value="${escapeHtml(form.title)}" maxlength="180" required />
-      </label>
-      <div class="calendar-panel__grid calendar-panel__grid--start-row">
-        <label class="calendar-panel__field">
-          <span>Date début</span>
-          <input type="date" name="startDate" value="${escapeHtml(form.startDate)}" required />
-        </label>
-        <label class="calendar-panel__field">
-          <span>Heure début</span>
-          <input type="time" name="startTime" value="${escapeHtml(form.startTime)}" required />
-        </label>
-      </div>
-      <fieldset class="calendar-panel__color-fieldset">
-        <legend class="calendar-panel__fieldset-legend" id="calendar-form-color-legend">Couleur</legend>
-        <div class="calendar-panel__color-swatches" role="radiogroup" aria-labelledby="calendar-form-color-legend">
-          ${colorRadios}
-        </div>
-      </fieldset>
-      <label class="calendar-panel__field">
-        <span>Rappel (minutes)</span>
-        <select name="reminder">${reminderSelect}</select>
-      </label>
+    <input type="hidden" name="color" value="${escapeHtml(form.color)}" data-cal-color-input />
+    <input
+      type="text"
+      name="title"
+      class="cal__composer-title"
+      value="${escapeHtml(form.title)}"
+      placeholder="Quoi ?"
+      maxlength="180"
+      required
+      aria-label="Titre de l'événement"
+    />
+    <div class="cal__composer-row">
+      <input type="date" name="startDate" value="${escapeHtml(form.startDate)}" required aria-label="Date" />
+      <input type="time" name="startTime" value="${escapeHtml(form.startTime)}" required aria-label="Heure de début" />
     </div>
     <button
       type="button"
-      class="calendar-panel__form-more-toggle btn"
+      class="cal__composer-more-toggle"
       data-calendar-form-more
       aria-expanded="false"
       aria-controls="calendar-form-more-panel"
     >
-      + Plus d'options ▾
+      Plus d'options
     </button>
     <div
-      class="calendar-panel__form-more"
+      class="cal__composer-more"
       id="calendar-form-more-panel"
       data-calendar-form-more-panel
       role="region"
       aria-label="Options supplémentaires"
+      aria-hidden="true"
     >
-      <div class="calendar-panel__grid">
-        <label class="calendar-panel__field">
-          <span>Date fin</span>
-          <input type="date" name="endDate" value="${escapeHtml(form.endDate)}" data-calendar-more-first />
-        </label>
-        <label class="calendar-panel__field">
-          <span>Heure fin</span>
-          <input type="time" name="endTime" value="${escapeHtml(form.endTime)}" />
-        </label>
+      <span class="cal__composer-label">Heure de fin</span>
+      <div class="cal__composer-row">
+        <input type="date" name="endDate" value="${escapeHtml(form.endDate)}" aria-label="Date fin" data-calendar-more-first />
+        <input type="time" name="endTime" value="${escapeHtml(form.endTime)}" aria-label="Heure fin" />
       </div>
-      <label class="calendar-panel__field">
-        <span>Description</span>
+      <label class="cal__composer-field">
+        <span class="cal__composer-label">Description</span>
         <textarea name="description" rows="3" maxlength="500">${escapeHtml(form.description)}</textarea>
       </label>
-      <label class="calendar-panel__field">
-        <span>Tâche associée</span>
+      <label class="cal__composer-field">
+        <span class="cal__composer-label">Tâche associée</span>
         <select name="taskId">
           <option value="">Aucune</option>
           ${state.taskOptions
@@ -107,21 +94,22 @@ function buildEventFormFields(form, state) {
             .join('')}
         </select>
       </label>
-      <div class="calendar-panel__grid">
-        <label class="calendar-panel__field">
-          <span>Récurrence</span>
-          <select name="recurrenceType">
-            <option value="none" ${form.recurrenceType === 'none' ? 'selected' : ''}>Aucune</option>
-            <option value="daily" ${form.recurrenceType === 'daily' ? 'selected' : ''}>Quotidien</option>
-            <option value="weekly" ${form.recurrenceType === 'weekly' ? 'selected' : ''}>Hebdomadaire</option>
-            <option value="monthly" ${form.recurrenceType === 'monthly' ? 'selected' : ''}>Mensuel</option>
-          </select>
-        </label>
-        <label class="calendar-panel__field">
-          <span>Fin récurrence</span>
-          <input type="date" name="recurrenceEndDate" value="${escapeHtml(form.recurrenceEndDate)}" />
-        </label>
+      <span class="cal__composer-label">Se répète / Rappel</span>
+      <div class="cal__composer-row">
+        <select name="recurrenceType" aria-label="Récurrence">
+          <option value="none" ${form.recurrenceType === 'none' ? 'selected' : ''}>Jamais</option>
+          <option value="daily" ${form.recurrenceType === 'daily' ? 'selected' : ''}>Chaque jour</option>
+          <option value="weekly" ${form.recurrenceType === 'weekly' ? 'selected' : ''}>Chaque semaine</option>
+          <option value="monthly" ${form.recurrenceType === 'monthly' ? 'selected' : ''}>Chaque mois</option>
+        </select>
+        <select name="reminder" aria-label="Rappel">${reminderSelect}</select>
       </div>
+      <label class="cal__composer-field">
+        <span class="cal__composer-label">Fin récurrence</span>
+        <input type="date" name="recurrenceEndDate" value="${escapeHtml(form.recurrenceEndDate)}" />
+      </label>
+      <span class="cal__composer-label">Couleur</span>
+      <div class="cal__swatches" role="group" aria-label="Couleur">${colorSwatches}</div>
     </div>
   `;
 }
@@ -132,227 +120,115 @@ function capitalizeFrLabel(value) {
   return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
 }
 
-function formatHeaderLabel(referenceDate, viewMode) {
-  if (viewMode === 'day') {
-    return new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }).format(referenceDate);
-  }
-  if (viewMode === 'week') {
-    const formatter = new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: 'long' });
-    const start = new Date(referenceDate);
-    const day = start.getDay();
-    const diff = day === 0 ? -6 : 1 - day;
-    start.setDate(start.getDate() + diff);
-    const end = new Date(start);
-    end.setDate(start.getDate() + 6);
-    return `${formatter.format(start)} - ${formatter.format(end)}`;
-  }
-
-  return new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' }).format(referenceDate);
-}
-
 function formatDetailDateRange(event) {
   const start = new Date(`${event.startDate}T${event.startTime || '00:00'}`);
   const hasEnd = Boolean(event.endDate && event.endTime);
   const dateLabel = new Intl.DateTimeFormat('fr-FR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric'
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long'
   }).format(start);
-  const startTime = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' })
-    .format(start)
-    .replace(':', 'h');
+  const startTime = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' }).format(start);
 
-  if (!hasEnd) return `${dateLabel} · ${startTime}`;
+  if (!hasEnd) return `${capitalizeFrLabel(dateLabel)} · ${startTime}`;
 
   const end = new Date(`${event.endDate}T${event.endTime}`);
-  const endTime = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' })
-    .format(end)
-    .replace(':', 'h');
-
+  const endTime = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' }).format(end);
   if (event.startDate === event.endDate) {
-    return `${dateLabel} · ${startTime}-${endTime}`;
+    return `${capitalizeFrLabel(dateLabel)} · ${startTime} → ${endTime}`;
   }
-
-  const endDateLabel = new Intl.DateTimeFormat('fr-FR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric'
-  }).format(end);
-  return `${dateLabel} · ${startTime} - ${endDateLabel} · ${endTime}`;
+  const endDateLabel = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long' }).format(end);
+  return `${capitalizeFrLabel(dateLabel)} · ${startTime} → ${capitalizeFrLabel(endDateLabel)} · ${endTime}`;
 }
 
-function createMiniUpcoming(upcomingEvents) {
-  if (!upcomingEvents.length) {
-    return '<p class="calendar-mini__empty">Aucun événement à venir.</p>';
-  }
-
-  return `
-    <ul class="calendar-mini__list">
-      ${upcomingEvents
-        .map(
-          (item) => `
-            <li class="calendar-mini__item">
-              <span class="calendar-mini__when">
-                <span class="calendar-mini__when-day">${escapeHtml(item.whenLabel)}</span>
-                <span class="calendar-mini__when-time">${escapeHtml(item.timeLabel)}</span>
-              </span>
-              <span class="calendar-mini__title">${escapeHtml(item.title)}</span>
-            </li>
-          `
-        )
-        .join('')}
-    </ul>
-  `;
-}
-
-function createMonthCell(dayData) {
-  const classes = ['calendar-month__cell'];
-  if (!dayData.inMonth) classes.push('calendar-month__cell--muted');
-  if (dayData.isToday) classes.push('calendar-month__cell--today');
-
-  const eventItems = dayData.events.slice(0, 3);
-  const hiddenCount = dayData.events.length - eventItems.length;
-
-  return `
-    <button
-      type="button"
-      class="${classes.join(' ')}"
-      data-day-cell="${dayData.date}"
-      aria-label="Jour ${dayData.date}"
-    >
-      <span class="calendar-month__date">${dayData.dayNumber}</span>
-      <span class="calendar-month__events">
-        ${eventItems
-          .map(
-            (event) => `
-              <span
-                class="calendar-dot calendar-dot--${event.color}"
-                data-event-open="${event.id}"
-                data-occurrence="${event.occurrenceDateTime}"
-                title="${escapeHtml(event.title)}"
-              >
-                ${event.hasTask ? '<span class="calendar-dot__task">🔗</span>' : ''}
-                ${event.isRecurring ? '<span class="calendar-dot__recurrence">🔄</span>' : ''}
-                <span class="calendar-dot__label">${escapeHtml(event.title)}</span>
-              </span>
-            `
-          )
-          .join('')}
-        ${
-          hiddenCount > 0
-            ? `<span class="calendar-month__more" data-day-cell="${dayData.date}">+${hiddenCount} autres</span>`
-            : ''
-        }
-      </span>
-    </button>
-  `;
-}
-
-function createMonthView(model) {
-  const weekdayFormatter = new Intl.DateTimeFormat('fr-FR', { weekday: 'short' });
-  const weekdayNames = model.weekdays.map((date) =>
-    weekdayFormatter.format(date).replace('.', '').slice(0, 3)
+function formatDayNavLabel(referenceDate, isToday) {
+  const long = capitalizeFrLabel(
+    new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
+      .format(referenceDate)
+      .replaceAll('.', '')
   );
-
-  return `
-    <section class="calendar-month card animate-fade-in" aria-label="Vue mois">
-      <div class="calendar-month__weekdays">
-        ${weekdayNames.map((name) => `<span>${escapeHtml(name)}</span>`).join('')}
-      </div>
-      <div class="calendar-month__grid">
-        ${model.days.map((day) => createMonthCell(day)).join('')}
-      </div>
-    </section>
-  `;
+  if (isToday) return "Aujourd'hui";
+  return long;
 }
 
-function formatDayViewHeaderLines(referenceDate) {
-  const weekday = capitalizeFrLabel(
-    new Intl.DateTimeFormat('fr-FR', { weekday: 'long' }).format(referenceDate).replaceAll('.', '')
-  );
-  const dateLine = capitalizeFrLabel(
-    new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long' }).format(referenceDate).replaceAll('.', '')
-  );
-  return { weekday, dateLine };
-}
 
 function createDayView(referenceDate, dayModel) {
-  const { weekday, dateLine } = formatDayViewHeaderLines(referenceDate);
+  const hours = Array.from({ length: DAY_TIMELINE_HOUR_COUNT }, (_, i) => DAY_START_HOUR + i);
+  const hourRows = hours
+    .map(
+      (hour) => `
+      <div class="cal__tide-hour">
+        <span class="cal__tide-hour-label">${String(hour).padStart(2, '0')}h</span>
+      </div>
+    `
+    )
+    .join('');
+
+  const eventBlocks = dayModel.events
+    .map((event) => {
+      const endTxt = event.endTimeLabel ? `–${event.endTimeLabel}` : '';
+      const classes = ['cal__evt', `cal__evt--${event.color}`];
+      if (event.compact) classes.push('cal__evt--compact');
+      if (event.isNew) classes.push('cal__evt--new');
+      return `
+      <button
+        type="button"
+        class="${classes.join(' ')}"
+        style="--lane:${event.lane};--lanes:${event.lanes};top:${event.topPx}px;height:${event.heightPx}px;"
+        data-event-open="${escapeHtml(event.id)}"
+        data-cal-evt
+        data-occurrence="${escapeHtml(event.occurrenceDateTime)}"
+        title="${escapeHtml(event.title)}"
+      >
+        <span class="cal__evt-time">${escapeHtml(event.timeLabel)}${endTxt}</span>
+        <span class="cal__evt-title">${escapeHtml(event.title)}</span>
+      </button>
+    `;
+    })
+    .join('');
+
   const emptyBlock =
     dayModel.events.length === 0
       ? `
-    <div class="calendar-day__empty">
-      <p class="calendar-day__empty-text">Aucun événement ce jour 🌿</p>
-      <button type="button" class="btn btn-primary calendar-day__empty-btn" data-day-empty-add="${escapeHtml(dayModel.dayYmd)}">
-        Ajouter un événement
-      </button>
+    <div class="cal__tide-empty">
+      <div class="cal__tide-empty-title">Journée en eau libre.</div>
+      <div class="cal__tide-empty-hint">Rien d'amarré. L'horizon est à toi.</div>
     </div>
   `
       : '';
 
-  const hourRows = dayModel.hours
-    .map(
-      (hour) => `
-      <div class="calendar-day__hour-label">${hour}h</div>
-      <button
-        type="button"
-        class="calendar-day__slot"
-        data-slot-date="${escapeHtml(dayModel.dayYmd)}"
-        data-slot-time="${String(hour).padStart(2, '0')}:00"
-        aria-label="Créer événement ${escapeHtml(dayModel.dayYmd)} ${hour}h"
-      ></button>
-    `
-    )
-    .join('');
-
-  const nowLine =
-    dayModel.nowLinePercent == null
-      ? ''
-      : `<div class="calendar-day__now-line" style="top:${dayModel.nowLinePercent}%"></div>`;
-
-  const eventBlocks = dayModel.events
-    .map(
-      (event) => `
-      <button
-        type="button"
-        class="calendar-day__event calendar-day__event--${event.color}"
-        style="top:${event.topPercent}%;height:${event.heightPercent}%;"
-        data-event-open="${escapeHtml(event.id)}"
-        data-occurrence="${escapeHtml(event.occurrenceDateTime)}"
-        title="${escapeHtml(event.title)}"
-      >
-        <span class="calendar-day__event-title">${escapeHtml(event.title)}</span>
-        <span class="calendar-day__event-time">${escapeHtml(event.timeLabel)}</span>
-        ${event.hasTask ? '<span class="calendar-day__event-task">🔗</span>' : ''}
-        ${event.isRecurring ? '<span class="calendar-day__event-rec">🔄</span>' : ''}
-      </button>
-    `
-    )
-    .join('');
+  const metaLine = dayModel.isToday
+    ? capitalizeFrLabel(
+        new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
+          .format(referenceDate)
+          .replaceAll('.', '')
+      )
+    : '';
 
   return `
-    <section class="calendar-day card animate-fade-in" aria-label="Vue jour">
-      <header class="calendar-day__header">
-        <div class="calendar-day__header-row">
-          <button type="button" class="btn calendar-day__nav-btn" data-nav="prev" aria-label="Jour précédent">←</button>
-          <div class="calendar-day__headline">
-            <div class="calendar-day__headline-weekday">${escapeHtml(weekday)}</div>
-            <div class="calendar-day__headline-date">${escapeHtml(dateLine)}</div>
-          </div>
-          <button type="button" class="btn calendar-day__nav-btn" data-nav="next" aria-label="Jour suivant">→</button>
+    <section class="cal__day-card" aria-label="Vue jour">
+      <div class="cal__day-nav">
+        <div>
+          <div class="cal__day-nav-label">${escapeHtml(formatDayNavLabel(referenceDate, dayModel.isToday))}</div>
+          ${metaLine ? `<div class="cal__day-nav-meta">${escapeHtml(metaLine)}</div>` : ''}
         </div>
-        <button type="button" class="btn calendar-day__today-btn" data-nav="today">Aujourd'hui</button>
-      </header>
-      ${emptyBlock}
-      <div class="calendar-day__scroll">
-        <div class="calendar-day__body">
-          <div class="calendar-day__grid">
-            ${hourRows}
-          </div>
-          <div class="calendar-day__events-layer">
-            ${nowLine}
-            ${eventBlocks}
-          </div>
+        <div class="cal__day-nav-btns">
+          <button type="button" class="cal__iconbtn" data-nav="prev" aria-label="Jour précédent">‹</button>
+          <button type="button" class="cal__iconbtn" data-nav="next" aria-label="Jour suivant">›</button>
+        </div>
+      </div>
+      <div class="cal__tide" data-cal-tide style="--hour-h:${HOUR_HEIGHT_PX}px">
+        <div class="cal__tide-past" data-cal-tide-past ${dayModel.isToday ? '' : 'hidden'}></div>
+        <div class="cal__tide-line cal__tide-line--anim" data-cal-tide-line ${dayModel.isToday ? '' : 'hidden'}>
+          <svg viewBox="0 0 1200 14" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M0,8 C80,3 160,12 300,8 C440,4 520,12 600,8 C680,3 760,12 900,8 C1040,4 1120,12 1200,8 L1200,14 L0,14 Z"/>
+          </svg>
+        </div>
+        <span class="cal__tide-now" data-cal-tide-now ${dayModel.isToday ? '' : 'hidden'}></span>
+        <div class="cal__tide-hours">
+          ${hourRows}
+          ${eventBlocks}
+          ${emptyBlock}
         </div>
       </div>
     </section>
@@ -360,227 +236,214 @@ function createDayView(referenceDate, dayModel) {
 }
 
 function createWeekView(model) {
-  const dayFormatter = new Intl.DateTimeFormat('fr-FR', { weekday: 'short', day: '2-digit', month: '2-digit' });
-  const hourLabels = model.hours;
-  const weekTimelineStartHour = hourLabels[0] ?? 8;
-  const weekTimelineHourCount = hourLabels.length || 15;
-  const weekTimelineMinutes = weekTimelineHourCount * 60;
-
-  const weekEventStyle = (event) => {
-    const start = new Date(event.occurrenceDateTime);
-    const startMinutes = Number.isNaN(start.getTime())
-      ? Math.max(0, event.rowStart - 1) * 30
-      : Math.max(0, (start.getHours() - weekTimelineStartHour) * 60 + start.getMinutes());
-    const topPercent = Math.min(100, (startMinutes / weekTimelineMinutes) * 100);
-    const heightPercent = Math.max((30 / weekTimelineMinutes) * 100, (event.rowSpan * 30 / weekTimelineMinutes) * 100);
-    return { topPercent, heightPercent };
-  };
-
   return `
-    <section class="calendar-week card animate-fade-in" aria-label="Vue semaine">
-      <div class="calendar-week__header">
-        <span class="calendar-week__corner"></span>
-        ${model.days
-          .map(
-            (day) => `
-              <button
-                type="button"
-                class="calendar-week__day ${day.isToday ? 'calendar-week__day--today' : ''}"
-                data-day-cell="${day.date}"
-              >
-                ${escapeHtml(dayFormatter.format(day.dateObject))}
-              </button>
-            `
-          )
-          .join('')}
+    <section class="cal__week" aria-label="Vue semaine">
+      <div class="cal__week-nav">
+        <button type="button" class="cal__iconbtn" data-nav="prev" aria-label="Semaine précédente">‹</button>
+        <span class="cal__week-label">${escapeHtml(model.weekLabel)}</span>
+        <button type="button" class="cal__iconbtn" data-nav="next" aria-label="Semaine suivante">›</button>
       </div>
-      <div class="calendar-week__body">
-        ${hourLabels
-          .map(
-            (hour) => `
-              <div class="calendar-week__hour-label">${hour}h</div>
-              ${model.days
-                .map(
-                  (day) => `
-                    <button
-                      type="button"
-                      class="calendar-week__slot"
-                      data-slot-date="${day.date}"
-                      data-slot-time="${String(hour).padStart(2, '0')}:00"
-                      aria-label="Créer événement ${day.date} ${hour}h"
-                    ></button>
-                  `
-                )
-                .join('')}
-            `
-          )
+      <div class="cal__week-list">
+        ${model.days
+          .map((day, index) => {
+            const classes = ['cal__wday'];
+            if (day.isToday) classes.push('cal__wday--today');
+            if (index > 0) classes.push('cal__wday--bordered');
+            const eventsHtml = day.events.length
+              ? day.events
+                  .map(
+                    (event) => `
+                  <button
+                    type="button"
+                    class="cal__wchip cal__wchip--${event.color}${event.isPast ? ' cal__wchip--past' : ''}"
+                    data-event-open="${escapeHtml(event.id)}"
+                    data-occurrence="${escapeHtml(event.occurrenceDateTime)}"
+                  >
+                    <span class="cal__wchip-time">${escapeHtml(event.timeLabel)}</span>
+                    <span class="cal__wchip-title">${escapeHtml(event.title)}</span>
+                  </button>
+                `
+                  )
+                  .join('')
+              : '<span class="cal__wday-none">—</span>';
+            return `
+            <div class="${classes.join(' ')}">
+              <button type="button" class="cal__wday-head" data-day-cell="${day.date}" aria-label="Ouvrir ${escapeHtml(day.date)}">
+                <div class="cal__wday-dow">${escapeHtml(day.dow)}</div>
+                <div class="cal__wday-num">${day.dayNum}</div>
+              </button>
+              <div class="cal__wday-events">${eventsHtml}</div>
+            </div>
+          `;
+          })
           .join('')}
-        <div class="calendar-week__events-layer">
-          ${model.events
-            .map((event) => {
-              const { topPercent, heightPercent } = weekEventStyle(event);
-              return `
-                <button
-                  type="button"
-                  class="calendar-week__event calendar-week__event--${event.color}"
-                  style="--event-col:${event.column};top:${topPercent}%;height:${heightPercent}%;"
-                  data-event-open="${event.id}"
-                  data-occurrence="${event.occurrenceDateTime}"
-                  title="${escapeHtml(event.title)}"
-                >
-                  <span class="calendar-week__event-title">${escapeHtml(event.title)}</span>
-                  <span class="calendar-week__event-time">${escapeHtml(event.timeLabel)}</span>
-                  ${event.hasTask ? '<span class="calendar-week__event-task">🔗</span>' : ''}
-                  ${event.isRecurring ? '<span class="calendar-week__event-rec">🔄</span>' : ''}
-                </button>
-              `;
-            })
-            .join('')}
-        </div>
       </div>
     </section>
   `;
 }
 
-function createDetailPanel(state) {
-  if (!state.open || !state.event) return '';
+function createMonthView(model) {
+  const weekdayFormatter = new Intl.DateTimeFormat('fr-FR', { weekday: 'short' });
+  const weekdayNames = model.weekdays.map((date) =>
+    weekdayFormatter.format(date).replace('.', '').slice(0, 1).toUpperCase()
+  );
 
-  const event = state.event;
   return `
-      <div class="calendar-panel-overlay">
-        <div class="calendar-panel-sheet-root">
-        <button type="button" class="calendar-panel__backdrop" data-panel-close aria-label="Fermer"></button>
-        <aside class="calendar-panel card" data-calendar-panel>
-          <div class="calendar-panel__handle" aria-hidden="true"></div>
-          <div class="calendar-panel__scroll">
-            <header class="calendar-panel__header">
-              <h2>${escapeHtml(event.title)}</h2>
-              <button type="button" class="calendar-panel__close btn" data-panel-close>Fermer</button>
-            </header>
-            <p class="calendar-panel__meta">${escapeHtml(formatDetailDateRange(event))}</p>
-            ${event.description ? `<p class="calendar-panel__description">${escapeHtml(event.description)}</p>` : ''}
-            ${
-              event.taskLabel
-                ? `<p class="calendar-panel__task">🔗 Tâche associée : ${escapeHtml(event.taskLabel)}</p>`
-                : ''
-            }
-            <p class="calendar-panel__recurrence">Récurrence : ${escapeHtml(event.recurrenceLabel)}</p>
-          </div>
-          <div class="calendar-panel__actions">
-            <button type="button" class="btn btn-primary" data-event-edit="${event.id}">Modifier</button>
-            <button type="button" class="btn calendar-panel__btn-danger-outline" data-event-delete="${event.id}">Supprimer</button>
-          </div>
-        </aside>
-        </div>
+    <section class="cal__chart" aria-label="Vue mois">
+      <div class="cal__chart-nav">
+        <button type="button" class="cal__iconbtn" data-nav="prev" aria-label="Mois précédent">‹</button>
+        <span class="cal__chart-label">${escapeHtml(model.monthLabel)}</span>
+        <button type="button" class="cal__iconbtn" data-nav="next" aria-label="Mois suivant">›</button>
       </div>
-    `;
+      <div class="cal__chart-grid">
+        ${weekdayNames.map((name) => `<div class="cal__chart-dow">${escapeHtml(name)}</div>`).join('')}
+        ${model.days
+          .map((day) => {
+            const classes = ['cal__cell'];
+            if (!day.inMonth) classes.push('cal__cell--out');
+            if (day.isToday) classes.push('cal__cell--today');
+            const dots = day.events
+              .slice(0, 3)
+              .map((event) => `<span class="cal__cell-dot cal__cell-dot--${event.color}"></span>`)
+              .join('');
+            const more =
+              day.events.length > 3
+                ? `<span class="cal__cell-more">+${day.events.length - 3}</span>`
+                : '';
+            return `
+            <button type="button" class="${classes.join(' ')}" data-day-cell="${day.date}" aria-label="Jour ${day.date}">
+              <span>${day.dayNumber}</span>
+              <span class="cal__cell-dots">${dots}${more}</span>
+            </button>
+          `;
+          })
+          .join('')}
+      </div>
+    </section>
+  `;
 }
 
-function createEventFormScreen(state) {
-  const form = state.form;
+function createApproachSection(approachEvents) {
+  if (!approachEvents.length) {
+    return `
+      <section class="cal__approach" aria-label="En approche">
+        <h2 class="cal__approach-title">En approche</h2>
+        <p class="cal__approach-empty">Horizon dégagé — rien en approche.</p>
+      </section>
+    `;
+  }
+
+  return `
+    <section class="cal__approach" aria-label="En approche">
+      <h2 class="cal__approach-title">En approche</h2>
+      <div class="cal__approach-list">
+        ${approachEvents
+          .map((item) => {
+            const distClass = item.distanceClass ? ` cal__app-item--${item.distanceClass}` : '';
+            const distLabel = item.dayDiff > 1 ? `J+${item.dayDiff}` : '';
+            return `
+            <button
+              type="button"
+              class="cal__app-item${distClass}"
+              data-approach-open="${escapeHtml(item.occurrenceDate)}"
+              data-event-open="${escapeHtml(item.id)}"
+            >
+              <span class="cal__app-dot cal__app-dot--${item.color}"></span>
+              <span class="cal__app-body">
+                <span class="cal__app-title">${escapeHtml(item.title)}</span>
+                <span class="cal__app-when">${escapeHtml(item.whenLabel)} · ${escapeHtml(item.timeLabel)}</span>
+              </span>
+              ${distLabel ? `<span class="cal__app-dist">${distLabel}</span>` : ''}
+            </button>
+          `;
+          })
+          .join('')}
+      </div>
+    </section>
+  `;
+}
+
+function createDetailDialog(state) {
+  if (!state.open || !state.event) {
+    return '<dialog class="cal__detail" data-cal-detail-dialog hidden></dialog>';
+  }
+  const event = state.event;
+  return `
+    <dialog class="cal__detail" data-cal-detail-dialog open>
+      <div class="cal__detail-card cal__detail-card--${event.color}">
+        <div class="cal__detail-title">${escapeHtml(event.title)}</div>
+        <div class="cal__detail-when">${escapeHtml(formatDetailDateRange(event))}</div>
+        ${event.description ? `<p class="cal__detail-desc">${escapeHtml(event.description)}</p>` : ''}
+        ${
+          event.taskLabel
+            ? `<p class="cal__detail-task">🔗 Tâche associée : ${escapeHtml(event.taskLabel)}</p>`
+            : ''
+        }
+        <p class="cal__detail-rec">Récurrence : ${escapeHtml(event.recurrenceLabel)}</p>
+        <div class="cal__detail-actions">
+          <button type="button" class="cal__btn cal__btn--danger" data-event-delete="${event.id}">Supprimer</button>
+          <button type="button" class="cal__btn" data-event-edit="${event.id}">Modifier</button>
+          <button type="button" class="cal__btn cal__btn--primary" data-panel-close>Fermer</button>
+        </div>
+      </div>
+    </dialog>
+  `;
+}
+
+function createComposerDialog(state) {
   const formState = {
     colorOptions: state.colorOptions,
     taskOptions: state.taskOptions
   };
-  const titleText = state.mode === 'edit' ? 'Modifier' : 'Nouvel événement';
-  const deleteBlock =
+  const saveLabel = state.mode === 'edit' ? 'Enregistrer' : 'Poser';
+  const deleteBtn =
     state.mode === 'edit' && state.eventId
-      ? `
-    <div class="calendar-form-screen__danger-zone">
-      <button type="button" class="calendar-form-screen__delete-btn" data-calendar-form-delete="${escapeHtml(state.eventId)}">Supprimer</button>
-    </div>
-  `
+      ? `<button type="button" class="cal__btn cal__btn--danger" data-calendar-form-delete="${escapeHtml(state.eventId)}">Supprimer</button>`
       : '';
 
   return `
-    <section class="calendar calendar--event-form animate-fade-in" aria-label="${escapeHtml(titleText)}">
-      <div class="calendar-form-screen">
-        <header class="calendar-form-screen__header">
-          <button type="button" class="calendar-form-screen__back" data-calendar-form-back>← Retour</button>
-          <h1 class="calendar-form-screen__title">${escapeHtml(titleText)}</h1>
-          <button type="submit" class="calendar-form-screen__save" form="calendar-event-form">Enregistrer</button>
-        </header>
-        <div class="calendar-form-screen__body">
-          <form class="calendar-panel__form" id="calendar-event-form" data-calendar-form>
-            ${buildEventFormFields(form, formState)}
-          </form>
-          ${deleteBlock}
+    <dialog class="cal__composer" data-cal-composer-dialog ${state.open ? 'open' : ''}>
+      <form class="cal__composer-card" data-calendar-form>
+        ${buildEventFormFields(state.form, formState)}
+        <div class="cal__composer-actions">
+          ${deleteBtn}
+          <button type="button" class="cal__btn" data-calendar-form-back>Annuler</button>
+          <button type="submit" class="cal__btn cal__btn--primary">${saveLabel}</button>
         </div>
-      </div>
-    </section>
+      </form>
+    </dialog>
   `;
 }
 
 function createCalendarView(model) {
-  if (model.eventForm?.open) {
-    return createEventFormScreen(model.eventForm);
-  }
-
   const referenceDate = new Date(model.referenceDate);
-  const currentYear = referenceDate.getFullYear();
-  const currentMonth = referenceDate.getMonth();
-  const monthFormatter = new Intl.DateTimeFormat('fr-FR', { month: 'long' });
-  const monthOptions = Array.from({ length: 12 }, (_, month) => {
-    const label = monthFormatter.format(new Date(currentYear, month, 1));
-    return `<option value="${month}" ${month === currentMonth ? 'selected' : ''}>${escapeHtml(
-      label.charAt(0).toUpperCase() + label.slice(1)
-    )}</option>`;
-  }).join('');
-  const yearOptions = Array.from({ length: 21 }, (_, offset) => currentYear - 10 + offset)
-    .map((year) => `<option value="${year}" ${year === currentYear ? 'selected' : ''}>${year}</option>`)
-    .join('');
+  const anchorClass = model.anchorHot ? ' cal__iconbtn--hot' : '';
+
+  const mainView =
+    model.viewMode === 'month'
+      ? createMonthView(model.month)
+      : model.viewMode === 'week'
+        ? createWeekView(model.week)
+        : createDayView(referenceDate, model.day);
 
   return `
-    <section class="calendar animate-fade-in">
-      <div class="calendar__header card">
-        <div class="calendar__top">
-          <h1 class="calendar__title">Calendrier</h1>
-          <div class="calendar__view-toggle" role="tablist" aria-label="Changer de vue">
-            <button type="button" class="btn ${model.viewMode === 'month' ? 'btn-primary' : ''}" data-view-mode="month">Mois</button>
-            <button type="button" class="btn ${model.viewMode === 'week' ? 'btn-primary' : ''}" data-view-mode="week">Semaine</button>
-            <button type="button" class="btn ${model.viewMode === 'day' ? 'btn-primary' : ''}" data-view-mode="day">Jour</button>
-          </div>
-        </div>
-        <div class="calendar__toolbar">
-          <button type="button" class="btn" data-nav="prev">←</button>
-          <div class="calendar__period-wrap">
-            <button
-              type="button"
-              class="calendar__period-btn"
-              data-open-jump-menu
-              aria-label="Choisir un mois"
-              aria-expanded="${model.jumpMenuOpen ? 'true' : 'false'}"
-            >
-              <span class="calendar__period">${escapeHtml(formatHeaderLabel(referenceDate, model.viewMode))}</span>
-            </button>
-            <div class="calendar__jump-menu ${model.jumpMenuOpen ? 'is-open' : ''}" data-jump-menu>
-              <label class="calendar__jump-label" for="calendar-jump-month">Mois</label>
-              <select id="calendar-jump-month" class="calendar__jump-select" data-jump-month>
-                ${monthOptions}
-              </select>
-              <label class="calendar__jump-label" for="calendar-jump-year">Année</label>
-              <select id="calendar-jump-year" class="calendar__jump-select" data-jump-year>
-                ${yearOptions}
-              </select>
-              <button type="button" class="btn calendar__jump-apply" data-jump-apply>Aller</button>
-            </div>
-          </div>
-          <button type="button" class="btn" data-nav="next">→</button>
-        </div>
-        <div class="calendar-mini">
-          <h3>Prochains événements</h3>
-          ${createMiniUpcoming(model.upcoming)}
+    <section class="cal animate-fade-in">
+      <div class="cal__head">
+        <h1 class="cal__head-title">Agenda</h1>
+        <span class="cal__head-spacer"></span>
+        <button type="button" class="cal__iconbtn${anchorClass}" data-nav="today" title="Revenir à aujourd'hui" aria-label="Revenir à aujourd'hui">⚓</button>
+        <div class="cal__seg" role="group" aria-label="Vue">
+          <button type="button" class="cal__seg-btn" data-view-mode="day" aria-pressed="${model.viewMode === 'day' ? 'true' : 'false'}">Jour</button>
+          <button type="button" class="cal__seg-btn" data-view-mode="week" aria-pressed="${model.viewMode === 'week' ? 'true' : 'false'}">Semaine</button>
+          <button type="button" class="cal__seg-btn" data-view-mode="month" aria-pressed="${model.viewMode === 'month' ? 'true' : 'false'}">Mois</button>
         </div>
       </div>
 
-      ${
-        model.viewMode === 'month'
-          ? createMonthView(model.month)
-          : model.viewMode === 'week'
-            ? createWeekView(model.week)
-            : createDayView(referenceDate, model.day)
-      }
-      ${createDetailPanel(model.detailPanel)}
+      ${mainView}
+      ${createDetailDialog(model.detailPanel)}
+      ${createComposerDialog(model.eventForm)}
+      ${createApproachSection(model.approach)}
+      <button type="button" class="cal__addbtn" data-cal-open-composer>+ Poser</button>
     </section>
   `;
 }
@@ -597,15 +460,14 @@ function createCalendarWidget(events) {
 
 function createDefaultForm(date = new Date()) {
   const start = new Date(date);
-  start.setMinutes(0, 0, 0);
-  if (start.getHours() < 7) start.setHours(7);
-  if (start.getHours() > 23) start.setHours(23);
+  start.setMinutes(Math.ceil(start.getMinutes() / 30) * 30, 0, 0);
+  if (start.getHours() < DAY_START_HOUR) start.setHours(DAY_START_HOUR, 0, 0, 0);
+  if (start.getHours() > DAY_END_HOUR) start.setHours(DAY_END_HOUR, 0, 0, 0);
   const end = new Date(start);
-  if (start.getHours() < 23) {
+  if (start.getHours() < DAY_END_HOUR) {
     end.setHours(start.getHours() + 1);
   } else {
-    end.setHours(23);
-    end.setMinutes(59);
+    end.setHours(DAY_END_HOUR, 59, 0, 0);
   }
 
   return {
