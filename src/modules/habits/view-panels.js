@@ -1,5 +1,7 @@
 import { escapeHtml } from '../../core/format.js';
 
+const GRIP_DOTS = '<span class="grip"><i></i><i></i><i></i><i></i><i></i><i></i></span>';
+
 function createManagePanel(habits, editHabit, bulkEditMode = false) {
   const formTitle = editHabit ? "Modifier l'habitude" : 'Ajouter une habitude';
   const submitLabel = editHabit ? 'Enregistrer' : 'Ajouter';
@@ -7,11 +9,16 @@ function createManagePanel(habits, editHabit, bulkEditMode = false) {
   return `
     <dialog class="habits__panel" data-habits-panel-dialog>
       <div class="habits__panel-card">
-      <header class="habits__panel-header">
+      <header class="habits__panel-head">
         <h2 class="habits__panel-title">Gérer mes habitudes</h2>
-        <div class="habits__panel-header-actions">
-          <button type="button" class="btn btn-secondary" data-habits-bulk-edit-toggle>
-            ${bulkEditMode ? 'Finir la modification' : 'Modifier toutes les habitudes'}
+        <div class="habits__panel-actions">
+          <button
+            type="button"
+            class="btn btn-secondary habits__panel-toggle"
+            data-habits-bulk-edit-toggle
+            aria-pressed="${bulkEditMode}"
+          >
+            ${bulkEditMode ? 'Terminé' : 'Réorganiser'}
           </button>
           <button type="button" class="btn btn-secondary habits__panel-close" data-habits-panel-close>Fermer</button>
         </div>
@@ -47,65 +54,65 @@ function createManagePanel(habits, editHabit, bulkEditMode = false) {
 
       <div class="habits__manage-list-wrap">
         <h3 class="habits__panel-subtitle">Mes habitudes</h3>
-        ${
-          bulkEditMode
-            ? `
-              <form class="habits__bulk-form" data-habits-bulk-form>
-                <ul class="habits__bulk-list">
-                  ${habits.map((habit) => createBulkEditRow(habit)).join('')}
-                </ul>
-                <button type="submit" class="btn btn-primary">Enregistrer toutes les habitudes</button>
-              </form>
-            `
-            : `
-              <ul class="habits__manage-list">
-                ${habits.map((habit, index) => createHabitManagerItem(habit, index, habits.length)).join('')}
-              </ul>
-            `
-        }
+        <p class="habits__reorder-hint${bulkEditMode ? ' habits__reorder-hint--show' : ''}">
+          Glisse une ligne pour la déplacer. Au clavier : sélectionne une ligne puis ↑ / ↓.
+        </p>
+        <ul class="habits__manage-list" data-habits-manage-list role="list" aria-label="Mes habitudes">
+          ${habits.map((habit, index) => createHabitManagerItem(habit, index, habits.length, bulkEditMode)).join('')}
+        </ul>
       </div>
       </div>
     </dialog>
   `;
 }
 
-function createHabitManagerItem(habit, index, total) {
+function createHabitManagerItem(habit, index, total, reorderMode = false) {
   const canMoveUp = index > 0;
   const canMoveDown = index < total - 1;
+  const name = escapeHtml(habit.name);
 
   return `
-    <li class="habits__manage-item card">
+    <li
+      class="habits__manage-item card${reorderMode ? ' habits__manage-item--reorder' : ''}"
+      data-id="${escapeHtml(habit.id)}"
+      role="listitem"
+      tabindex="0"
+    >
+      <span class="habits__manage-handle${reorderMode ? ' habits__manage-handle--show' : ''}" aria-hidden="true">
+        ${GRIP_DOTS}
+      </span>
       <div class="habits__manage-main">
         <p class="habits__manage-title">
           <span aria-hidden="true">${escapeHtml(habit.emoji)}</span>
-          <span>${escapeHtml(habit.name)}</span>
+          <span>${name}</span>
         </p>
         <p class="habits__manage-meta">${escapeHtml(habit.frequencyLabel)}</p>
       </div>
+      <div class="habits__manage-kbd${reorderMode ? ' habits__manage-kbd--show' : ''}">
+        <button
+          type="button"
+          class="habits__manage-kbd-btn"
+          data-habit-move-up="${habit.id}"
+          aria-label="Monter ${name}"
+          ${canMoveUp ? '' : 'disabled'}
+        >▲</button>
+        <button
+          type="button"
+          class="habits__manage-kbd-btn"
+          data-habit-move-down="${habit.id}"
+          aria-label="Descendre ${name}"
+          ${canMoveDown ? '' : 'disabled'}
+        >▼</button>
+      </div>
+      ${
+        reorderMode
+          ? ''
+          : `
       <div class="habits__manage-actions">
-        <button type="button" class="btn btn-secondary habits__icon-btn" data-habit-move-up="${habit.id}" ${canMoveUp ? '' : 'disabled'}>↑</button>
-        <button type="button" class="btn btn-secondary habits__icon-btn" data-habit-move-down="${habit.id}" ${canMoveDown ? '' : 'disabled'}>↓</button>
         <button type="button" class="btn btn-secondary habits__icon-btn" data-habit-edit="${habit.id}">✎</button>
         <button type="button" class="btn btn-secondary habits__icon-btn habits__icon-btn--danger" data-habit-delete="${habit.id}">✕</button>
-      </div>
-    </li>
-  `;
-}
-
-function createBulkEditRow(habit) {
-  return `
-    <li class="habits__bulk-item card">
-      <input type="hidden" data-bulk-habit-id value="${escapeHtml(habit.id)}" />
-      <div class="habits__bulk-row">
-        <input data-bulk-habit-emoji type="text" maxlength="3" value="${escapeHtml(habit.emoji)}" />
-        <input data-bulk-habit-name type="text" maxlength="120" value="${escapeHtml(habit.name)}" required />
-        <select data-bulk-habit-frequency>
-          <option value="daily" ${habit.frequency === 'daily' ? 'selected' : ''}>Quotidien</option>
-          <option value="every2days" ${habit.frequency === 'every2days' ? 'selected' : ''}>Tous les 2 jours</option>
-          <option value="weekdays" ${habit.frequency === 'weekdays' ? 'selected' : ''}>Jours de semaine</option>
-          <option value="weekend" ${habit.frequency === 'weekend' ? 'selected' : ''}>Weekend</option>
-        </select>
-      </div>
+      </div>`
+      }
     </li>
   `;
 }

@@ -29,6 +29,7 @@ import {
   generateUUID
 } from './habits-store.js';
 import { createHabitsEventHandlers } from './habits-events.js';
+import { attachListDragReorder } from '../../core/list-drag-reorder.js';
 
 const JUST_DONE_MS = 600;
 
@@ -47,6 +48,8 @@ let onSubmit = null;
 let onSyncComplete = null;
 let onDialogClose = null;
 let onDialogClick = null;
+let cleanupManageListDrag = null;
+let onManageListKeydown = null;
 
 function closeHabitsPanelDialog() {
   const dialog = rootContainer?.querySelector('[data-habits-panel-dialog]');
@@ -73,8 +76,71 @@ function openPetSettingsDialog() {
 }
 
 function syncDialogsAfterRender() {
-  if (panelOpen) openHabitsPanelDialog();
+  if (panelOpen) {
+    openHabitsPanelDialog();
+    setupManageListReorder();
+  } else {
+    teardownManageListReorder();
+  }
   if (petSettingsOpen) openPetSettingsDialog();
+}
+
+function teardownManageListReorder() {
+  if (cleanupManageListDrag) {
+    cleanupManageListDrag();
+    cleanupManageListDrag = null;
+  }
+  const listEl = rootContainer?.querySelector('[data-habits-manage-list]');
+  if (listEl && onManageListKeydown) {
+    listEl.removeEventListener('keydown', onManageListKeydown);
+    onManageListKeydown = null;
+  }
+}
+
+function setupManageListReorder() {
+  teardownManageListReorder();
+  if (!rootContainer || !bulkEditMode) return;
+
+  const listEl = rootContainer.querySelector('[data-habits-manage-list]');
+  if (!(listEl instanceof HTMLElement)) return;
+
+  cleanupManageListDrag = attachListDragReorder({
+    listEl,
+    rowSelector: '.habits__manage-item',
+    handleSelector: '.habits__manage-handle',
+    getOrder: () => habits.map((habit) => habit.id),
+    onReorderEnd: (orderedIds) => {
+      reorderHabits(orderedIds);
+      render();
+    }
+  });
+
+  onManageListKeydown = (event) => {
+    if (!bulkEditMode) return;
+    const row = event.target instanceof Element ? event.target.closest('.habits__manage-item') : null;
+    if (!(row instanceof HTMLElement)) return;
+    const habitId = row.dataset.id;
+    if (!habitId) return;
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      moveHabit(habitId, 'up');
+      render();
+      requestAnimationFrame(() => {
+        const next = rootContainer?.querySelector(`[data-id="${habitId}"]`);
+        if (next instanceof HTMLElement) next.focus();
+      });
+    }
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      moveHabit(habitId, 'down');
+      render();
+      requestAnimationFrame(() => {
+        const next = rootContainer?.querySelector(`[data-id="${habitId}"]`);
+        if (next instanceof HTMLElement) next.focus();
+      });
+    }
+  };
+  listEl.addEventListener('keydown', onManageListKeydown);
 }
 
 function getState() {
@@ -207,6 +273,14 @@ function moveHabit(habitId, direction) {
   if (targetIndex < 0 || targetIndex >= habits.length) return;
   const [item] = habits.splice(index, 1);
   habits.splice(targetIndex, 0, item);
+  persistHabits(habits);
+}
+
+function reorderHabits(orderedIds) {
+  const byId = new Map(habits.map((habit) => [habit.id, habit]));
+  const next = orderedIds.map((id) => byId.get(id)).filter(Boolean);
+  if (next.length !== habits.length) return;
+  habits = next;
   persistHabits(habits);
 }
 
@@ -450,6 +524,7 @@ const habitsModule = {
   },
 
   destroy() {
+    teardownManageListReorder();
     if (rootContainer && onClick) rootContainer.removeEventListener('click', onClick);
     if (rootContainer && onSubmit) rootContainer.removeEventListener('submit', onSubmit);
     if (rootContainer && onDialogClose) rootContainer.removeEventListener('close', onDialogClose);
