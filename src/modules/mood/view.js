@@ -1,4 +1,5 @@
-import { escapeHtml, truncate } from '../../core/format.js';
+import { escapeHtml } from '../../core/format.js';
+import { describeSea, miniSky, waveShade, waterShade } from './scene.js';
 
 const WEEKDAY_SHORT = ['dim', 'lun', 'mar', 'mer', 'jeu', 'ven', 'sam'];
 
@@ -31,106 +32,6 @@ function buildAreaPath(points, baselineY) {
   const last = realPoints[realPoints.length - 1];
   const first = realPoints[0];
   return `${linePath} L ${last.x} ${baselineY} L ${first.x} ${baselineY} Z`;
-}
-
-function createChartPoint(point, kind) {
-  if (!point.hasData) return '';
-
-  const value = kind === 'mood' ? point.mood : point.energy;
-  const colorClass = valueColorClass(value);
-  const kindClass = kind === 'mood' ? 'mood-chart__point--mood' : 'mood-chart__point--energy';
-
-  return `
-    <circle
-      class="mood-chart__point ${kindClass} ${colorClass}"
-      cx="${point.x}"
-      cy="${point.y}"
-      r="6"
-      data-mood-point
-      data-date="${point.date}"
-      data-mood="${point.mood ?? '-'}"
-      data-energy="${point.energy ?? '-'}"
-      data-mood-emoji="${escapeHtml(point.moodEmoji || '')}"
-      data-energy-emoji="${escapeHtml(point.energyEmoji || '')}"
-      data-note="${escapeHtml(point.note || '')}"
-      data-has-data="true"
-      data-is-weekly="${point.isWeekly ? 'true' : 'false'}"
-      tabindex="0"
-    />
-  `;
-}
-
-function createChartSvg(chartPoints, { isWeekly = false, periodLabel = '7 jours' } = {}) {
-  const width = 720;
-  const height = 300;
-  const margin = { top: 22, right: 20, bottom: 56, left: 48 };
-  const plotWidth = width - margin.left - margin.right;
-  const plotHeight = height - margin.top - margin.bottom;
-  const dayGap = plotWidth / Math.max(1, chartPoints.length - 1);
-  const yForValue = (value) => margin.top + ((5 - value) / 4) * plotHeight;
-  const baselineY = yForValue(1);
-
-  const moodPoints = chartPoints.map((point, index) => ({
-    ...point,
-    x: margin.left + dayGap * index,
-    y: yForValue(point.mood ?? 1),
-    hasData: Boolean(point.hasData)
-  }));
-
-  const energyPoints = chartPoints.map((point, index) => ({
-    ...point,
-    x: margin.left + dayGap * index,
-    y: yForValue(point.energy ?? 1),
-    hasData: Boolean(point.hasData)
-  }));
-
-  const moodPath = buildChartPath(moodPoints);
-  const energyPath = buildChartPath(energyPoints);
-  const moodArea = buildAreaPath(moodPoints, baselineY);
-  const energyArea = buildAreaPath(energyPoints, baselineY);
-
-  const labelStep = chartPoints.length > 14 ? Math.ceil(chartPoints.length / 8) : 1;
-
-  const yGuides = [1, 2, 3, 4, 5]
-    .map((value) => {
-      const y = yForValue(value);
-      return `
-        <line x1="${margin.left}" y1="${y}" x2="${width - margin.right}" y2="${y}" class="mood-chart__grid" />
-        <text x="${margin.left - 16}" y="${y + 4}" class="mood-chart__y-label">${value}</text>
-      `;
-    })
-    .join('');
-
-  const xLabels = chartPoints
-    .map((point, index) => {
-      if (!point.dayShort) return '';
-      if (chartPoints.length > 14 && index % labelStep !== 0 && index !== chartPoints.length - 1) return '';
-      const x = margin.left + dayGap * index;
-      return `<text x="${x}" y="${height - 22}" text-anchor="middle" class="mood-chart__x-label">${escapeHtml(point.dayShort)}</text>`;
-    })
-    .join('');
-
-  const moodCircles = moodPoints.map((point) => createChartPoint(point, 'mood')).join('');
-  const energyCircles = energyPoints.map((point) => createChartPoint(point, 'energy')).join('');
-
-  const ariaLabel = isWeekly
-    ? `Évolution humeur et énergie par semaine sur ${periodLabel}`
-    : `Évolution humeur et énergie sur ${periodLabel}`;
-
-  return `
-    <svg class="mood-chart__svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeHtml(ariaLabel)}">
-      ${yGuides}
-      <line x1="${margin.left}" y1="${height - margin.bottom}" x2="${width - margin.right}" y2="${height - margin.bottom}" class="mood-chart__axis" />
-      <line x1="${margin.left}" y1="${margin.top}" x2="${margin.left}" y2="${height - margin.bottom}" class="mood-chart__axis" />
-      ${moodArea ? `<path d="${moodArea}" class="mood-chart__area mood-chart__area--mood" />` : ''}
-      ${energyArea ? `<path d="${energyArea}" class="mood-chart__area mood-chart__area--energy" />` : ''}
-      ${moodPath ? `<path d="${moodPath}" class="mood-chart__line mood-chart__line--mood" />` : ''}
-      ${energyPath ? `<path d="${energyPath}" class="mood-chart__line mood-chart__line--energy" />` : ''}
-      ${moodCircles}
-      ${energyCircles}
-      ${xLabels}
-    </svg>
-  `;
 }
 
 function createDashboardMiniChart(chartPoints) {
@@ -170,185 +71,162 @@ function createDashboardMiniChart(chartPoints) {
   `;
 }
 
-function createTodayState(todayEntry) {
-  if (!todayEntry) {
+function createSegmentButtons(items, selectedValue, kind) {
+  return items
+    .map((item) => {
+      const pressed = selectedValue != null && selectedValue === item.value;
+      return `
+        <button
+          type="button"
+          class="mood__seg-btn"
+          data-mood-select="${kind}"
+          data-value="${item.value}"
+          aria-pressed="${pressed}"
+          aria-label="${escapeHtml(item.label)}"
+        >
+          ${item.emoji}<span class="mood__seg-cap">${escapeHtml(item.label)}</span>
+        </button>
+      `;
+    })
+    .join('');
+}
+
+function createPeriodButtons(periodOptions, selectedPeriod) {
+  return periodOptions
+    .map(
+      (option) => `
+        <button
+          type="button"
+          class="mood__periods-btn"
+          data-mood-period="${option.id}"
+          aria-pressed="${selectedPeriod === option.id}"
+        >${escapeHtml(option.label)}</button>
+      `
+    )
+    .join('');
+}
+
+function createGalleryDayCell(bucket, moodLevels, energyLevels) {
+  if (bucket.empty) {
     return `
-      <section class="mood__today card animate-slide-up">
-        <p class="mood__today-empty">Pas encore d’entrée aujourd’hui. Prends 20 secondes pour te situer 💜</p>
-      </section>
+      <button type="button" class="mood__day mood__day--empty${bucket.today ? ' mood__day--today' : ''}" data-mood-day-empty>
+        <span class="mood__day-dow" style="color:var(--text-muted);text-shadow:none">${escapeHtml(bucket.label)}</span>
+      </button>
     `;
   }
 
+  const sky = miniSky(bucket.m);
+  const moodLevel = moodLevels.find((item) => item.value === bucket.m) || moodLevels[2];
+  const energyLevel = energyLevels.find((item) => item.value === bucket.e) || energyLevels[2];
+
   return `
-    <section class="mood__today card animate-slide-up">
-      <div class="mood__today-content">
-        <p class="mood__today-summary">
-          Aujourd'hui : ${todayEntry.moodEmoji} ${escapeHtml(todayEntry.moodLabel)} · ${todayEntry.energyEmoji} ${escapeHtml(todayEntry.energyLabel)}
-        </p>
-        ${
-          String(todayEntry.note || '').trim()
-            ? `<p class="mood__today-note">Note : ${escapeHtml(todayEntry.note)}</p>`
-            : ''
-        }
-      </div>
-      <button type="button" class="btn btn-secondary" data-mood-edit-today>Modifier</button>
-    </section>
+    <button
+      type="button"
+      class="mood__day${bucket.today ? ' mood__day--today' : ''}"
+      data-mood-day
+      data-mood="${bucket.m}"
+      data-energy="${bucket.e}"
+      data-note="${escapeHtml(bucket.note || '')}"
+      data-date="${bucket.date || ''}"
+      data-count="${bucket.count || 1}"
+      style="--d-sky-top:${sky.sky[0]};--d-sky-bot:${sky.sky[1]};--d-water:${waterShade(bucket.m)};--d-amp:${2 + bucket.e * 2}px;--d-wave:${waveShade(bucket.e)}"
+    >
+      <span class="mood__day-dow">${escapeHtml(bucket.label)}</span>
+      <div class="mood__day-scene"></div>
+      <div class="mood__day-water"></div>
+      <div class="mood__day-wave"></div>
+      <div class="mood__day-tip">${moodLevel.emoji}${energyLevel.emoji}</div>
+    </button>
   `;
 }
 
-function createScaleButtons(items, selectedValue, kind) {
+function createGalleryHtml(buckets, period, moodLevels, energyLevels) {
+  const cols = period === 'week' ? 7 : Math.min(12, Math.max(1, buckets.length));
+  const title = period === 'week' ? 'La mer des jours' : 'La mer, en moyenne';
+
+  return {
+    title,
+    gridCols: cols,
+    cells: buckets.map((bucket) => createGalleryDayCell(bucket, moodLevels, energyLevels)).join('')
+  };
+}
+
+function createDetailHtml(bucket, moodLevels, energyLevels) {
+  const moodLevel = moodLevels.find((item) => item.value === bucket.m) || moodLevels[2];
+  const energyLevel = energyLevels.find((item) => item.value === bucket.e) || energyLevels[2];
+  const head = bucket.count > 1 ? `Moyenne sur ${bucket.count} jours` : describeSea(bucket.m, bucket.e);
+  const dateLine =
+    bucket.date && bucket.count === 1 ? `<div class="mood__detail-date">${escapeHtml(formatDateShortFr(bucket.date))}</div>` : '';
+
   return `
-    <div class="mood__scale-grid" role="radiogroup" aria-label="${kind === 'mood' ? 'Humeur' : 'Énergie'}">
-      ${items
-        .map((item) => {
-          const selected = selectedValue != null && selectedValue === item.value;
-          return `
-            <button
-              type="button"
-              class="mood__scale-btn ${selected ? 'is-selected' : ''}"
-              data-mood-select="${kind}"
-              data-value="${item.value}"
-              role="radio"
-              aria-checked="${selected}"
-            >
-              <span class="mood__scale-emoji">${item.emoji}</span>
-              <span class="mood__scale-label">${escapeHtml(item.label)}</span>
-            </button>
-          `;
-        })
-        .join('')}
+    ${dateLine || `<div class="mood__detail-date">${escapeHtml(head)}</div>`}
+    <div class="mood__detail-meta">
+      ${escapeHtml(describeSea(bucket.m, bucket.e))} — ${moodLevel.emoji} ${escapeHtml(moodLevel.label)} · ${energyLevel.emoji} ${escapeHtml(energyLevel.label)}
     </div>
+    ${bucket.note ? `<div class="mood__detail-note">« ${escapeHtml(bucket.note)} »</div>` : ''}
   `;
 }
 
-function createPeriodSelector(periodOptions, selectedPeriod) {
-  return `
-    <div class="mood__period-wrap">
-      <div class="mood__period-filters" role="toolbar" aria-label="Période du graphique">
-        ${periodOptions
-          .map(
-            (option) => `
-              <button
-                type="button"
-                class="mood__period-chip ${selectedPeriod === option.id ? 'is-active' : ''}"
-                data-mood-period="${option.id}"
-              >${escapeHtml(option.label)}</button>
-            `
-          )
-          .join('')}
-      </div>
-    </div>
-  `;
-}
-
-function createHistory(entries, { hasMore = false } = {}) {
-  if (!entries.length) {
-    return '<p class="mood-history__empty">Aucune entrée pour cette période.</p>';
-  }
-
-  return `
-    <ul class="mood-history__list" data-mood-history-list data-has-more="${hasMore ? 'true' : 'false'}">
-      ${entries
-        .map(
-          (entry) => `
-            <li class="mood-history__item card">
-              <div class="mood-history__meta">
-                <span class="mood-history__date">${formatDateShortFr(entry.date)}</span>
-                <span class="mood-history__emojis">${entry.moodEmoji} · ${entry.energyEmoji}</span>
-              </div>
-              <p class="mood-history__note">${escapeHtml(truncate(entry.note || 'Sans note', 60))}</p>
-            </li>
-          `
-        )
-        .join('')}
-    </ul>
-  `;
-}
-
-function createMoodView({
-  todayEntry,
-  moodLevels,
-  energyLevels,
-  selectedMood,
-  selectedEnergy,
-  note,
-  chartDays,
-  history,
-  historyTotal = 0,
-  periodOptions,
-  selectedPeriod,
-  chartIsWeekly = false
-}) {
-  const selectedMoodLabel =
-    selectedMood != null
-      ? moodLevels.find((item) => item.value === selectedMood)?.label || 'Choisir une humeur'
-      : 'Choisir une humeur';
-  const selectedEnergyLabel =
-    selectedEnergy != null
-      ? energyLevels.find((item) => item.value === selectedEnergy)?.label || 'Choisir une énergie'
-      : 'Choisir une énergie';
+function createMoodShell({ moodLevels, energyLevels, selectedMood, selectedEnergy, note, periodOptions, selectedPeriod }) {
+  const moodLabel =
+    selectedMood != null ? moodLevels.find((item) => item.value === selectedMood)?.label || '' : '—';
+  const energyLabel =
+    selectedEnergy != null ? energyLevels.find((item) => item.value === selectedEnergy)?.label || '' : '—';
   const canSubmit = selectedMood != null && selectedEnergy != null;
-  const periodLabel = periodOptions.find((option) => option.id === selectedPeriod)?.label || '7 jours';
-  const hasMoreHistory = historyTotal > history.length;
 
   return `
-    <section class="mood animate-fade-in">
-      <header class="mood__header">
-        <h1 class="mood__title">Humeur / Énergie</h1>
-        <p class="mood__subtitle">Check-in rapide pour te situer sans surcharge.</p>
+    <section class="mood animate-fade-in" aria-label="Module Humeur">
+      <header class="mood__head">
+        <h1 class="mood__head-title">Humeur</h1>
+        <p class="mood__head-sub">Compose ta mer du jour. Aucune n'est meilleure qu'une autre.</p>
       </header>
 
-      ${createTodayState(todayEntry)}
+      <div class="mood__stage" data-mood-stage>
+        <span class="mood__stage-cap" data-mood-cap></span>
+        <span class="mood__stage-sub" data-mood-sub></span>
+        <div class="mood__stage-sun" aria-hidden="true"></div>
+        <canvas data-mood-canvas></canvas>
+        <span class="mood__stage-ack" data-mood-ack>Ta mer est consignée.</span>
+      </div>
 
-      <section class="mood__form card animate-slide-up">
-        <h2 class="mood__section-title">Saisie quotidienne</h2>
-        <form data-mood-form>
-          <div class="mood__field">
-            <p class="mood__field-title">Humeur <span class="mood__current-value">${escapeHtml(selectedMoodLabel)}</span></p>
-            ${createScaleButtons(moodLevels, selectedMood, 'mood')}
+      <section class="mood__controls">
+        <div class="mood__slider">
+          <div class="mood__slider-head">
+            <span class="mood__slider-name">Humeur — la lumière</span>
+            <span class="mood__slider-val" data-mood-val-label>${escapeHtml(moodLabel)}</span>
           </div>
-
-          <div class="mood__field">
-            <p class="mood__field-title">Énergie <span class="mood__current-value">${escapeHtml(selectedEnergyLabel)}</span></p>
-            ${createScaleButtons(energyLevels, selectedEnergy, 'energy')}
+          <div class="mood__seg" data-mood-seg="mood" role="group" aria-label="Humeur">
+            ${createSegmentButtons(moodLevels, selectedMood, 'mood')}
           </div>
+        </div>
 
-          <div class="mood__field">
-            <label for="mood-note" class="mood__field-title">Note optionnelle</label>
-            <textarea
-              id="mood-note"
-              data-mood-note
-              rows="3"
-              maxlength="300"
-              placeholder="Comment tu te sens ? Qu'est-ce qui influence ta journée ?"
-            >${escapeHtml(note || '')}</textarea>
+        <div class="mood__slider">
+          <div class="mood__slider-head">
+            <span class="mood__slider-name">Énergie — la houle</span>
+            <span class="mood__slider-val" data-energy-val-label>${escapeHtml(energyLabel)}</span>
           </div>
+          <div class="mood__seg" data-mood-seg="energy" role="group" aria-label="Énergie">
+            ${createSegmentButtons(energyLevels, selectedEnergy, 'energy')}
+          </div>
+        </div>
 
-          <button type="submit" class="btn btn-primary mood__submit" ${canSubmit ? '' : 'disabled'}>Enregistrer</button>
-        </form>
+        <div class="mood__note-field">
+          <span class="mood__slider-name">Un mot sur ta journée (optionnel)</span>
+          <textarea data-mood-note placeholder="Ce qui a coloré ta mer aujourd'hui…" rows="3">${escapeHtml(note || '')}</textarea>
+        </div>
+
+        <button type="button" class="mood__save-btn" data-mood-save ${canSubmit ? '' : 'disabled'}>Consigner ma mer</button>
       </section>
 
-      <section class="mood__chart card animate-slide-up">
-        <div class="mood__chart-head">
-          <h2 class="mood__section-title">Évolution · ${escapeHtml(periodLabel)}</h2>
-          <p class="mood__hint">Survole ou clique un point pour les détails.</p>
+      <section class="mood__gallery" data-mood-gallery>
+        <div class="mood__gallery-head">
+          <h2 class="mood__gallery-title" data-mood-gallery-title>La mer des jours</h2>
+          <div class="mood__periods" data-mood-periods role="group" aria-label="Période">
+            ${createPeriodButtons(periodOptions, selectedPeriod)}
+          </div>
         </div>
-        ${createPeriodSelector(periodOptions, selectedPeriod)}
-        ${createChartSvg(chartDays, { isWeekly: chartIsWeekly, periodLabel })}
-        <div class="mood__chart-tooltip" data-mood-tooltip>
-          Sélectionne un point pour voir la date, les valeurs et la note.
-        </div>
-        <div class="mood__legend">
-          <span><i class="mood__dot mood__dot--mood"></i>Humeur</span>
-          <span><i class="mood__dot mood__dot--energy"></i>Énergie</span>
-        </div>
-      </section>
-
-      <section class="mood__history card animate-slide-up" data-mood-history>
-        <h2 class="mood__section-title" data-mood-history-title>Historique · ${escapeHtml(periodLabel)}</h2>
-        <div data-mood-history-body>
-          ${createHistory(history, { hasMore: hasMoreHistory })}
-        </div>
+        <div class="mood__days" data-mood-days></div>
+        <div class="mood__detail" data-mood-detail hidden></div>
       </section>
     </section>
   `;
@@ -367,13 +245,13 @@ function createDashboardMoodWidget({ todayEntry, chartDays = [], moodTrend = 'st
       content: `
         <div class="mood-widget">
           ${createDashboardMiniChart(chartDays)}
-          <p class="mood-widget__empty">Aucune entrée aujourd’hui. Fais ton check-in 💜</p>
+          <p class="mood-widget__empty">Aucune entrée aujourd'hui. Fais ton check-in 💜</p>
         </div>
       `
     };
   }
 
-  const shortNote = truncate(todayEntry.note || 'Sans note', 80);
+  const shortNote = todayEntry.note ? String(todayEntry.note).slice(0, 80) : 'Sans note';
   const trend = trendLabel(moodTrend);
   const dominantLine = dominantMoodEmoji
     ? `<p class="mood-widget__dominant">Emoji dominant : ${dominantMoodEmoji}</p>`
@@ -397,4 +275,11 @@ function createDashboardMoodWidget({ todayEntry, chartDays = [], moodTrend = 'st
   };
 }
 
-export { WEEKDAY_SHORT, createMoodView, createDashboardMoodWidget, createHistory, formatDateShortFr };
+export {
+  WEEKDAY_SHORT,
+  createMoodShell,
+  createGalleryHtml,
+  createDetailHtml,
+  createDashboardMoodWidget,
+  formatDateShortFr
+};
