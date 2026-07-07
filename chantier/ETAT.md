@@ -3,7 +3,7 @@
 > Ce fichier est la mémoire du chantier. L'agent le lit au début de chaque
 > mission et le met à jour à la fin. Il doit rester factuel et concis.
 
-**Dernière mise à jour :** 2026-07-07 — M12d
+**Dernière mise à jour :** 2026-07-07 — M12e
 
 ---
 
@@ -38,6 +38,7 @@
 | M12b | Habitudes : panneaux en modales dialog | ✅ faite (validation Cédric en attente) | 2026-07-07 |
 | M12c | Habitudes : en-tête panneau + drag réorganisation | ✅ faite (validation Cédric en attente) | 2026-07-07 |
 | M12d | Habitudes : modale fantôme, scroll perdu, FLIP muet | ✅ faite (validation Cédric en attente) | 2026-07-07 |
+| M12e | Habitudes : ligne drag invisible iOS | ✅ faite (validation Cédric en attente) | 2026-07-07 |
 
 Statuts : ⬜ à faire · 🔶 en cours · ✅ faite et validée par Cédric · 🛑 bloquée
 
@@ -50,18 +51,18 @@ sans justification écrite.*
 
 | Métrique | Baseline (M00) | Dernière valeur | Mission |
 |---|---|---|---|
-| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M12d |
-| Tests unitaires | 22/22 passés (2 fichiers) | 65/65 passés (12 fichiers) | M12d |
-| Lint | 0 erreur | 0 erreur | M12d |
-| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 295 KB (`index-DwEn95RH.js`) | M12d |
-| JS initial (gzip) | 243 KB | 83 KB | M12d |
-| CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 128 KB (`index-DJmEKrAu.css`, entrée HTML) | M12d |
-| Chunk calendar JS (gzip) | — | 9,4 KB (`index-DDlLwwuF.js`) | M12d |
-| Chunk calendar CSS (gzip) | — | 3,2 KB (`index-D1nMcXjX.css`) | M12d |
-| Chunk habits JS (gzip) | — | 4,1 KB (`index-mMBa0GDV.js`) | M12d |
+| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M12e |
+| Tests unitaires | 22/22 passés (2 fichiers) | 65/65 passés (12 fichiers) | M12e |
+| Lint | 0 erreur | 0 erreur | M12e |
+| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 295 KB (`index-CtDdN1cb.js`) | M12e |
+| JS initial (gzip) | 243 KB | 83 KB | M12e |
+| CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 128 KB (`index-M5XUNlaS.css`, entrée HTML) | M12e |
+| Chunk calendar JS (gzip) | — | 9,4 KB (`index-BEu6gP9j.js`) | M12e |
+| Chunk calendar CSS (gzip) | — | 3,2 KB (`index-D1nMcXjX.css`) | M12e |
+| Chunk habits JS (gzip) | — | 4,1 KB (`index-CtUJC-8K.js`) | M12e |
 | Nombre de chunks JS | 1 | 9 | M01 |
 | Polices woff2 (dist) | — | ~122 KB (7 fichiers) | M04 |
-| Precache PWA | — | 1089 KiB (23 entrées) | M12d |
+| Precache PWA | — | 1089 KiB (23 entrées) | M12e |
 
 Variation bundle M05 : +4,3 KB brut sur le chunk d'entrée JS (275 vs 270 M04) — hors tolérance ±2 KB
 mais +1,5 KB gzip seulement ; justifié par markup SVG inline (houle, ancre, coche) et fonctions tide
@@ -535,6 +536,29 @@ et zéro `#c9a227` dans `tasks/style.css`.
 - `git diff --stat` périmètre : `core/list-drag-reorder.js`, `habits/index.js`, annexe composant
 - Commits : `fix:` drag FLIP robuste ; `fix:` modale fantôme + scroll drop ; `chore:` clôture M12d
 
+### Rituel AVANT M12e (2026-07-07)
+
+- Smoke : 20/20 modules, 4/4 shell
+- Unit : 65/65 (12 fichiers)
+- Lint : 0 erreur
+- Build entrée : 295 KB brut (`index-DwEn95RH.js`), 83 KB gzip
+- CSS entrée : 128 KB brut (`index-DJmEKrAu.css`), 21 KB gzip
+- Chunk habits JS : 11,6 KB brut (`index-mMBa0GDV.js`), 4,1 KB gzip
+- Precache : 1089 KiB
+
+### Rituel APRÈS M12e (2026-07-07)
+
+- Smoke : 20/20 modules, 4/4 shell
+- Unit : 65/65 (12 fichiers)
+- Lint : 0 erreur
+- Build entrée : 295 KB brut (`index-CtDdN1cb.js`), 83 KB gzip (inchangé)
+- CSS entrée : 128 KB brut (`index-M5XUNlaS.css`), 21 KB gzip (+0,1 KB, promotion calque GPU drag)
+- Chunk habits JS : 11,6 KB brut (`index-CtUJC-8K.js`), 4,1 KB gzip (inchangé)
+- Precache : 1089 KiB (inchangé)
+- Grep contrôle : 0 `!important` et 0 couleur en dur dans `habits/style.css`
+- `git diff --stat` périmètre : `habits/style.css` uniquement (+4 propriétés CSS `--dragging`)
+- Commits : `fix:` promotion calque GPU drag iOS ; `chore:` clôture M12e
+
 ### Simulation quota plein (procédure dev, M02)
 
 1. `npm run preview`, ouvrir l'app dans le navigateur.
@@ -785,6 +809,16 @@ Vérification automatisée équivalente : `npm run test:unit` — tests `save() 
   drag). Annexe `composant-liste-drag-reorder.html` alignée.
 - M12d : fin corrective série Habitudes (M12 → M12d). Validation manuelle groupée
   attendue (fermeture modale ×3, drag long scrollé, repli clavier).
+- M12e : bug iOS ligne drag invisible — cause WebKit (repaint CPU à haute fréquence
+  de `transform` sans promotion de calque). Correctif : `will-change: transform`,
+  `translateZ(0)`, `backface-visibility: hidden` sur `.list-drag-reorder__row--dragging`
+  uniquement (classe retirée par `onDragEnd`, pas de gaspillage GPU permanent).
+- M12e : règle transverse — tout élément repositionné par `transform` à haute fréquence
+  via JS (drag, suivi pointeur) doit être promu sur son propre calque GPU pendant
+  l'interaction. À appliquer d'office dans tout futur pattern de drag (dont Mémo).
+  Annexe `composant-liste-drag-reorder.html` déjà alignée (M12d).
+- M12e : série Habitudes close (M12 → M12e). Validation manuelle groupée attendue
+  (drag iPhone lent/rapide, 4 thèmes, absence de disparition sous le doigt).
 
 ---
 

@@ -279,3 +279,13 @@ Historique des modifications du chantier `chantier/redesign`.
 - Annexe `composant-liste-drag-reorder.html` alignée sur la version robuste.
 - Bundle entrée : +0,3 KB brut / +0,1 KB gzip. CSS et chunk habits inchangés.
 - Validation manuelle (fermeture modale ×3, drag liste longue scrollée, clavier) attendue.
+
+### M12e — Habitudes : ligne drag invisible iOS
+
+- Correctif WebKit iOS : promotion calque GPU sur `.list-drag-reorder__row--dragging`
+  (`will-change: transform`, `translateZ(0)`, `backface-visibility: hidden`) — la ligne
+  reste visible sous le doigt pendant le drag à haute fréquence de `transform`.
+- `will-change` conditionnel à la classe `--dragging` (retirée par `onDragEnd`).
+- Annexe `composant-liste-drag-reorder.html` déjà alignée (M12d). Périmètre : CSS uniquement.
+- CSS entrée : +0,1 KB gzip. JS et chunk habits inchangés. Total 65/65.
+- Série Habitudes close (M12 → M12e). Validation manuelle iPhone (drag lent/rapide, 4 thèmes) attendue.
