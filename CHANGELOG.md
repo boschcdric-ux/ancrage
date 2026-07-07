@@ -267,3 +267,15 @@ Historique des modifications du chantier `chantier/redesign`.
 - Tests : +2 (`list-drag-reorder.test.js`). Total 65/65.
 - Bundle entrée : +3 KB brut / +0,6 KB gzip. CSS entrée : +2 KB. Chunk habits inchangé.
 - Fin série Habitudes (M12 → M12c). Validation manuelle groupée attendue.
+
+### M12d — Habitudes : modale fantôme, scroll perdu au drop, FLIP muet
+
+- Bug modale fantôme : `close` d'un `<dialog>` ne bubble pas — écoute en phase capture
+  sur `rootContainer` pour synchroniser `panelOpen` / `petSettingsOpen`.
+- Bug scroll perdu : retrait du `render()` dans `onReorderEnd` (DOM déjà réordonné par
+  le drag). Repli clavier ↑/↓ : `insertBefore` sans re-render modale.
+- Bug FLIP muet : `list-drag-reorder.js` réécrit — `offsetTop` comme référence stable,
+  `insertBefore` à la vraie place (pas append en fin), double rAF pour l'animation FLIP.
+- Annexe `composant-liste-drag-reorder.html` alignée sur la version robuste.
+- Bundle entrée : +0,3 KB brut / +0,1 KB gzip. CSS et chunk habits inchangés.
+- Validation manuelle (fermeture modale ×3, drag liste longue scrollée, clavier) attendue.

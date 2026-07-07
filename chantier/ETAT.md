@@ -3,7 +3,7 @@
 > Ce fichier est la mémoire du chantier. L'agent le lit au début de chaque
 > mission et le met à jour à la fin. Il doit rester factuel et concis.
 
-**Dernière mise à jour :** 2026-07-07 — M12c
+**Dernière mise à jour :** 2026-07-07 — M12d
 
 ---
 
@@ -37,6 +37,7 @@
 | M12 | Refonte Habitudes : les mouillages | ✅ faite (validation Cédric en attente) | 2026-07-07 |
 | M12b | Habitudes : panneaux en modales dialog | ✅ faite (validation Cédric en attente) | 2026-07-07 |
 | M12c | Habitudes : en-tête panneau + drag réorganisation | ✅ faite (validation Cédric en attente) | 2026-07-07 |
+| M12d | Habitudes : modale fantôme, scroll perdu, FLIP muet | ✅ faite (validation Cédric en attente) | 2026-07-07 |
 
 Statuts : ⬜ à faire · 🔶 en cours · ✅ faite et validée par Cédric · 🛑 bloquée
 
@@ -49,18 +50,18 @@ sans justification écrite.*
 
 | Métrique | Baseline (M00) | Dernière valeur | Mission |
 |---|---|---|---|
-| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M12c |
-| Tests unitaires | 22/22 passés (2 fichiers) | 65/65 passés (12 fichiers) | M12c |
-| Lint | 0 erreur | 0 erreur | M12c |
-| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 295 KB (`index-C7Rt5db-.js`) | M12c |
-| JS initial (gzip) | 243 KB | 83 KB | M12c |
-| CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 128 KB (`index-DJmEKrAu.css`, entrée HTML) | M12c |
-| Chunk calendar JS (gzip) | — | 9,4 KB (`index-8cW3NOWj.js`) | M12c |
-| Chunk calendar CSS (gzip) | — | 3,2 KB (`index-D1nMcXjX.css`) | M12c |
-| Chunk habits JS (gzip) | — | 4,1 KB (`index-BgS5sSdR.js`) | M12c |
+| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M12d |
+| Tests unitaires | 22/22 passés (2 fichiers) | 65/65 passés (12 fichiers) | M12d |
+| Lint | 0 erreur | 0 erreur | M12d |
+| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 295 KB (`index-DwEn95RH.js`) | M12d |
+| JS initial (gzip) | 243 KB | 83 KB | M12d |
+| CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 128 KB (`index-DJmEKrAu.css`, entrée HTML) | M12d |
+| Chunk calendar JS (gzip) | — | 9,4 KB (`index-DDlLwwuF.js`) | M12d |
+| Chunk calendar CSS (gzip) | — | 3,2 KB (`index-D1nMcXjX.css`) | M12d |
+| Chunk habits JS (gzip) | — | 4,1 KB (`index-mMBa0GDV.js`) | M12d |
 | Nombre de chunks JS | 1 | 9 | M01 |
 | Polices woff2 (dist) | — | ~122 KB (7 fichiers) | M04 |
-| Precache PWA | — | 1088 KiB (23 entrées) | M12c |
+| Precache PWA | — | 1089 KiB (23 entrées) | M12d |
 
 Variation bundle M05 : +4,3 KB brut sur le chunk d'entrée JS (275 vs 270 M04) — hors tolérance ±2 KB
 mais +1,5 KB gzip seulement ; justifié par markup SVG inline (houle, ancre, coche) et fonctions tide
@@ -511,6 +512,29 @@ et zéro `#c9a227` dans `tasks/style.css`.
 - `git diff --stat` périmètre : `core/list-drag-reorder.js`, `habits/view-panels.js`, `habits/index.js`, `habits/style.css`
 - Commits : `feat:` module drag partagé ; `feat:` en-tête + réorganisation ; `chore:` clôture M12c
 
+### Rituel AVANT M12d (2026-07-07)
+
+- Smoke : 20/20 modules, 4/4 shell
+- Unit : 65/65 (12 fichiers)
+- Lint : 0 erreur
+- Build entrée : 295 KB brut (`index-C7Rt5db-.js`), 83 KB gzip
+- CSS entrée : 128 KB brut (`index-DJmEKrAu.css`), 21 KB gzip
+- Chunk habits JS : 11,6 KB brut (`index-BgS5sSdR.js`), 4,1 KB gzip
+- Precache : 1088 KiB
+
+### Rituel APRÈS M12d (2026-07-07)
+
+- Smoke : 20/20 modules, 4/4 shell
+- Unit : 65/65 (12 fichiers)
+- Lint : 0 erreur
+- Build entrée : 295 KB brut (`index-DwEn95RH.js`), 83 KB gzip (+0,3 KB brut, +0,1 KB gzip — drag robuste offsetTop/double rAF)
+- CSS entrée : 128 KB brut (`index-DJmEKrAu.css`), 21 KB gzip (inchangé)
+- Chunk habits JS : 11,6 KB brut (`index-mMBa0GDV.js`), 4,1 KB gzip (inchangé)
+- Precache : 1089 KiB (+1 KiB)
+- Grep contrôle : 0 `!important` et 0 couleur en dur dans `habits/style.css`
+- `git diff --stat` périmètre : `core/list-drag-reorder.js`, `habits/index.js`, annexe composant
+- Commits : `fix:` drag FLIP robuste ; `fix:` modale fantôme + scroll drop ; `chore:` clôture M12d
+
 ### Simulation quota plein (procédure dev, M02)
 
 1. `npm run preview`, ouvrir l'app dans le navigateur.
@@ -749,6 +773,18 @@ Vérification automatisée équivalente : `npm run test:unit` — tests `save() 
   (visibles au focus ou en mode réorganisation), jamais en interaction principale.
 - M12c : `touch-action: pan-y` sur les lignes, `touch-action: none` sur la poignée.
   Fin de la série Habitudes (M12 → M12c). Validation manuelle groupée attendue.
+- M12d : événement `close` d'un `<dialog>` ne bubble pas — écoute déléguée en phase
+  capture (`addEventListener('close', handler, true)`) sur `rootContainer` pour les
+  deux dialogs Habitudes. 5e règle du patron modale canonique.
+- M12d : `onReorderEnd` ne déclenche plus `render()` — le DOM est déjà à jour après
+  le drag ; repli clavier ↑/↓ via `insertBefore` + `moveManageRowInDom()` (pas de
+  re-render modale, scroll conservé).
+- M12d : drag robuste — référence position = `offsetTop` (insensible aux transforms),
+  rang saisi déplacé par `insertBefore` à sa vraie place (pas `appendChild` en fin),
+  FLIP des autres lignes en double rAF (leçon M09c, désormais transverse au patron
+  drag). Annexe `composant-liste-drag-reorder.html` alignée.
+- M12d : fin corrective série Habitudes (M12 → M12d). Validation manuelle groupée
+  attendue (fermeture modale ×3, drag long scrollé, repli clavier).
 
 ---
 
