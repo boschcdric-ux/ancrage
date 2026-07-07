@@ -14,25 +14,25 @@
 | M00 | Baseline et branche de chantier | ✅ faite et validée par Cédric | 2026-07-06 |
 | M01 | Restaurer le code-splitting (registry) | ✅ faite et validée par Cédric | 2026-07-06 |
 | M02 | Fiabiliser la sauvegarde | ✅ faite et validée par Cédric | 2026-07-06 |
-| M03 | Ménage : code mort et duplications | ✅ faite (en attente validation Cédric) | 2026-07-06 |
-| M04 | Socle design : thèmes, mouvement, typographie | ✅ faite (en attente validation Cédric) | 2026-07-06 |
-| M05 | Signature Tâches : la ligne de flottaison | ✅ faite (en attente validation Cédric) | 2026-07-06 |
-| M05b | Correctif interactions sous-tâches/tag | ✅ faite (en attente validation Cédric) | 2026-07-06 |
-| M06 | Tâches : tag, bordure, tag à la création | ✅ faite (en attente validation Cédric) | 2026-07-06 |
-| M07 | Signature Capture : la goutte | ✅ faite (en attente validation Cédric) | 2026-07-06 |
-| M08 | Capture : popover tag + mise en page | ✅ faite (en attente validation Cédric) | 2026-07-06 |
-| M08b | Capture : aligner popover tag (référence) | ✅ faite (en attente validation Cédric) | 2026-07-06 |
-| M08c | Capture : popover tag fantôme (display) | ✅ faite (en attente validation Cédric) | 2026-07-06 |
-| M08d | Capture : flash popover à l'ouverture | ✅ faite (en attente validation Cédric) | 2026-07-06 |
-| M08e | Capture : un seul chemin d'ouverture popover | ✅ faite (en attente validation Cédric) | 2026-07-06 |
-| M09 | Signature Respiration : respirer avec la mer | ✅ faite (en attente validation Cédric) | 2026-07-06 |
-| M09b | Corrections groupées Capture & Respiration | ✅ faite (en attente validation Cédric) | 2026-07-06 |
-| M09c | Respiration : sync eau démarrage + pause | ✅ faite (en attente validation Cédric) | 2026-07-06 |
-| M10 | Refonte Agenda : la marée du jour | ✅ faite (en attente validation Cédric) | 2026-07-07 |
-| M10b | Agenda : modale centrée, boutons + espacement haut | ✅ faite (en attente validation Cédric) | 2026-07-07 |
-| M10c | Agenda : modale en mode modal (showModal) | ✅ faite (en attente validation Cédric) | 2026-07-07 |
-| M10d | Agenda : fonds thématisés + fin récurrence | ✅ faite (en attente validation Cédric) | 2026-07-07 |
-| M10e | Agenda : input date iOS déborde | ✅ faite (en attente validation Cédric) | 2026-07-07 |
+| M03 | Ménage : code mort et duplications | ✅ faite et validée par Cédric | 2026-07-06 |
+| M04 | Socle design : thèmes, mouvement, typographie | ✅ faite et validée par Cédric | 2026-07-06 |
+| M05 | Signature Tâches : la ligne de flottaison | ✅ faite et validée par Cédric | 2026-07-06 |
+| M05b | Correctif interactions sous-tâches/tag | ✅ faite et validée par Cédric | 2026-07-06 |
+| M06 | Tâches : tag, bordure, tag à la création | ✅ faite et validée par Cédric | 2026-07-06 |
+| M07 | Signature Capture : la goutte | ✅ faite et validée par Cédric | 2026-07-06 |
+| M08 | Capture : popover tag + mise en page | ✅ faite et validée par Cédric | 2026-07-06 |
+| M08b | Capture : aligner popover tag (référence) | ✅ faite et validée par Cédric | 2026-07-06 |
+| M08c | Capture : popover tag fantôme (display) | ✅ faite et validée par Cédric | 2026-07-06 |
+| M08d | Capture : flash popover à l'ouverture | ✅ faite et validée par Cédric | 2026-07-06 |
+| M08e | Capture : un seul chemin d'ouverture popover | ✅ faite et validée par Cédric | 2026-07-06 |
+| M09 | Signature Respiration : respirer avec la mer | ✅ faite et validée par Cédric | 2026-07-06 |
+| M09b | Corrections groupées Capture & Respiration | ✅ faite et validée par Cédric | 2026-07-06 |
+| M09c | Respiration : sync eau démarrage + pause | ✅ faite et validée par Cédric | 2026-07-06 |
+| M10 | Refonte Agenda : la marée du jour | ✅ faite et validée par Cédric | 2026-07-07 |
+| M10b | Agenda : modale centrée, boutons + espacement haut | ✅ faite et validée par Cédric | 2026-07-07 |
+| M10c | Agenda : modale en mode modal (showModal) | ✅ faite et validée par Cédric | 2026-07-07 |
+| M10d | Agenda : fonds thématisés + fin récurrence | ✅ faite et validée par Cédric | 2026-07-07 |
+| M10e | Agenda : input date iOS déborde | ✅ faite et validée par Cédric | 2026-07-07 |
 
 Statuts : ⬜ à faire · 🔶 en cours · ✅ faite et validée par Cédric · 🛑 bloquée
 
