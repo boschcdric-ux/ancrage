@@ -89,8 +89,15 @@ function createHabitsEventHandlers(ctx) {
       return;
     }
 
-    if (target.closest('[data-habits-bulk-edit-toggle]')) {
-      setState({ bulkEditMode: !state.bulkEditMode, editHabitId: null });
+    if (target.closest('[data-habits-reorder-open]')) {
+      closeHabitsPanelDialog();
+      setState({ reorderViewOpen: true, panelOpen: false, editHabitId: null });
+      render();
+      return;
+    }
+
+    if (target.closest('[data-reorder-done]')) {
+      setState({ reorderViewOpen: false, panelOpen: true });
       render();
       return;
     }
@@ -99,7 +106,6 @@ function createHabitsEventHandlers(ctx) {
     if (editButton instanceof HTMLButtonElement) {
       setState({
         editHabitId: editButton.dataset.habitEdit || null,
-        bulkEditMode: false,
         panelOpen: true,
         petSettingsOpen: false
       });
@@ -143,7 +149,6 @@ function createHabitsEventHandlers(ctx) {
       if (!result.ok) return;
       setState({
         editHabitId: null,
-        bulkEditMode: false,
         panelOpen: result.created ? false : getState().panelOpen
       });
       render();
@@ -153,7 +158,6 @@ function createHabitsEventHandlers(ctx) {
     if (target.matches('[data-habits-bulk-form]')) {
       event.preventDefault();
       if (!saveAllHabitsFromBulkForm(target)) return;
-      setState({ bulkEditMode: false });
       render();
       return;
     }

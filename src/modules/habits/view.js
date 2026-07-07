@@ -1,6 +1,6 @@
 import { escapeHtml } from '../../core/format.js';
 import { FREQUENCY_DISPLAY_LABELS } from './logic.js';
-import { createManagePanel, createOnboardingView, createPetSettingsPanel } from './view-panels.js';
+import { createManagePanel, createOnboardingView, createPetSettingsPanel, createReorderView } from './view-panels.js';
 
 function createViewSwitcher(viewMode) {
   return `
@@ -159,10 +159,14 @@ function createHabitsView({
   panelOpen = false,
   manageHabits = [],
   editHabit = null,
-  bulkEditMode = false
+  reorderViewOpen = false
 }) {
   if (showOnboarding) {
     return createOnboardingView(onboardingPetKind);
+  }
+
+  if (reorderViewOpen) {
+    return createReorderView(manageHabits);
   }
 
   return `
@@ -191,7 +195,7 @@ function createHabitsView({
         <button type="button" class="habits__pet-link" data-open-pet-settings>⚙️ Mon animal</button>
       </div>
 
-      ${panelOpen ? createManagePanel(manageHabits, editHabit, bulkEditMode) : ''}
+      ${panelOpen ? createManagePanel(manageHabits, editHabit) : ''}
       ${petSettingsOpen ? createPetSettingsPanel(petProfile) : ''}
     </section>
   `;
