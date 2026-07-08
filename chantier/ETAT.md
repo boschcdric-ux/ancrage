@@ -3,7 +3,7 @@
 > Ce fichier est la mémoire du chantier. L'agent le lit au début de chaque
 > mission et le met à jour à la fin. Il doit rester factuel et concis.
 
-**Dernière mise à jour :** 2026-07-08 — M13 exécutée (🔶), en attente de validation Cédric
+**Dernière mise à jour :** 2026-07-08 — M14 exécutée (🔶), en attente de validation Cédric
 
 ---
 
@@ -43,7 +43,7 @@
 | M12g | Habitudes : audit profond drag invisible | ✅ faite et validée par Cédric | 2026-07-07 |
 | M12h | Habitudes : réorganisation hors modale (vue dédiée) | ✅ faite et validée par Cédric | 2026-07-07 |
 | M13 | Refonte Météo : le ciel se lit comme l'eau | ✅ faite et validée par Cédric (Mac + iPhone) | 2026-07-08 |
-| M14 | Refonte Journal : déposer le courant du jour | ⬜ à faire — prérequis : aucun | 2026-07-08 |
+| M14 | Refonte Journal : déposer le courant du jour | 🔶 exécutée — en attente de validation Cédric | 2026-07-08 |
 
 Statuts : ⬜ à faire · 🔶 en cours · ✅ faite et validée par Cédric · 🛑 bloquée
 
@@ -56,18 +56,18 @@ sans justification écrite.*
 
 | Métrique | Baseline (M00) | Dernière valeur | Mission |
 |---|---|---|---|
-| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M13 |
-| Tests unitaires | 22/22 passés (2 fichiers) | 69/69 passés (13 fichiers) | M13 |
-| Lint | 0 erreur | 0 erreur | M13 |
-| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 301 KB (`index-C_bYlja-.js`) | M13 |
-| JS initial (gzip) | 243 KB | 85 KB | M13 |
-| CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 131 KB (`index-TT-KsaPp.css`, entrée HTML) | M13 |
+| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M14 |
+| Tests unitaires | 22/22 passés (2 fichiers) | 78/78 passés (14 fichiers) | M14 |
+| Lint | 0 erreur | 0 erreur | M14 |
+| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 301 KB (`index-BvzX_l_P.js`) | M14 |
+| JS initial (gzip) | 243 KB | 85 KB | M14 |
+| CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 132 KB (`index-rsB_th3f.css`, entrée HTML) | M14 |
 | Chunk calendar JS (gzip) | — | 9,4 KB (`index-CjilaMva.js`) | M12h |
 | Chunk calendar CSS (gzip) | — | 3,2 KB (`index-D1nMcXjX.css`) | M12h |
 | Chunk habits JS (gzip) | — | 4,1 KB (`index-BLnBeiFL.js`) | M12h |
 | Nombre de chunks JS | 1 | 9 | M01 |
 | Polices woff2 (dist) | — | ~122 KB (7 fichiers) | M04 |
-| Precache PWA | — | 1133 KiB (23 entrées) | M13 |
+| Precache PWA | — | 1139 KiB (23 entrées) | M14 |
 
 Variation bundle M05 : +4,3 KB brut sur le chunk d'entrée JS (275 vs 270 M04) — hors tolérance ±2 KB
 mais +1,5 KB gzip seulement ; justifié par markup SVG inline (houle, ancre, coche) et fonctions tide
@@ -669,6 +669,45 @@ et zéro `#c9a227` dans `tasks/style.css`.
   - H4 déjà acquise (inchangée) : vent/humidité disponibles dans `current`.
   - H5 confirmée : `cloudcover` disponible sur `current` et `hourly`.
 
+### Rituel AVANT M14 (2026-07-08)
+
+- Smoke : 20/20 modules, 4/4 shell
+- Unit : 69/69 (13 fichiers)
+- Lint : 0 erreur
+- Build entrée : 301 KB brut (`index-DcoHss_J.js`), 85 KB gzip
+- CSS entrée : 131 KB brut (`index-qenKrYa7.css`), 22 KB gzip
+- Chunk journal JS (avant) : 418 KB brut (`index-CsLFVgCI.js`), 131 KB gzip
+- Precache : 1133 KiB
+- Note outillage : `npm run build` échouait dans la sandbox (workers `terser`
+  interrompus, faux « Unable to write the service worker file ») ; build lancé
+  hors sandbox → vert. Ancien STOP levé (voir Blocages).
+
+### Rituel APRÈS M14 (2026-07-08)
+
+- Smoke : 20/20 modules, 4/4 shell
+- Unit : 78/78 (14 fichiers, +9 tests `journal/store.test.js`)
+- Lint : 0 erreur
+- Build entrée : 301 KB brut (`index-BvzX_l_P.js`), 85 KB gzip (+0,25 KB brut —
+  socle : 3 tokens couleur + `--paper` + `--font-read`)
+- CSS entrée : 132 KB brut (`index-rsB_th3f.css`), 22 KB gzip (+0,6 KB —
+  tokens socle)
+- Chunk journal JS : 421 KB brut (`index-Bu4AJcV-.js`), 132 KB gzip (+3 KB brut —
+  refonte + découpage, Tiptap inchangé)
+- Chunk journal CSS : 18,0 KB brut (`index-3kPe3nSX.css`), 3,2 KB gzip
+- Precache : 1139 KiB (+6 KiB)
+- Découpage (`wc -l src/modules/journal/*.js`) : `editor.js` 136, `events.js` 131,
+  `index.js` 230, `session.js` 123, `state.js` 31, `store.js` 154, `view.js` 300
+  (règle < ~300 respectée) + `store.test.js`
+- Test navigateur piloté (preview dédié port 4319, sans `--host`) :
+  - iPhone 375/390px et desktop 1280px : `document.scrollWidth === innerWidth`
+    (aucun débordement horizontal) ; barre de tags `data-h-scroll` scrollable
+    et contenue ; colonne liste `min(640px)` centrée.
+  - Tiptap non-régression : Titre 1 → `<h1>`, Gras → `<strong>`, couleur →
+    `<span style="color:var(--success)">`, liste de tâches (case rendue),
+    état actif des boutons, bouton Supprimer conditionnel. Sauvegarde au
+    « ← Retour » + rechargement : HTML formaté (taskList + color + strong)
+    intact. Tag Nature persisté et affiché en badge dans la liste.
+
 ### Simulation quota plein (procédure dev, M02)
 
 1. `npm run preview`, ouvrir l'app dans le navigateur.
@@ -979,6 +1018,32 @@ Vérification automatisée équivalente : `npm run test:unit` — tests `save() 
 - M13 : retour d'expérience règles v2 — mission justifiée (4 fichiers météo + adaptation
   API + état UI supplémentaire + vérification hypothèses). Ce travail n'était pas un ticket
   léger.
+- M14 : Journal refondu — 8e emploi de l'eau (**déposer le courant du jour**).
+  Deux ambiances contrastées alignées maquette : **liste** en « strates » (fil
+  temporel, point d'accent pour entrées ≤ 3 j, badges de tag colorés, tri serif)
+  avec navigation par tag prioritaire (`data-h-scroll`) ; **écriture** sobre fond
+  « papier » (`--paper`), typographie de lecture serif (`--font-read`).
+- M14 : Tiptap préservé intégralement. Cycle de vie encapsulé dans `editor.js`
+  (`createJournalEditor` : `mount`/`destroy`/`exec`/`refreshToolbar`) ; extensions
+  et 18 commandes `data-journal-command` inchangées. `mount()` détruit toujours
+  l'instance avant re-render.
+- M14 : découpage du module (règle < ~300 L) en `store.js` (données), `editor.js`
+  (Tiptap), `events.js` (délégation DOM), `state.js` (état mutable partagé),
+  `session.js` (session d'édition + autosave), `view.js` (gabarits), `index.js`
+  (orchestration). Test ajouté `store.test.js` (tri/filtres/normalisation).
+- M14 : tags partagés portés à 9 (retrait **Jardin**, ajout **Nature 🌿, Projets 🚀,
+  Idées 💡, Écriture ✍️**) — `PREDEFINED_TAGS` mis à jour à l'identique dans
+  `journal/`, `tasks/`, `capture/`. Couleurs : `nature`→`--success`, et 3 tokens
+  de tonalité ajoutés au socle (`--tone-violet`, `--tone-gold`, `--tone-clay`,
+  par thème) pour projets/idées/écriture (`shared-tag-badge--*`). `capture`
+  n'a pas de couleur par tag (badge unique), seule la liste change.
+- M14 : `--font-read` (serif système : Georgia/Times, **sans nouvelle dépendance
+  de police**) et `--paper` ajoutés au socle. La maquette proposait Newsreader
+  (Google Fonts) ; écarté pour ne pas ajouter de dépendance hors périmètre.
+- M14 : recherche plein texte conservée dans la liste (la maquette ne la montrait
+  pas) — choix de non-régression, intégrée discrètement sous la barre de tags.
+  Tri par date gardé en `<select>` discret (au lieu du bouton bascule de la
+  maquette) pour ne pas modifier le câblage d'événements.
 
 ---
 
@@ -1017,4 +1082,7 @@ Vérification automatisée équivalente : `npm run test:unit` — tests `save() 
 
 *Rempli uniquement en cas de STOP. Vidé une fois le blocage levé par Cédric.*
 
-- Aucun blocage actif.
+- Aucun blocage actif. *(2026-07-08 — le STOP « build service worker » avant
+  M14 était un artefact de sandbox : les workers `terser` étaient interrompus.
+  Résolu en lançant `npm run build` hors sandbox. Note outillage : exécuter le
+  build hors sandbox sur ce chantier.)*

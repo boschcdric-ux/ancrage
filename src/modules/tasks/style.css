@@ -949,10 +949,13 @@
 
 .shared-tag-badge--maison { --shared-tag-tone: var(--info); }
 .shared-tag-badge--boulot { --shared-tag-tone: var(--accent); }
-.shared-tag-badge--jardin { --shared-tag-tone: var(--success); }
 .shared-tag-badge--sante { --shared-tag-tone: var(--danger); }
 .shared-tag-badge--admin { --shared-tag-tone: var(--warning); }
 .shared-tag-badge--personnel { --shared-tag-tone: var(--text-secondary); }
+.shared-tag-badge--projets { --shared-tag-tone: var(--tone-violet); }
+.shared-tag-badge--idees { --shared-tag-tone: var(--tone-gold); }
+.shared-tag-badge--ecriture { --shared-tag-tone: var(--tone-clay); }
+.shared-tag-badge--nature { --shared-tag-tone: var(--success); }
 
 .tasks__tag-wrap {
   position: relative;

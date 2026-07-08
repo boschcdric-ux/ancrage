@@ -20,7 +20,11 @@
   --warning: #f0b35e;
   --danger: #ef7d93;
   --info: #5ab4f0;
+  --tone-violet: #ab9cf2;
+  --tone-gold: #e6be5c;
+  --tone-clay: #d79a78;
 
+  --paper: #0d1620;
   --border: rgba(233, 241, 244, 0.08);
   --shadow: 0 4px 24px rgba(2, 8, 14, 0.5);
   --shadow-soft: 0 2px 12px rgba(2, 8, 14, 0.3);
@@ -49,7 +53,11 @@
   --warning: #a86f24;
   --danger: #b3543f;
   --info: #2f6f8f;
+  --tone-violet: #5f4da3;
+  --tone-gold: #8a6f1f;
+  --tone-clay: #a85c3f;
 
+  --paper: #fffdf8;
   --border: rgba(38, 48, 31, 0.10);
   --shadow: 0 4px 24px rgba(90, 80, 60, 0.15);
   --shadow-soft: 0 2px 12px rgba(90, 80, 60, 0.08);
@@ -78,7 +86,11 @@
   --warning: #f0c05e;
   --danger: #ee7f8e;
   --info: #8fb4e8;
+  --tone-violet: #c3a8f0;
+  --tone-gold: #e6c05c;
+  --tone-clay: #e0a07a;
 
+  --paper: #140d13;
   --border: rgba(244, 233, 228, 0.08);
   --shadow: 0 4px 24px rgba(10, 4, 10, 0.5);
   --shadow-soft: 0 2px 12px rgba(10, 4, 10, 0.3);
@@ -107,7 +119,11 @@
   --warning: #a86f24;
   --danger: #b3543f;
   --info: #2f6f8f;
+  --tone-violet: #5f4da3;
+  --tone-gold: #8a6f1f;
+  --tone-clay: #a85c3f;
 
+  --paper: #fbfefd;
   --border: rgba(29, 43, 45, 0.10);
   --shadow: 0 4px 24px rgba(60, 85, 82, 0.15);
   --shadow-soft: 0 2px 12px rgba(60, 85, 82, 0.08);
@@ -120,6 +136,7 @@
 :root {
   --font-family: 'Atkinson Hyperlegible', system-ui, sans-serif;
   --font-display: 'Bricolage Grotesque Variable', var(--font-family);
+  --font-read: Georgia, 'Times New Roman', 'Iowan Old Style', serif;
   --text-xs:   0.75rem;
   --text-sm:   0.875rem;
   --text-base: 1rem;

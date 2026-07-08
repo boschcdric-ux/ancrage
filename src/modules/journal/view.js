@@ -3,11 +3,16 @@ import { escapeHtml, truncate } from '../../core/format.js';
 const PREDEFINED_TAGS = [
   { id: 'maison', emoji: '🏠', label: 'Maison' },
   { id: 'boulot', emoji: '💼', label: 'Boulot' },
-  { id: 'jardin', emoji: '🌿', label: 'Jardin' },
   { id: 'sante', emoji: '🏥', label: 'Santé' },
   { id: 'admin', emoji: '📋', label: 'Admin' },
-  { id: 'personnel', emoji: '👤', label: 'Personnel' }
+  { id: 'personnel', emoji: '👤', label: 'Personnel' },
+  { id: 'projets', emoji: '🚀', label: 'Projets' },
+  { id: 'idees', emoji: '💡', label: 'Idées' },
+  { id: 'ecriture', emoji: '✍️', label: 'Écriture' },
+  { id: 'nature', emoji: '🌿', label: 'Nature' }
 ];
+
+const FRESH_WINDOW_MS = 3 * 24 * 60 * 60 * 1000;
 
 function renderTagBadge(tagId) {
   const tag = PREDEFINED_TAGS.find((t) => t.id === tagId);
@@ -22,48 +27,54 @@ function getListTitle(entry) {
 
 function getListBodyPreview(entry) {
   const raw = String(entry.contentText || '').trim();
-  return truncate(raw, 220);
+  return truncate(raw, 200);
 }
 
-function createJournalTagFilters(activeTag = 'all') {
+function isFreshEntry(entry) {
+  const ref = Number(entry?.updatedAt) || Number(entry?.createdAt) || 0;
+  return Date.now() - ref <= FRESH_WINDOW_MS;
+}
+
+function createTagBar(activeTag = 'all') {
   const tagButtons = PREDEFINED_TAGS.map(
     (t) => `
-    <button
-      type="button"
-      class="journal__filter-chip ${activeTag === t.id ? 'is-active' : ''}"
-      data-journal-tag-filter="tag"
-      data-journal-filter-tag="${t.id}"
-      aria-pressed="${activeTag === t.id ? 'true' : 'false'}"
-    >
-      ${t.emoji} ${escapeHtml(t.label)}
-    </button>
-  `
+      <button
+        type="button"
+        class="journal__tag-chip shared-tag-badge--${t.id} ${activeTag === t.id ? 'is-active' : ''}"
+        data-journal-tag-filter="tag"
+        data-journal-filter-tag="${t.id}"
+        aria-pressed="${activeTag === t.id ? 'true' : 'false'}"
+      >
+        <span class="journal__tag-dot" aria-hidden="true"></span>${t.emoji} ${escapeHtml(t.label)}
+      </button>`
   ).join('');
 
   return `
-    <div class="journal__tag-filters" role="toolbar" aria-label="Filtrer par tag">
-      <button
-        type="button"
-        class="journal__filter-chip ${activeTag === 'all' ? 'is-active' : ''}"
-        data-journal-tag-filter="all"
-        aria-pressed="${activeTag === 'all' ? 'true' : 'false'}"
-      >
-        Toutes
-      </button>
-      ${tagButtons}
+    <div class="journal__tagbar-wrap">
+      <div class="journal__tagbar" data-h-scroll role="toolbar" aria-label="Filtrer par tag">
+        <button
+          type="button"
+          class="journal__tag-chip journal__tag-chip--all ${activeTag === 'all' ? 'is-active' : ''}"
+          data-journal-tag-filter="all"
+          aria-pressed="${activeTag === 'all' ? 'true' : 'false'}"
+        >
+          Toutes
+        </button>
+        ${tagButtons}
+      </div>
     </div>
   `;
 }
 
-function createJournalSortControl(dateSort = 'desc') {
+function createSortControl(dateSort = 'desc') {
   return `
-    <div class="journal__sort-field">
-      <label class="journal__sort-label" for="journal-sort">Tri par date</label>
-      <select id="journal-sort" class="journal__sort-select" data-journal-sort aria-label="Trier les entrées par date">
-        <option value="desc" ${dateSort === 'desc' ? 'selected' : ''}>Plus récent</option>
-        <option value="asc" ${dateSort === 'asc' ? 'selected' : ''}>Plus ancien</option>
+    <label class="journal__sort">
+      <span class="journal__sort-label">Trier par date</span>
+      <select class="journal__sort-select" data-journal-sort aria-label="Trier les entrées par date">
+        <option value="desc" ${dateSort === 'desc' ? 'selected' : ''}>Plus récentes d'abord</option>
+        <option value="asc" ${dateSort === 'asc' ? 'selected' : ''}>Plus anciennes d'abord</option>
       </select>
-    </div>
+    </label>
   `;
 }
 
@@ -86,41 +97,42 @@ function createEditorTagField(selectedTagId = '') {
   `;
 }
 
-function createListItems(entries = [], storedEntryCount = 0) {
+function createStrata(entries = [], storedEntryCount = 0) {
   if (!entries.length) {
     if (storedEntryCount === 0) {
       return `
-      <p class="journal__empty">
-        Aucune entrée pour le moment. Commence avec « Nouvelle entrée ».
-      </p>
-    `;
+        <p class="journal__empty">
+          Rien de déposé pour l'instant. Commence avec « Écrire ».
+        </p>
+      `;
     }
-    return `<p class="journal__empty">Aucune entrée ne correspond à ces filtres.</p>`;
+    return `<p class="journal__empty">Aucune entrée ne correspond à ce tag.</p>`;
   }
 
-  return `
-    <ul class="journal__entries-list">
-      ${entries
-        .map(
-          (entry) => `
-            <li>
-              <button type="button" class="journal__entry card animate-fade-in" data-journal-open="${entry.id}">
-                <div class="journal__entry-top">
-                  <span class="journal__entry-date">${escapeHtml(entry.formattedDate)}</span>
-                  <span class="journal__entry-meta">
-                    ${entry.tagId ? renderTagBadge(entry.tagId) : ''}
-                    <span class="journal__entry-length">${entry.wordCount || 0} mots</span>
-                  </span>
-                </div>
-                <p class="journal__entry-title">${escapeHtml(getListTitle(entry))}</p>
-                <p class="journal__entry-body-preview">${escapeHtml(getListBodyPreview(entry))}</p>
-              </button>
-            </li>
-          `
-        )
-        .join('')}
-    </ul>
-  `;
+  const rows = entries
+    .map((entry) => {
+      const fresh = isFreshEntry(entry);
+      const excerpt = getListBodyPreview(entry);
+      return `
+        <button type="button" class="journal__entry animate-fade-in" data-journal-open="${entry.id}">
+          <span class="journal__entry-marker">
+            <span class="journal__entry-depth ${fresh ? '' : 'journal__entry-depth--faded'}"></span>
+          </span>
+          <span class="journal__entry-card">
+            <span class="journal__entry-date">${escapeHtml(entry.formattedDate)}</span>
+            <span class="journal__entry-title">${escapeHtml(getListTitle(entry))}</span>
+            ${excerpt ? `<span class="journal__entry-excerpt">${escapeHtml(excerpt)}</span>` : ''}
+            <span class="journal__entry-foot">
+              ${entry.tagId ? renderTagBadge(entry.tagId) : ''}
+              <span class="journal__entry-words">${entry.wordCount || 0} mots</span>
+            </span>
+          </span>
+        </button>
+      `;
+    })
+    .join('');
+
+  return `<div class="journal__strata" data-journal-list>${rows}</div>`;
 }
 
 function createListView(
@@ -130,16 +142,18 @@ function createListView(
   dateSort = 'desc',
   storedEntryCount = 0
 ) {
+  const countLabel = `${storedEntryCount} ${storedEntryCount > 1 ? 'entrées' : 'entrée'}`;
+
   return `
-    <section class="journal animate-fade-in">
-      <div class="journal__panel card animate-slide-up">
-        <header class="journal__header">
+    <section class="journal journal--list animate-fade-in">
+      <div class="journal__list">
+        <header class="journal__list-head">
           <div>
             <h1 class="journal__title">Journal</h1>
-            <p class="journal__subtitle">Écris, relis, et garde une trace claire de tes journées.</p>
+            <p class="journal__subtitle">Ce que tu as déposé, jour après jour.</p>
           </div>
-          <button type="button" class="btn btn-primary" data-journal-new>
-            Nouvelle entrée
+          <button type="button" class="journal__write-btn" data-journal-new>
+            <span aria-hidden="true">✍️</span> Écrire
           </button>
         </header>
 
@@ -154,14 +168,14 @@ function createListView(
           />
         </div>
 
-        <div class="journal__list-controls">
-          ${createJournalTagFilters(listTagFilter)}
-          ${createJournalSortControl(dateSort)}
+        ${createTagBar(listTagFilter)}
+
+        <div class="journal__sortrow">
+          <span class="journal__sortrow-count">${countLabel}</span>
+          ${createSortControl(dateSort)}
         </div>
 
-        <div class="journal__entries" data-journal-list>
-          ${createListItems(entries, storedEntryCount)}
-        </div>
+        ${createStrata(entries, storedEntryCount)}
       </div>
     </section>
   `;
@@ -187,8 +201,21 @@ function createEditorView(entry, isSaved = true, editorState = {}) {
   const showDeleteButton = shouldShowDeleteButton(entry, editorState);
 
   return `
-    <section class="journal animate-fade-in">
-      <div class="journal__panel journal__panel--editor card animate-slide-up">
+    <section class="journal journal--editor animate-fade-in">
+      <div class="journal__panel journal__panel--editor">
+        <div class="journal__editor-actions">
+          <button type="button" class="journal__action-back" data-journal-back>
+            ← Retour
+          </button>
+          <button
+            type="button"
+            class="journal__action-delete"
+            data-journal-delete
+            ${showDeleteButton ? '' : 'hidden'}
+          >
+            🗑 Supprimer
+          </button>
+        </div>
         <div class="journal__editor-top">
           <input
             type="text"
@@ -200,12 +227,12 @@ function createEditorView(entry, isSaved = true, editorState = {}) {
           />
           ${createEditorTagField(tagValue)}
         </div>
-
         <div class="journal__toolbar">
           <button type="button" class="journal__tool-btn" data-journal-command="bold" aria-label="Gras">B</button>
           <button type="button" class="journal__tool-btn" data-journal-command="italic" aria-label="Italique">I</button>
           <button type="button" class="journal__tool-btn" data-journal-command="underline" aria-label="Souligné">U</button>
           <button type="button" class="journal__tool-btn" data-journal-command="strike" aria-label="Barré"><span style="text-decoration:line-through">S</span></button>
+          <span class="journal__toolbar-sep"></span>
           <button type="button" class="journal__tool-btn" data-journal-command="heading1" aria-label="Titre 1">H1</button>
           <button type="button" class="journal__tool-btn" data-journal-command="heading2" aria-label="Titre 2">H2</button>
           <button type="button" class="journal__tool-btn" data-journal-command="heading3" aria-label="Titre 3">H3</button>
@@ -226,35 +253,20 @@ function createEditorView(entry, isSaved = true, editorState = {}) {
           <button type="button" class="journal__tool-btn journal__color-btn" data-journal-command="color-reset" aria-label="Couleur par défaut" title="Couleur par défaut">
             <span class="journal__color-dot journal__color-reset">A</span>
           </button>
+          <span class="journal__toolbar-sep"></span>
           <button type="button" class="journal__tool-btn" data-journal-command="bulletList" aria-label="Liste à puces">• Liste</button>
           <button type="button" class="journal__tool-btn" data-journal-command="orderedList" aria-label="Liste numérotée">1. Liste</button>
           <button type="button" class="journal__tool-btn" data-journal-command="taskList" aria-label="Liste de tâches">☑ Tâche</button>
           <button type="button" class="journal__tool-btn" data-journal-command="blockquote" aria-label="Citation">"</button>
           <button type="button" class="journal__tool-btn" data-journal-command="horizontalRule" aria-label="Séparateur">—</button>
         </div>
-
         <div class="journal__editor-content">
           <div class="journal__editor-prosemirror" data-journal-editor></div>
         </div>
-
         <footer class="journal__editor-footer">
           <span class="journal__save-state ${statusClass}" data-journal-save-state>${statusLabel}</span>
           <span class="journal__word-count" data-journal-word-count>${words} mots</span>
         </footer>
-
-        <div class="journal__editor-actions">
-          <button type="button" class="btn btn-secondary journal__action-back" data-journal-back>
-            ← Retour
-          </button>
-          <button
-            type="button"
-            class="btn btn-secondary journal__action-delete"
-            data-journal-delete
-            ${showDeleteButton ? '' : 'hidden'}
-          >
-            🗑 Supprimer
-          </button>
-        </div>
       </div>
     </section>
   `;
