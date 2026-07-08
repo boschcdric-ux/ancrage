@@ -3,7 +3,7 @@
 > Ce fichier est la mémoire du chantier. L'agent le lit au début de chaque
 > mission et le met à jour à la fin. Il doit rester factuel et concis.
 
-**Dernière mise à jour :** 2026-07-08 — M13 ajoutée au tableau de bord (⬜), prête à être lancée
+**Dernière mise à jour :** 2026-07-08 — M13 exécutée (🔶), en attente de validation Cédric
 
 ---
 
@@ -42,7 +42,7 @@
 | M12f | Habitudes : drag invisible (ancêtre transformé) | ✅ faite et validée par Cédric | 2026-07-07 |
 | M12g | Habitudes : audit profond drag invisible | ✅ faite et validée par Cédric | 2026-07-07 |
 | M12h | Habitudes : réorganisation hors modale (vue dédiée) | ✅ faite et validée par Cédric | 2026-07-07 |
-| M13 | Refonte Météo : le ciel se lit comme l'eau | ⬜ à faire — prérequis : aucun | 2026-07-08 |
+| M13 | Refonte Météo : le ciel se lit comme l'eau | 🔶 en cours — implémentée, validation Cédric en attente | 2026-07-08 |
 
 Statuts : ⬜ à faire · 🔶 en cours · ✅ faite et validée par Cédric · 🛑 bloquée
 
@@ -55,18 +55,18 @@ sans justification écrite.*
 
 | Métrique | Baseline (M00) | Dernière valeur | Mission |
 |---|---|---|---|
-| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M12h |
-| Tests unitaires | 22/22 passés (2 fichiers) | 69/69 passés (13 fichiers) | M12h |
-| Lint | 0 erreur | 0 erreur | M12h |
-| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 296 KB (`index-Cpgtky3q.js`) | M12h |
-| JS initial (gzip) | 243 KB | 83 KB | M12h |
-| CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 129 KB (`index-C0k1qZ-Z.css`, entrée HTML) | M12h |
+| Smoke tests | 20/20 modules, 4/4 shell | 20/20 modules, 4/4 shell | M13 |
+| Tests unitaires | 22/22 passés (2 fichiers) | 69/69 passés (13 fichiers) | M13 |
+| Lint | 0 erreur | 0 erreur | M13 |
+| JS initial (dist, brut) | 856 KB (`index-DsV8hCcK.js`) | 301 KB (`index-C_bYlja-.js`) | M13 |
+| JS initial (gzip) | 243 KB | 85 KB | M13 |
+| CSS (dist, brut) | 219 KB (`index-BZJK38el.css`) | 131 KB (`index-TT-KsaPp.css`, entrée HTML) | M13 |
 | Chunk calendar JS (gzip) | — | 9,4 KB (`index-CjilaMva.js`) | M12h |
 | Chunk calendar CSS (gzip) | — | 3,2 KB (`index-D1nMcXjX.css`) | M12h |
 | Chunk habits JS (gzip) | — | 4,1 KB (`index-BLnBeiFL.js`) | M12h |
 | Nombre de chunks JS | 1 | 9 | M01 |
 | Polices woff2 (dist) | — | ~122 KB (7 fichiers) | M04 |
-| Precache PWA | — | 1090 KiB (23 entrées) | M12h |
+| Precache PWA | — | 1133 KiB (23 entrées) | M13 |
 
 Variation bundle M05 : +4,3 KB brut sur le chunk d'entrée JS (275 vs 270 M04) — hors tolérance ±2 KB
 mais +1,5 KB gzip seulement ; justifié par markup SVG inline (houle, ancre, coche) et fonctions tide
@@ -641,6 +641,33 @@ et zéro `#c9a227` dans `tasks/style.css`.
   `will-change` parallax conditionnel (M12g) conservé.
 - Commits : `feat:` vue réorganiser hors modale ; `chore:` clôture M12h
 
+### Rituel AVANT M13 (2026-07-08)
+
+- Smoke : 20/20 modules, 4/4 shell
+- Unit : 69/69 (13 fichiers)
+- Lint : 0 erreur
+- Build entrée : 296 KB brut (`index-Cn3JbHZG.js`), 83 KB gzip
+- CSS entrée : 129 KB brut (`index-C0k1qZ-Z.css`), 21 KB gzip
+- Precache : 1126 KiB
+- Diagnostic build local : processus `vite preview`/`esbuild` orphelins arrêtés + reset complet (`rm -rf node_modules dist package-lock.json && npm install`) avant relance ; build Workbox redevenu vert.
+
+### Rituel APRÈS M13 (2026-07-08)
+
+- Smoke : 20/20 modules, 4/4 shell
+- Unit : 69/69 (13 fichiers)
+- Lint : 0 erreur
+- Build entrée : 301 KB brut (`index-C_bYlja-.js`), 85 KB gzip (+5 KB brut, +2 KB gzip — refonte météo complète)
+- CSS entrée : 131 KB brut (`index-TT-KsaPp.css`), 22 KB gzip (+2 KB, nouvelle mise en page météo)
+- Precache : 1133 KiB (+7 KiB)
+- Chunk weather JS : 40,9 KB brut (`index-B6tqL0MO.js`), 10,2 KB gzip
+- Taille fichiers JS météo (`wc -l src/modules/weather/*.js`) : `data.js` 222, `index.js` 274, `view.js` 207 (règle <~300 respectée)
+- Hypothèses M13 :
+  - H1 confirmée : `hourly=temperature_2m,apparent_temperature,weathercode,cloudcover` renvoie bien un pas horaire complet (120 points sur 5 jours), filtré au jour courant.
+  - H2 confirmée : `daily=sunrise,sunset` disponible, format `YYYY-MM-DDTHH:mm` avec `timezone=auto`.
+  - H3 infirmée partiellement : pas de `moonrise/moonset/moon_phase` sur endpoint `forecast` (HTTP 400) ; repli implémenté via calcul local phase/luminosité lunaire.
+  - H4 déjà acquise (inchangée) : vent/humidité disponibles dans `current`.
+  - H5 confirmée : `cloudcover` disponible sur `current` et `hourly`.
+
 ### Simulation quota plein (procédure dev, M02)
 
 1. `npm run preview`, ouvrir l'app dans le navigateur.
@@ -938,6 +965,19 @@ Vérification automatisée équivalente : `npm run test:unit` — tests `save() 
   transverse définitive : **jamais de drag par transform à haute fréquence à l'intérieur
   d'un `<dialog>` scrollable** — concevoir ces interactions dans le flux normal du module
   (vaut pour Mémo). Série Habitudes réellement close (M12 → M12h).
+- M13 : Météo refondu — 7e emploi de l'eau (**lit le ciel**). Vue principale alignée
+  maquette : lieu + bascule `Ici/Ailleurs`, carte conditions unifiée (réelle/ressentie,
+  soleil, lune calculée, vent, humidité, ciel étoilé), jauge thermique verticale,
+  courbe horaire 24 h, jours à venir, conseil discret.
+- M13 : règle anti-certitude appliquée explicitement : H1/H2/H5 vérifiées par appel
+  réel API, H3 (données lunaires natives) infirmée par réponse 400 Open-Meteo ; repli
+  adopté = calcul local phase/luminosité lunaire, sans inventer moonrise/moonset.
+- M13 : recherche "Ailleurs" implémentée en état session non persistant (`elsewhereCity`,
+  `search.elsewhere`) ; aucun write dans `CITY_STORAGE_KEY`. Retour au mode `Ici`
+  au clic "Fermer" ou en quittant le module (reset d'état à `destroy/init`).
+- M13 : retour d'expérience règles v2 — mission justifiée (4 fichiers météo + adaptation
+  API + état UI supplémentaire + vérification hypothèses). Ce travail n'était pas un ticket
+  léger.
 
 ---
 
@@ -976,4 +1016,4 @@ Vérification automatisée équivalente : `npm run test:unit` — tests `save() 
 
 *Rempli uniquement en cas de STOP. Vidé une fois le blocage levé par Cédric.*
 
-*(vide)*
+- Aucun blocage actif.

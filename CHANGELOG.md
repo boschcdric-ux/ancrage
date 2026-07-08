@@ -328,3 +328,16 @@ Historique des modifications du chantier `chantier/redesign`.
 - Bundle entrée : +0,5 KB brut / gzip stable. CSS entrée : +0,4 KB. Chunk habits inchangé.
 - Total 69/69. Grep : 0 `:has` dans `habits/style.css`.
 - Série Habitudes réellement close (M12 → M12h). Validation iPhone drag vue dédiée attendue.
+
+### M13 — Refonte Météo : le ciel se lit comme l'eau
+
+- Refonte du module `weather` selon la maquette M13 : lieu + bascule `Ici/Ailleurs`,
+  carte conditions unifiée, jauge thermique verticale, courbe 24 h, jours à venir et conseil discret.
+- Recherche `Ailleurs` ajoutée en état session non persistant : consultation ponctuelle
+  d'une autre ville sans écraser `weather:selected-city`.
+- API enrichie : `hourly` (température + cloudcover), `daily` (sunrise/sunset), `current` cloudcover ;
+  données lunaires natives Open-Meteo indisponibles (400), remplacées par calcul local phase/luminosité.
+- Fichiers météo restructurés (`data.js`, `index.js`, `view.js`) pour respecter la contrainte
+  de taille (<~300 lignes par fichier JS). `weather/README.md` rempli.
+- Rituel vert : smoke 20/20 + 4/4 shell, unit 69/69, lint 0, build OK (PWA Workbox générée).
+- Bundle entrée : 301 KB brut / 85 KB gzip (+5 KB / +2 KB). CSS entrée : 131 KB brut (+2 KB).
