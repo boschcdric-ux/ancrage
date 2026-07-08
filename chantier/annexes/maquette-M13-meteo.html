@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="encre">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maquette M13 — Météo : le ciel se lit comme l'eau</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   MAQUETTE M13 — Météo : "le ciel se lit comme l'eau"
+   Ordre de lecture voulu par Cédric :
+   1. le lieu (en grand)  2. la jauge thermique verticale
+   3. la marée thermique (courbe 24h)  4. les jours à venir
+   + conseils discrets bienveillants, °C réel ET ressenti côte à côte.
+   DONNÉES EN DUR (journée type été Nîmes) : cette maquette valide le
+   VISUEL et la disposition, PAS le branchement API.
+   ============================================================ */
+:root, [data-theme="encre"]{--bg-primary:#0a1017;--bg-secondary:#101a24;--bg-tertiary:#16232f;--bg-hover:#1c2c3b;--text-primary:#e9f1f4;--text-secondary:#9db4c0;--text-muted:#8299a6;--accent:#45e0b0;--accent-hover:#63eec2;--accent-soft:rgba(69,224,176,.15);--text-on-accent:#04241a;--border:rgba(233,241,244,.08);--shadow:0 4px 24px rgba(2,8,14,.5)}
+[data-theme="garrigue"]{--bg-primary:#f2eee6;--bg-secondary:#faf7f0;--bg-tertiary:#eae4d8;--bg-hover:#e2dccd;--text-primary:#26301f;--text-secondary:#55614a;--text-muted:#5f6b53;--accent:#4d6b3c;--accent-hover:#3e5a2f;--accent-soft:rgba(77,107,60,.12);--text-on-accent:#f5f8ef;--border:rgba(38,48,31,.10);--shadow:0 4px 24px rgba(90,80,60,.15)}
+[data-theme="crepuscule"]{--bg-primary:#171015;--bg-secondary:#201620;--bg-tertiary:#291d29;--bg-hover:#322434;--text-primary:#f4e9e4;--text-secondary:#c3aaa4;--text-muted:#a89089;--accent:#f0a35e;--accent-hover:#f5b678;--accent-soft:rgba(240,163,94,.15);--text-on-accent:#2b1706;--border:rgba(244,233,228,.08);--shadow:0 4px 24px rgba(10,4,10,.5)}
+[data-theme="maree"]{--bg-primary:#e8edeb;--bg-secondary:#f4f7f6;--bg-tertiary:#dee6e3;--bg-hover:#d4dedb;--text-primary:#1d2b2d;--text-secondary:#48605f;--text-muted:#536c6a;--accent:#146b66;--accent-hover:#0f5752;--accent-soft:rgba(20,107,102,.10);--text-on-accent:#eaf5f3;--border:rgba(29,43,45,.10);--shadow:0 4px 24px rgba(60,85,82,.15)}
+/* échelle thermique commune (froid -> chaud), indépendante du thème */
+:root{--cold-deep:#2b6fb3;--cold:#4aa3d4;--mild:#3fb8a4;--warm:#e8b24d;--hot:#e07a4d;--scorch:#d1503f;
+--font-family:'Atkinson Hyperlegible',system-ui,sans-serif;--font-display:'Bricolage Grotesque',var(--font-family);
+--radius-md:12px;--radius-lg:18px;--radius-full:9999px;--dfast:140ms;--dnorm:320ms;--ease-out:cubic-bezier(.16,1,.3,1);--ease-spring:cubic-bezier(.34,1.45,.64,1)}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{max-width:100%;overflow-x:hidden}
+body{font-family:var(--font-family);background:var(--bg-primary);color:var(--text-primary);display:flex;flex-direction:column;align-items:center;padding:20px 12px 60px;gap:14px;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;color:inherit;background:none;border:none;cursor:pointer;font-size:inherit}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+input{font-family:inherit;font-size:max(1rem,16px);color:var(--text-primary)}
+.demo-bar{width:min(440px,100%);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.demo-bar__title{font-family:var(--font-display);font-weight:600;font-size:.9rem;color:var(--text-secondary)}
+.theme-chips{display:flex;gap:7px}.theme-chip{width:26px;height:26px;border-radius:50%;background:var(--pv);border:2px solid var(--border)}
+.theme-chip[aria-pressed="true"]{border-color:var(--accent);transform:scale(1.12)}
+
+.module{width:min(440px,100%);max-width:100%;display:flex;flex-direction:column;gap:14px;box-sizing:border-box}
+
+/* ---------- 1. LE LIEU (en grand) ---------- */
+.place{display:flex;align-items:flex-start;gap:12px}
+.place__main{flex:1;min-width:0}
+.place__row{display:flex;align-items:center;gap:8px}
+.place__name{font-family:var(--font-display);font-weight:700;font-size:1.6rem;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.place__sky{font-size:1.4rem;flex:none}
+.place__desc{font-size:.86rem;color:var(--text-secondary);margin-top:2px}
+.place__switch{flex:none;display:flex;gap:6px;align-items:center}
+.place__btn{padding:7px 12px;border-radius:var(--radius-full);font-size:.76rem;font-weight:700;
+background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-secondary);white-space:nowrap;
+transition:background var(--dfast),color var(--dfast)}
+.place__btn[aria-pressed="true"]{background:var(--accent);color:var(--text-on-accent);border-color:transparent}
+
+/* recherche d'une autre ville (rando) */
+.elsewhere{display:none;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);
+padding:10px;gap:8px;align-items:center}
+.elsewhere.show{display:flex}
+.elsewhere input{flex:1;min-width:0;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:9px;padding:9px 12px}
+.elsewhere button{flex:none;padding:9px 14px;border-radius:9px;background:var(--accent);color:var(--text-on-accent);font-weight:700}
+
+/* ---------- bloc actuel : carte unifiée "conditions du moment" + jauge ---------- */
+.now{display:flex;align-items:stretch;gap:12px}
+.conditions{flex:1;min-width:0;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-lg);
+padding:14px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:12px}
+/* ligne du haut : les deux températures côte à côte */
+.conditions__temps{display:flex;gap:18px}
+.temp-block{min-width:0}
+.temp-block__label{font-size:.64rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)}
+.temp-block__val{font-family:var(--font-display);font-weight:700;font-size:1.9rem;line-height:1.05;margin-top:1px}
+.temp-block__val small{font-size:.9rem;color:var(--text-secondary);font-weight:400}
+/* grille des infos secondaires (soleil, lune, vent, humidité) */
+.conditions__grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px;
+border-top:1px solid var(--border);padding-top:12px}
+.stat{display:flex;align-items:center;gap:9px;min-width:0}
+.stat__icon{flex:none;width:30px;height:30px;border-radius:9px;display:grid;place-items:center;
+background:var(--bg-tertiary);border:1px solid var(--border);font-size:.95rem}
+.stat__body{min-width:0}
+.stat__label{font-size:.62rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text-muted);
+white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stat__val{font-size:.86rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stat__val small{font-weight:400;color:var(--text-secondary)}
+/* ligne "ciel étoilé" : lecture des conditions d'observation, en pied de carte */
+.stargaze{display:flex;align-items:center;gap:9px;border-top:1px solid var(--border);padding-top:11px;margin-top:1px}
+.stargaze__icon{flex:none;font-size:1rem}
+.stargaze__text{font-size:.8rem;line-height:1.4;color:var(--text-secondary)}
+.stargaze__text b{color:var(--text-primary);font-weight:700}
+
+/* ---------- 2. LA JAUGE THERMIQUE VERTICALE ---------- */
+.thermo{flex:none;width:66px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);
+box-shadow:var(--shadow);padding:10px 8px;display:flex;flex-direction:column;align-items:center;gap:6px}
+.thermo__scale{position:relative;flex:1;width:20px;border-radius:var(--radius-full);overflow:hidden;min-height:150px;
+background:linear-gradient(to top,var(--cold-deep) 0%,var(--cold) 22%,var(--mild) 45%,var(--warm) 68%,var(--hot) 85%,var(--scorch) 100%)}
+.thermo__marker{position:absolute;left:50%;width:26px;height:26px;transform:translate(-50%,50%);
+border-radius:50%;background:var(--text-primary);border:3px solid var(--bg-secondary);box-shadow:0 2px 6px rgba(0,0,0,.4);
+display:grid;place-items:center;transition:bottom var(--dnorm) var(--ease-out)}
+.thermo__marker::after{content:'';width:8px;height:8px;border-radius:50%;background:var(--hot)}
+.thermo__caption{font-size:.62rem;color:var(--text-muted);text-align:center;font-weight:700}
+.thermo__minmax{display:flex;flex-direction:column;align-items:center;font-size:.66rem;color:var(--text-secondary);gap:2px}
+
+/* ---------- conseil discret ---------- */
+.advice{display:flex;align-items:flex-start;gap:10px;background:var(--accent-soft);border:1px solid var(--border);
+border-radius:var(--radius-md);padding:11px 13px}
+.advice__icon{flex:none;font-size:1.1rem;line-height:1.3}
+.advice__text{font-size:.84rem;line-height:1.45;color:var(--text-primary)}
+
+/* ---------- 3. LA MARÉE THERMIQUE (courbe 24h) ---------- */
+.tide{background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow);
+padding:14px;box-sizing:border-box}
+.tide__head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px}
+.tide__title{font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)}
+.tide__now{font-size:.74rem;color:var(--accent);font-weight:700}
+.tide__chart{position:relative;width:100%}
+.tide__chart svg{display:block;width:100%;height:auto}
+.tide__hours{display:flex;justify-content:space-between;margin-top:4px;font-size:.64rem;color:var(--text-muted)}
+
+/* ---------- 4. LES JOURS À VENIR ---------- */
+.days{background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow);
+padding:6px;box-sizing:border-box}
+.day{display:flex;align-items:center;gap:12px;padding:11px 10px;border-radius:var(--radius-md);transition:background var(--dfast)}
+.day:hover{background:var(--bg-hover)}
+.day+.day{border-top:1px solid var(--border)}
+.day__name{flex:none;width:44px;font-weight:700;font-size:.86rem}
+.day__icon{flex:none;font-size:1.2rem;width:28px;text-align:center}
+.day__bar{flex:1;min-width:0;height:8px;border-radius:var(--radius-full);position:relative;background:var(--bg-tertiary);overflow:hidden}
+.day__bar-fill{position:absolute;top:0;bottom:0;border-radius:var(--radius-full);
+background:linear-gradient(to right,var(--cold),var(--mild),var(--warm))}
+.day__temps{flex:none;display:flex;gap:8px;font-size:.84rem;font-variant-numeric:tabular-nums}
+.day__max{font-weight:700}.day__min{color:var(--text-muted)}
+
+.foot-note{width:min(440px,100%);font-size:.72rem;color:var(--text-muted);text-align:center;line-height:1.5}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+
+<div class="demo-bar">
+  <span class="demo-bar__title">M13 · Météo — maquette</span>
+  <div class="theme-chips" role="group" aria-label="Thèmes">
+    <button class="theme-chip" data-t="encre" style="--pv:linear-gradient(135deg,#101a24 55%,#45e0b0 55%)" aria-pressed="true" aria-label="Encre"></button>
+    <button class="theme-chip" data-t="garrigue" style="--pv:linear-gradient(135deg,#faf7f0 55%,#4d6b3c 55%)" aria-pressed="false" aria-label="Garrigue"></button>
+    <button class="theme-chip" data-t="crepuscule" style="--pv:linear-gradient(135deg,#201620 55%,#f0a35e 55%)" aria-pressed="false" aria-label="Crépuscule"></button>
+    <button class="theme-chip" data-t="maree" style="--pv:linear-gradient(135deg,#f4f7f6 55%,#146b66 55%)" aria-pressed="false" aria-label="Marée basse"></button>
+  </div>
+</div>
+
+<main class="module" aria-label="Module Météo — maquette">
+
+  <!-- 1. LE LIEU -->
+  <div class="place">
+    <div class="place__main">
+      <div class="place__row">
+        <span class="place__name" id="placeName">Nîmes</span>
+        <span class="place__sky">☀️</span>
+      </div>
+      <div class="place__desc" id="placeDesc">Ciel dégagé · ressenti lourd l'après-midi</div>
+    </div>
+    <div class="place__switch">
+      <button class="place__btn" data-loc="here" aria-pressed="true">📍 Ici</button>
+      <button class="place__btn" data-loc="else" aria-pressed="false">Ailleurs</button>
+    </div>
+  </div>
+
+  <div class="elsewhere" id="elsewhere">
+    <input type="text" placeholder="Une ville pour ta rando… (ex. Le Vigan)" aria-label="Chercher une ville">
+    <button type="button">Voir</button>
+  </div>
+
+  <!-- bloc actuel : carte unifiée conditions + jauge -->
+  <div class="now">
+    <div class="conditions">
+      <div class="conditions__temps">
+        <div class="temp-block">
+          <div class="temp-block__label">Réelle</div>
+          <div class="temp-block__val" id="tReal">29<small>°C</small></div>
+        </div>
+        <div class="temp-block">
+          <div class="temp-block__label">Ressentie</div>
+          <div class="temp-block__val" id="tFeel">32<small>°C</small></div>
+        </div>
+      </div>
+      <div class="conditions__grid">
+        <div class="stat">
+          <span class="stat__icon">☀️</span>
+          <div class="stat__body">
+            <div class="stat__label">Soleil</div>
+            <div class="stat__val">↑6:12 <small>↓21:28</small></div>
+          </div>
+        </div>
+        <div class="stat">
+          <span class="stat__icon">🌙</span>
+          <div class="stat__body">
+            <div class="stat__label">Lune · Gibbeuse</div>
+            <div class="stat__val">78 % <small>éclairée</small></div>
+          </div>
+        </div>
+        <div class="stat">
+          <span class="stat__icon">💨</span>
+          <div class="stat__body">
+            <div class="stat__label">Vent</div>
+            <div class="stat__val">14 <small>km/h O</small></div>
+          </div>
+        </div>
+        <div class="stat">
+          <span class="stat__icon">💧</span>
+          <div class="stat__body">
+            <div class="stat__label">Humidité</div>
+            <div class="stat__val">52 <small>%</small></div>
+          </div>
+        </div>
+      </div>
+      <div class="stargaze">
+        <span class="stargaze__icon">🔭</span>
+        <span class="stargaze__text" id="stargazeText"><b>Belle nuit pour les étoiles</b> — ciel dégagé et lune couchée après 1 h.</span>
+      </div>
+    </div>
+    <!-- 2. JAUGE THERMIQUE -->
+    <div class="thermo" role="img" aria-label="Jauge thermique : 29 degrés, journée chaude">
+      <div class="thermo__minmax"><span id="tMax">34°</span></div>
+      <div class="thermo__scale">
+        <div class="thermo__marker" id="thermoMarker" style="bottom:72%"></div>
+      </div>
+      <div class="thermo__minmax"><span id="tMin">19°</span></div>
+      <div class="thermo__caption">chaud</div>
+    </div>
+  </div>
+
+  <!-- conseil discret -->
+  <div class="advice">
+    <span class="advice__icon">🥵</span>
+    <span class="advice__text" id="adviceText">Grosse chaleur cet après-midi (pic vers 16 h). Si tu sors, vise avant 11 h ou après 19 h, et emporte de l'eau.</span>
+  </div>
+
+  <!-- 3. MARÉE THERMIQUE (courbe 24h) -->
+  <section class="tide">
+    <div class="tide__head">
+      <span class="tide__title">La marée thermique du jour</span>
+      <span class="tide__now" id="tideNow">Maintenant · 9 h</span>
+    </div>
+    <div class="tide__chart" id="tideChart"></div>
+    <div class="tide__hours"><span>0h</span><span>6h</span><span>12h</span><span>18h</span><span>24h</span></div>
+  </section>
+
+  <!-- 4. JOURS À VENIR -->
+  <section class="days" id="days"></section>
+
+</main>
+
+<p class="foot-note">
+  Maquette à données figées (journée type). Valide le visuel et la
+  disposition — le branchement à l'API réelle (Open-Meteo, déjà en place)
+  se fera à l'intégration. La jauge et les couleurs suivent une échelle
+  thermique commune, la même partout (froid = eaux profondes, chaud =
+  évaporation).
+</p>
+
+<script>
+(function(){
+'use strict';
+const $=id=>document.getElementById(id);
+
+/* ---------- Données figées : journée type été à Nîmes ---------- */
+const HOURLY=[18,17,17,16,16,17,19,22,24,26,28,30,31,33,34,34,33,31,29,27,25,23,21,20]; // °C par heure 0..23
+const NOW_HOUR=9;
+const DAY_MIN=16, DAY_MAX=34;
+const FORECAST=[
+  {name:"Auj.",icon:"☀️",min:19,max:34},
+  {name:"Jeu.",icon:"⛅",min:20,max:33},
+  {name:"Ven.",icon:"🌤️",min:18,max:30},
+  {name:"Sam.",icon:"🌧️",min:17,max:26},
+  {name:"Dim.",icon:"⛅",min:18,max:28}
+];
+
+/* échelle thermique -> couleur (commune à toute l'UI) */
+function tempColor(t){
+  // bornes douces -5..40°C
+  const stops=[[-5,'#2b6fb3'],[5,'#4aa3d4'],[14,'#3fb8a4'],[24,'#e8b24d'],[31,'#e07a4d'],[40,'#d1503f']];
+  for(let i=0;i<stops.length-1;i++){
+    const [a,ca]=stops[i],[b,cb]=stops[i+1];
+    if(t<=b){const k=Math.max(0,Math.min(1,(t-a)/(b-a)));return mix(ca,cb,k);}
+  }
+  return stops[stops.length-1][1];
+}
+function mix(c1,c2,k){
+  const p=h=>[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
+  const [r1,g1,b1]=p(c1),[r2,g2,b2]=p(c2);
+  const r=Math.round(r1+(r2-r1)*k),g=Math.round(g1+(g2-g1)*k),b=Math.round(b1+(b2-b1)*k);
+  return `rgb(${r},${g},${b})`;
+}
+
+/* ---------- 2. position du marqueur sur la jauge ---------- */
+function placeMarker(){
+  const t=29;
+  const frac=(t-DAY_MIN)/(DAY_MAX-DAY_MIN);
+  $('thermoMarker').style.bottom=(frac*100).toFixed(0)+'%';
+  $('thermoMarker').style.setProperty('--dot',tempColor(t));
+}
+
+/* ---------- 3. la marée thermique (courbe SVG) ---------- */
+function drawTide(){
+  const W=400,H=120,pad=10;
+  const min=Math.min(...HOURLY),max=Math.max(...HOURLY);
+  const xs=i=>pad+(i/23)*(W-2*pad);
+  const ys=t=>H-pad-((t-min)/(max-min))*(H-2*pad-14);
+  // chemin lissé
+  let d=`M ${xs(0)} ${ys(HOURLY[0])}`;
+  for(let i=1;i<24;i++){
+    const x0=xs(i-1),y0=ys(HOURLY[i-1]),x1=xs(i),y1=ys(HOURLY[i]);
+    const cx=(x0+x1)/2;
+    d+=` Q ${x0} ${y0} ${cx} ${(y0+y1)/2} T ${x1} ${y1}`;
+  }
+  // aire sous la courbe (remplissage dégradé thermique)
+  const area=d+` L ${xs(23)} ${H} L ${xs(0)} ${H} Z`;
+  const nowX=xs(NOW_HOUR),nowY=ys(HOURLY[NOW_HOUR]);
+  // stops de dégradé horizontal selon la température de chaque heure
+  let grad='';
+  for(let i=0;i<24;i+=3){grad+=`<stop offset="${(i/23*100).toFixed(0)}%" stop-color="${tempColor(HOURLY[i])}"/>`;}
+  $('tideChart').innerHTML=`
+    <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-label="Courbe des températures sur 24 heures">
+      <defs>
+        <linearGradient id="tideStroke" x1="0" y1="0" x2="1" y2="0">${grad}</linearGradient>
+        <linearGradient id="tideFill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.22"/>
+          <stop offset="100%" stop-color="var(--accent)" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      <path d="${area}" fill="url(#tideFill)"/>
+      <path d="${d}" fill="none" stroke="url(#tideStroke)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      <line x1="${nowX}" y1="${pad}" x2="${nowX}" y2="${H-pad}" stroke="var(--text-muted)" stroke-width="1" stroke-dasharray="3 3" opacity="0.5"/>
+      <circle cx="${nowX}" cy="${nowY}" r="5" fill="var(--accent)" stroke="var(--bg-secondary)" stroke-width="2"/>
+      <text x="${nowX}" y="${nowY-10}" text-anchor="middle" font-size="11" font-weight="700" fill="var(--text-primary)">${HOURLY[NOW_HOUR]}°</text>
+    </svg>`;
+}
+
+/* ---------- 4. jours à venir ---------- */
+function drawDays(){
+  const wrap=$('days');wrap.innerHTML='';
+  const allMin=Math.min(...FORECAST.map(d=>d.min)),allMax=Math.max(...FORECAST.map(d=>d.max));
+  FORECAST.forEach(d=>{
+    const left=((d.min-allMin)/(allMax-allMin))*100;
+    const right=((d.max-allMin)/(allMax-allMin))*100;
+    const row=document.createElement('div');row.className='day';
+    row.innerHTML=`
+      <span class="day__name">${d.name}</span>
+      <span class="day__icon">${d.icon}</span>
+      <span class="day__bar"><span class="day__bar-fill" style="left:${left}%;right:${100-right}%"></span></span>
+      <span class="day__temps"><span class="day__max">${d.max}°</span><span class="day__min">${d.min}°</span></span>`;
+    wrap.appendChild(row);
+  });
+}
+
+/* ---------- bascule ici / ailleurs ---------- */
+document.querySelectorAll('[data-loc]').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('[data-loc]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+  $('elsewhere').classList.toggle('show',b.dataset.loc==='else');
+}));
+
+/* thèmes */
+document.querySelectorAll('[data-t]').forEach(b=>b.addEventListener('click',()=>{
+  document.documentElement.dataset.theme=b.dataset.t;
+  document.querySelectorAll('[data-t]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+}));
+
+/* ---------- ligne ciel étoilé : dérivée de (nuages + lune) ---------- */
+function describeStargazing(){
+  // Données de démo cohérentes avec la scène (été Nîmes, ciel dégagé)
+  const cloudCover=12;      // % — vient de l'API (cloudcover)
+  const moonIllum=78;       // % éclairé — calculé depuis la phase
+  const moonSetHour=1;      // heure de coucher de lune
+  let verdict, detail;
+  if(cloudCover>60){verdict='Ciel couvert';detail='peu d\u2019étoiles visibles ce soir.';}
+  else if(cloudCover>30){verdict='Ciel voilé';detail='quelques éclaircies possibles.';}
+  else if(moonIllum>70 && moonSetHour>2){verdict='Lune brillante';detail='ciel laiteux, peu favorable aux étoiles.';}
+  else if(moonIllum>70){verdict='Belle nuit pour les étoiles';detail=`ciel dégagé et lune couchée après ${moonSetHour} h.`;}
+  else {verdict='Excellente nuit pour les étoiles';detail='ciel dégagé et lune discrète.';}
+  $('stargazeText').innerHTML=`<b>${verdict}</b> — ${detail}`;
+}
+
+placeMarker();drawTide();drawDays();describeStargazing();
+})();
+</script>
+</body>
+</html>
