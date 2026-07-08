@@ -1,4 +1,4 @@
-.weather{width:min(440px,100%);max-width:100%;margin:0 auto;display:grid;gap:var(--space-4)}
+.weather{--cold-deep:#2b6fb3;--cold:#4aa3d4;--mild:#3fb8a4;--warm:#e8b24d;--hot:#e07a4d;--scorch:#d1503f;width:min(440px,100%);max-width:100%;margin:0 auto;display:grid;gap:var(--space-4)}
 .weather--onboarding{place-items:center;min-height:min(72vh,520px)}
 .weather__onboarding{width:100%;max-width:560px;padding:var(--space-8) var(--space-6);display:grid;gap:var(--space-5);text-align:center}
 .weather__onboarding-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-4);text-align:left}
@@ -35,6 +35,7 @@
 .conditions__grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px;border-top:1px solid var(--border);padding-top:12px}
 .stat{display:flex;align-items:center;gap:9px;min-width:0}
 .stat__icon{flex:none;width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:var(--bg-tertiary);border:1px solid var(--border);font-size:.95rem}
+.stat__body{min-width:0}
 .stat__label{font-size:.62rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .stat__val{font-size:.86rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .stat__val small{font-weight:400;color:var(--text-secondary)}
@@ -67,5 +68,5 @@
 .weather__state--error p{color:var(--danger)}
 .weather__spinner{width:24px;height:24px;border-radius:var(--radius-full);border:2px solid var(--border);border-top-color:var(--accent);animation:weather-spin var(--duration-xslow) linear infinite}
 @keyframes weather-spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-@media (max-width:760px){.weather__onboarding-grid{grid-template-columns:1fr}.now{flex-direction:column}.thermo{width:100%;flex-direction:row;justify-content:center}.thermo__scale{width:100%;max-width:22px}.elsewhere{display:grid;grid-template-columns:1fr}}
+@media (max-width:760px){.weather__onboarding-grid{grid-template-columns:1fr}.elsewhere{display:grid;grid-template-columns:1fr}}
 @media (prefers-reduced-motion: reduce){.weather__spinner{animation:none}}

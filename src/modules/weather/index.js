@@ -29,7 +29,7 @@ function readSelectedCity() {
 function render() {
   if (!rootContainer) return;
   rootContainer.innerHTML = createWeatherView({
-    showOnboarding: !readOnboardedFlag(),
+    showOnboarding: state.showOnboarding,
     onboardingGeoStatus: state.onboardingGeoStatus,
     searchQuery: state.search.default.query,
     searchResults: state.search.default.results,
@@ -103,6 +103,7 @@ async function fetchAndStoreWeather(city, scope) {
 
 function selectDefaultCity(city) {
   save(ONBOARDED_KEY, true);
+  state.showOnboarding = false;
   state.selectedCity = city;
   state.activeLocation = 'here';
   state.search.default.query = city.name;
@@ -168,6 +169,7 @@ function requestOnboardingGeolocation() {
 
 function skipWeatherOnboarding() {
   save(ONBOARDED_KEY, true);
+  state.showOnboarding = false;
   remove(CITY_STORAGE_KEY);
   state.selectedCity = null;
   state.status = 'idle';
@@ -237,6 +239,7 @@ const weatherModule = {
     const selected = readSelectedCity();
     const needsOnboarding = !readOnboardedFlag();
     state = {
+      showOnboarding: needsOnboarding,
       status: needsOnboarding ? 'idle' : selected ? 'loading' : 'idle',
       errorMessage: '',
       onboardingGeoStatus: 'idle',
