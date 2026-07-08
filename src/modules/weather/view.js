@@ -15,7 +15,7 @@ function createGeoOnboardingHint(status) {
 
 function createSearchResults(results = [], scope = 'default') {
   if (!results.length) return '';
-  return `<ul class="weather__results card" data-weather-results role="listbox" aria-label="Resultats de villes">${results
+  return `<ul class="weather__results card" data-weather-results role="listbox" aria-label="Résultats de villes">${results
     .map((item, idx) => {
       const label = `${item.name}${item.admin1 ? `, ${item.admin1}` : ''}, ${item.country}`;
       return `<li><button type="button" class="weather__result-btn" data-weather-result="${item.id}" data-weather-scope="${scope}" role="option" aria-selected="${idx === 0 ? 'true' : 'false'}">${escapeHtml(label)}</button></li>`;
@@ -94,7 +94,7 @@ function createThermalTideChart(tide) {
   const markerY = yPos(marker.temperature);
   const gradient = points.filter((_, idx) => idx % 3 === 0).map((point, idx, list) => `<stop offset="${Math.round((idx / Math.max(1, list.length - 1)) * 100)}%" stop-color="${point.color}" />`).join('');
   return `
-    <svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" aria-label="Courbe des temperatures sur 24 heures">
+    <svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" aria-label="Courbe des températures sur 24 heures">
       <defs>
         <linearGradient id="weather-tide-stroke" x1="0" y1="0" x2="1" y2="0">${gradient}</linearGradient>
         <linearGradient id="weather-tide-fill" x1="0" y1="0" x2="0" y2="1">
@@ -112,7 +112,7 @@ function createThermalTideChart(tide) {
 }
 
 function createWeatherContent(snapshot) {
-  if (!snapshot) return '<div class="weather__state card"><p>Choisis une ville pour afficher la meteo.</p></div>';
+  if (!snapshot) return '<div class="weather__state card"><p>Choisis une ville pour afficher la météo.</p></div>';
   const activeHere = snapshot.activeLocation === 'here';
   return `
     <section class="weather__content-grid" data-weather-content>
@@ -137,14 +137,14 @@ function createWeatherContent(snapshot) {
       <div class="now">
         <article class="conditions">
           <div class="conditions__temps">
-            <div class="temp-block"><p class="temp-block__label">Reelle</p><p class="temp-block__val">${Math.round(snapshot.currentTemp)}<small>°C</small></p></div>
+            <div class="temp-block"><p class="temp-block__label">Réelle</p><p class="temp-block__val">${Math.round(snapshot.currentTemp)}<small>°C</small></p></div>
             <div class="temp-block"><p class="temp-block__label">Ressentie</p><p class="temp-block__val">${Math.round(snapshot.apparentTemp)}<small>°C</small></p></div>
           </div>
           <div class="conditions__grid">
             <div class="stat"><span class="stat__icon">☀️</span><div class="stat__body"><p class="stat__label">Soleil</p><p class="stat__val">↑${escapeHtml(snapshot.sunrise)} <small>↓${escapeHtml(snapshot.sunset)}</small></p></div></div>
-            <div class="stat"><span class="stat__icon">🌙</span><div class="stat__body"><p class="stat__label">Lune · ${escapeHtml(snapshot.moon.phaseLabel)}</p><p class="stat__val">${Math.round(snapshot.moon.illumination)} <small>% eclairee</small></p></div></div>
+            <div class="stat"><span class="stat__icon">🌙</span><div class="stat__body"><p class="stat__label">Lune · ${escapeHtml(snapshot.moon.phaseLabel)}</p><p class="stat__val">${Math.round(snapshot.moon.illumination)} <small>% éclairée</small></p></div></div>
             <div class="stat"><span class="stat__icon">💨</span><div class="stat__body"><p class="stat__label">Vent</p><p class="stat__val">${Math.round(snapshot.windSpeed)} <small>km/h</small></p></div></div>
-            <div class="stat"><span class="stat__icon">💧</span><div class="stat__body"><p class="stat__label">Humidite</p><p class="stat__val">${Math.round(snapshot.humidity)} <small>%</small></p></div></div>
+            <div class="stat"><span class="stat__icon">💧</span><div class="stat__body"><p class="stat__label">Humidité</p><p class="stat__val">${Math.round(snapshot.humidity)} <small>%</small></p></div></div>
           </div>
           <div class="stargaze"><span class="stargaze__icon">🔭</span><p class="stargaze__text"><b>${escapeHtml(snapshot.stargazing.title)}</b> — ${escapeHtml(snapshot.stargazing.detail)}</p></div>
         </article>
@@ -152,12 +152,12 @@ function createWeatherContent(snapshot) {
           <p class="thermo__minmax">${Math.round(snapshot.thermo.max)}°</p>
           <div class="thermo__scale"><span class="thermo__marker" style="bottom:${snapshot.thermo.level.toFixed(0)}%; --marker-color:${snapshot.thermo.currentColor};"></span></div>
           <p class="thermo__minmax">${Math.round(snapshot.thermo.min)}°</p>
-          <p class="thermo__caption">${snapshot.currentTemp >= snapshot.thermo.max - 2 ? 'chaud' : 'modere'}</p>
+          <p class="thermo__caption">${snapshot.currentTemp >= snapshot.thermo.max - 2 ? 'chaud' : 'modéré'}</p>
         </aside>
       </div>
       <div class="advice"><span class="advice__icon">${snapshot.advice.icon}</span><p class="advice__text">${escapeHtml(snapshot.advice.text)}</p></div>
       <section class="tide card">
-        <div class="tide__head"><p class="tide__title">La maree thermique du jour</p><p class="tide__now">Maintenant · ${escapeHtml(snapshot.tide.nowLabel)}</p></div>
+        <div class="tide__head"><p class="tide__title">La marée thermique du jour</p><p class="tide__now">Maintenant · ${escapeHtml(snapshot.tide.nowLabel)}</p></div>
         <div class="tide__chart">${createThermalTideChart(snapshot.tide)}</div>
         <div class="tide__hours"><span>0h</span><span>6h</span><span>12h</span><span>18h</span><span>24h</span></div>
       </section>
@@ -171,11 +171,11 @@ function createWeatherContent(snapshot) {
 }
 
 function createLoadingState() {
-  return '<div class="weather__state card"><span class="weather__spinner" aria-hidden="true"></span><p>Chargement de la meteo...</p></div>';
+  return '<div class="weather__state card"><span class="weather__spinner" aria-hidden="true"></span><p>Chargement de la météo...</p></div>';
 }
 
 function createErrorState(message) {
-  return `<div class="weather__state weather__state--error card"><p>${escapeHtml(message || 'Impossible de recuperer la meteo pour le moment.')}</p><button type="button" class="btn btn-secondary" data-weather-retry>Reessayer</button></div>`;
+  return `<div class="weather__state weather__state--error card"><p>${escapeHtml(message || 'Impossible de récupérer la météo pour le moment.')}</p><button type="button" class="btn btn-secondary" data-weather-retry>Réessayer</button></div>`;
 }
 
 function createMainView(state) {

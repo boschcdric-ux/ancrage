@@ -1,5 +1,5 @@
 const WEATHER_MAP = {
-  0: { emoji: '☀️', description: 'Ensoleille' },
+  0: { emoji: '☀️', description: 'Ensoleillé' },
   1: { emoji: '🌤', description: 'Peu nuageux' },
   2: { emoji: '🌤', description: 'Peu nuageux' },
   3: { emoji: '☁️', description: 'Couvert' },
@@ -76,6 +76,10 @@ function formatTimeLabel(isoDateTime) {
   return new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' }).format(date);
 }
 
+function formatHour(isoDateTime) {
+  return isoDateTime?.split('T')[1]?.slice(0, 5) || '';
+}
+
 function toRgb(hex) {
   return [parseInt(hex.slice(1, 3), 16), parseInt(hex.slice(3, 5), 16), parseInt(hex.slice(5, 7), 16)];
 }
@@ -111,24 +115,24 @@ function getMoonData(dateValue) {
   if (age < 9.22831) return { illumination, phaseLabel: 'Premier quartier' };
   if (age < 12.91963) return { illumination, phaseLabel: 'Gibbeuse croissante' };
   if (age < 16.61096) return { illumination, phaseLabel: 'Pleine lune' };
-  if (age < 20.30228) return { illumination, phaseLabel: 'Gibbeuse decroissante' };
+  if (age < 20.30228) return { illumination, phaseLabel: 'Gibbeuse décroissante' };
   if (age < 23.99361) return { illumination, phaseLabel: 'Dernier quartier' };
   if (age < 27.68493) return { illumination, phaseLabel: 'Dernier croissant' };
   return { illumination, phaseLabel: 'Nouvelle lune' };
 }
 
 function describeStargazing(cloudCover, moonIllumination) {
-  if (cloudCover > 60) return { title: 'Ciel couvert', detail: "peu d'etoiles visibles ce soir." };
-  if (cloudCover > 30) return { title: 'Ciel voile', detail: 'quelques eclaircies possibles.' };
-  if (moonIllumination > 70) return { title: 'Lune brillante', detail: 'ciel laiteux, observation limitee.' };
-  return { title: 'Belle nuit pour les etoiles', detail: 'ciel degage et lune discrete.' };
+  if (cloudCover > 60) return { title: 'Ciel couvert', detail: "peu d'étoiles visibles ce soir." };
+  if (cloudCover > 30) return { title: 'Ciel voilé', detail: 'quelques éclaircies possibles.' };
+  if (moonIllumination > 70) return { title: 'Lune brillante', detail: 'ciel laiteux, observation limitée.' };
+  return { title: 'Belle nuit pour les étoiles', detail: 'ciel dégagé et lune discrète.' };
 }
 
 function buildAdvice(currentTemp, maxTemp, windSpeed) {
-  if (maxTemp >= 32) return { icon: '🥵', text: "Grosse chaleur attendue. Sortir tot ou tard aide a garder ton energie." };
+  if (maxTemp >= 32) return { icon: '🥵', text: "Grosse chaleur attendue. Sortir tôt ou tard aide à garder ton énergie." };
   if (windSpeed >= 35) return { icon: '💨', text: 'Vent soutenu aujourd’hui. Une couche coupe-vent peut te simplifier la sortie.' };
   if (currentTemp <= 4) return { icon: '🧣', text: 'Air froid. Une couche chaude et des mains couvertes rendent la balade plus douce.' };
-  return { icon: '🌿', text: 'Conditions plutot stables. Bonne fenetre pour une pause dehors si tu en as envie.' };
+  return { icon: '🌿', text: 'Conditions plutôt stables. Bonne fenêtre pour une pause dehors si tu en as envie.' };
 }
 
 function extractTodayHourly(payload) {
@@ -155,7 +159,7 @@ async function fetchWeatherSnapshot(city, signal) {
   url.searchParams.set('timezone', 'auto');
   url.searchParams.set('forecast_days', '5');
   const response = await fetch(url.toString(), { signal });
-  if (!response.ok) throw new Error('Le service meteo est indisponible.');
+  if (!response.ok) throw new Error('Le service météo est indisponible.');
   return response.json();
 }
 
@@ -163,7 +167,7 @@ function mapWeatherSnapshot(payload, city) {
   const daily = payload?.daily || {};
   const current = payload?.current || {};
   const days = Array.isArray(daily.time) ? daily.time : [];
-  if (!days.length || !current.time) throw new Error('Donnees meteo incompletes.');
+  if (!days.length || !current.time) throw new Error('Données météo incomplètes.');
 
   const forecast = days.map((date, idx) => {
     const min = toNumber(daily.temperature_2m_min?.[idx]);
@@ -208,8 +212,8 @@ function mapWeatherSnapshot(payload, city) {
     humidity: toNumber(current.relativehumidity_2m),
     windSpeed: toNumber(current.windspeed_10m),
     cloudCover,
-    sunrise: daily.sunrise?.[0] || '',
-    sunset: daily.sunset?.[0] || '',
+    sunrise: formatHour(daily.sunrise?.[0]),
+    sunset: formatHour(daily.sunset?.[0]),
     moon,
     stargazing,
     advice: buildAdvice(currentTemp, maxToday, toNumber(current.windspeed_10m)),
