@@ -4,10 +4,13 @@ import { escapeHtml } from '../../core/format.js';
 const PREDEFINED_TAGS = [
   { id: 'maison', emoji: '🏠', label: 'Maison' },
   { id: 'boulot', emoji: '💼', label: 'Boulot' },
-  { id: 'jardin', emoji: '🌿', label: 'Jardin' },
   { id: 'sante', emoji: '🏥', label: 'Santé' },
   { id: 'admin', emoji: '📋', label: 'Admin' },
-  { id: 'personnel', emoji: '👤', label: 'Personnel' }
+  { id: 'personnel', emoji: '👤', label: 'Personnel' },
+  { id: 'projets', emoji: '🚀', label: 'Projets' },
+  { id: 'idees', emoji: '💡', label: 'Idées' },
+  { id: 'ecriture', emoji: '✍️', label: 'Écriture' },
+  { id: 'nature', emoji: '🌿', label: 'Nature' }
 ];
 
 const CHECK_SVG =

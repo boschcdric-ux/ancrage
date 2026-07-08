@@ -341,3 +341,26 @@ Historique des modifications du chantier `chantier/redesign`.
   de taille (<~300 lignes par fichier JS). `weather/README.md` rempli.
 - Rituel vert : smoke 20/20 + 4/4 shell, unit 69/69, lint 0, build OK (PWA Workbox générée).
 - Bundle entrée : 301 KB brut / 85 KB gzip (+5 KB / +2 KB). CSS entrée : 131 KB brut (+2 KB).
+
+### M14 — Refonte Journal : déposer le courant du jour
+
+- Refonte du module `journal` selon la maquette M14, en deux ambiances contrastées :
+  vue **liste** en « strates » (fil temporel, point d'accent pour les entrées récentes,
+  badges de tag colorés, typographie de lecture serif) avec navigation par tag prioritaire
+  (barre scrollable `data-h-scroll`) et tri par date secondaire ; vue **écriture** sobre
+  sur fond « papier ».
+- Éditeur Tiptap **préservé intégralement** : extensions et 18 commandes inchangées,
+  cycle de vie encapsulé dans `editor.js`. Sauvegarde/rechargement du contenu formaté
+  vérifiés (gras, couleur, liste de tâches).
+- Découpage du module pour respecter la contrainte de taille (<~300 lignes) :
+  `store.js`, `editor.js`, `events.js`, `state.js`, `session.js`, `view.js`, `index.js`.
+  Test ajouté `journal/store.test.js` (tri, filtres, normalisation). `journal/README.md` rempli.
+- Tags partagés portés à 9 : retrait de **Jardin**, ajout de **Nature 🌿, Projets 🚀,
+  Idées 💡, Écriture ✍️** — répercuté à l'identique dans `journal`, `tasks`, `capture`.
+  Trois tokens de tonalité ajoutés au socle (`--tone-violet`, `--tone-gold`, `--tone-clay`),
+  plus `--paper` et `--font-read` (serif système, sans nouvelle dépendance de police).
+- Rituel vert : smoke 20/20 + 4/4 shell, unit 78/78 (+9), lint 0, build OK (PWA Workbox générée).
+  Test navigateur piloté (iPhone 375/390px + desktop 1280px) : aucun débordement horizontal,
+  barre de tags scrollable, éditeur Tiptap fonctionnel et persistant.
+- Bundle entrée : 301 KB brut / 85 KB gzip (+0,25 KB). CSS entrée : 132 KB brut (+0,6 KB).
+  Chunk journal : 421 KB brut / 132 KB gzip (+3 KB — refonte + découpage, Tiptap inchangé).
