@@ -34,14 +34,14 @@
 | M10d | Agenda : fonds thématisés + fin récurrence | ✅ faite et validée par Cédric | 2026-07-07 |
 | M10e | Agenda : input date iOS déborde | ✅ faite et validée par Cédric | 2026-07-07 |
 | M11 | Refonte Humeur : l'état de la mer | ✅ faite et validée par Cédric | 2026-07-07 |
-| M12 | Refonte Habitudes : les mouillages | ✅ faite (validation Cédric en attente) | 2026-07-07 |
-| M12b | Habitudes : panneaux en modales dialog | ✅ faite (validation Cédric en attente) | 2026-07-07 |
-| M12c | Habitudes : en-tête panneau + drag réorganisation | ✅ faite (validation Cédric en attente) | 2026-07-07 |
-| M12d | Habitudes : modale fantôme, scroll perdu, FLIP muet | ✅ faite (validation Cédric en attente) | 2026-07-07 |
-| M12e | Habitudes : ligne drag invisible iOS | ✅ faite (validation Cédric en attente) | 2026-07-07 |
-| M12f | Habitudes : drag invisible (ancêtre transformé) | ✅ faite (validation Cédric en attente) | 2026-07-07 |
-| M12g | Habitudes : audit profond drag invisible | ✅ faite (validation Cédric en attente) | 2026-07-07 |
-| M12h | Habitudes : réorganisation hors modale (vue dédiée) | ✅ faite (validation Cédric en attente) | 2026-07-07 |
+| M12 | Refonte Habitudes : les mouillages | ✅ faite t validée par Cédric | 2026-07-07 |
+| M12b | Habitudes : panneaux en modales dialog | ✅ faite t validée par Cédric | 2026-07-07 |
+| M12c | Habitudes : en-tête panneau + drag réorganisation | ✅ faite et validée par Cédric | 2026-07-07 |
+| M12d | Habitudes : modale fantôme, scroll perdu, FLIP muet | ✅ faite et validée par Cédric | 2026-07-07 |
+| M12e | Habitudes : ligne drag invisible iOS | ✅ faite et validée par Cédric | 2026-07-07 |
+| M12f | Habitudes : drag invisible (ancêtre transformé) | ✅ faite et validée par Cédric | 2026-07-07 |
+| M12g | Habitudes : audit profond drag invisible | ✅ faite et validée par Cédric | 2026-07-07 |
+| M12h | Habitudes : réorganisation hors modale (vue dédiée) | ✅ faite et validée par Cédric | 2026-07-07 |
 
 Statuts : ⬜ à faire · 🔶 en cours · ✅ faite et validée par Cédric · 🛑 bloquée
 
@@ -975,4 +975,7 @@ Vérification automatisée équivalente : `npm run test:unit` — tests `save() 
 
 *Rempli uniquement en cas de STOP. Vidé une fois le blocage levé par Cédric.*
 
-*(vide)*
+- 2026-07-08 — **STOP (sélection mission impossible)**  
+  - **Ce qui bloque :** le tableau de bord ne contient aucune ligne au statut `⬜ à faire` (toutes les missions listées sont en `✅`, la dernière étant `M12h`).  
+  - **Ce qui a été tenté :** lecture complète de `chantier/00-REGLES.md` puis `chantier/ETAT.md`, recherche explicite des statuts `⬜` et d'une mission suivante dans le tableau de bord.  
+  - **Question à Cédric :** quelle mission dois-je lancer maintenant (probablement `M13-refonte-meteo.md`), et peux-tu l'ajouter/mettre à jour dans le tableau de bord avec son statut et ses prérequis pour que je reprenne le flux normal (rituel AVANT → mission → rituel de fin) ?
