@@ -3,7 +3,7 @@
 > Ce fichier est la mémoire du chantier. L'agent le lit au début de chaque
 > mission et le met à jour à la fin. Il doit rester factuel et concis.
 
-**Dernière mise à jour :** 2026-07-07 — M12h faite (validation Cédric en attente)
+**Dernière mise à jour :** 2026-07-08 — M13 ajoutée au tableau de bord (⬜), prête à être lancée
 
 ---
 
@@ -42,6 +42,7 @@
 | M12f | Habitudes : drag invisible (ancêtre transformé) | ✅ faite et validée par Cédric | 2026-07-07 |
 | M12g | Habitudes : audit profond drag invisible | ✅ faite et validée par Cédric | 2026-07-07 |
 | M12h | Habitudes : réorganisation hors modale (vue dédiée) | ✅ faite et validée par Cédric | 2026-07-07 |
+| M13 | Refonte Météo : le ciel se lit comme l'eau | ⬜ à faire — prérequis : aucun | 2026-07-08 |
 
 Statuts : ⬜ à faire · 🔶 en cours · ✅ faite et validée par Cédric · 🛑 bloquée
 
@@ -975,7 +976,4 @@ Vérification automatisée équivalente : `npm run test:unit` — tests `save() 
 
 *Rempli uniquement en cas de STOP. Vidé une fois le blocage levé par Cédric.*
 
-- 2026-07-08 — **STOP (sélection mission impossible)**  
-  - **Ce qui bloque :** le tableau de bord ne contient aucune ligne au statut `⬜ à faire` (toutes les missions listées sont en `✅`, la dernière étant `M12h`).  
-  - **Ce qui a été tenté :** lecture complète de `chantier/00-REGLES.md` puis `chantier/ETAT.md`, recherche explicite des statuts `⬜` et d'une mission suivante dans le tableau de bord.  
-  - **Question à Cédric :** quelle mission dois-je lancer maintenant (probablement `M13-refonte-meteo.md`), et peux-tu l'ajouter/mettre à jour dans le tableau de bord avec son statut et ses prérequis pour que je reprenne le flux normal (rituel AVANT → mission → rituel de fin) ?
+*(vide)*
