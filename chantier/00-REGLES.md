@@ -231,6 +231,39 @@ document de mission qui la référence, et la mission doit prévoir un temps
 d'intégration/test dans le contexte réel avant de considérer le travail
 fini.
 
+### Remplacement complet, jamais de fusion silencieuse (règle durcie)
+**Précédents documentés :** Météo (M13) et Journal (M14) ont chacun laissé
+passer une media query mobile INVENTÉE, absente de la maquette, qui a cassé
+la mise en page validée (jauge empilée, bouton étiré). Journal a en plus
+gardé un élément entier de l'ancien module (barre de recherche) jamais
+demandé dans la mission, et perdu 4 boutons Tiptap existants en cours de
+route. Le motif commun : une refonte a été traitée comme une **édition
+incrémentale** de l'existant plutôt qu'un **remplacement**, sur les parties
+que la mission désignait comme "à transplanter".
+
+Règles, à partir de maintenant :
+- Sur le HTML/CSS explicitement désigné "code à transplanter" par une
+  mission : **remplacer le bloc entier**, ne jamais fusionner avec le
+  markup/CSS préexistant. Si un élément de l'ancien code n'apparaît pas
+  dans la maquette, il disparaît — ne pas le garder "au cas où" sans le
+  signaler explicitement à Cédric comme un écart.
+- **N'ajouter AUCUNE media query ou adaptation responsive absente de la
+  maquette**, sauf demande explicite. Si le rendu semble avoir besoin
+  d'un ajustement à une taille non couverte par la maquette : le signaler
+  dans le compte-rendu de mission comme une question ouverte, ne pas
+  décider seul.
+- Sur toute fonctionnalité préexistante marquée "à préserver" dans une
+  mission (ex. Tiptap) : la mission doit lister exhaustivement ce qui
+  doit survivre (comme fait pour Journal — extensions, 18 commandes). Le
+  compte-rendu de clôture doit confirmer, **un par un**, que chaque
+  élément listé est toujours fonctionnel — pas une confirmation globale
+  du type "Tiptap préservé".
+- Le compte-rendu de clôture d'une mission de refonte doit inclure une
+  ligne explicite : **"Éléments de l'ancien module retirés : [liste]"**
+  — si cette liste est vide alors que la mission demandait un
+  remplacement visuel, c'est un signal que quelque chose a été fusionné
+  au lieu d'être remplacé.
+
 ---
 
 ## 7. Protocole de blocage (STOP)
