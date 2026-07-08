@@ -134,26 +134,28 @@ function createWeatherContent(snapshot) {
         <button type="button" data-weather-elsewhere-reset>Fermer</button>
         <div class="elsewhere__results" data-weather-results-container>${createSearchResults(snapshot.elsewhereResults, 'elsewhere')}</div>
       </div>
-      <div class="now">
-        <article class="conditions">
-          <div class="conditions__temps">
-            <div class="temp-block"><p class="temp-block__label">Réelle</p><p class="temp-block__val">${Math.round(snapshot.currentTemp)}<small>°C</small></p></div>
-            <div class="temp-block"><p class="temp-block__label">Ressentie</p><p class="temp-block__val">${Math.round(snapshot.apparentTemp)}<small>°C</small></p></div>
+      <article class="conditions">
+        <div class="conditions__temps">
+          <div class="temp-block"><p class="temp-block__label">Réelle</p><p class="temp-block__val">${Math.round(snapshot.currentTemp)}<small>°C</small></p></div>
+          <div class="temp-block"><p class="temp-block__label">Ressentie</p><p class="temp-block__val">${Math.round(snapshot.apparentTemp)}<small>°C</small></p></div>
+        </div>
+        <div class="conditions__grid">
+          <div class="stat"><span class="stat__icon">☀️</span><div class="stat__body"><p class="stat__label">Soleil</p><p class="stat__val">↑${escapeHtml(snapshot.sunrise)} <small>↓${escapeHtml(snapshot.sunset)}</small></p></div></div>
+          <div class="stat"><span class="stat__icon">🌙</span><div class="stat__body"><p class="stat__label">Lune · ${escapeHtml(snapshot.moon.phaseLabel)}</p><p class="stat__val">${Math.round(snapshot.moon.illumination)} <small>% éclairée</small></p></div></div>
+          <div class="stat"><span class="stat__icon">💨</span><div class="stat__body"><p class="stat__label">Vent</p><p class="stat__val">${Math.round(snapshot.windSpeed)} <small>km/h</small></p></div></div>
+          <div class="stat"><span class="stat__icon">💧</span><div class="stat__body"><p class="stat__label">Humidité</p><p class="stat__val">${Math.round(snapshot.humidity)} <small>%</small></p></div></div>
+        </div>
+        <div class="stargaze"><span class="stargaze__icon">🔭</span><p class="stargaze__text"><b>${escapeHtml(snapshot.stargazing.title)}</b> — ${escapeHtml(snapshot.stargazing.detail)}</p></div>
+      </article>
+      <div class="thermo" role="img" aria-label="Jauge thermique du jour">
+        <div class="thermo__row">
+          <span class="thermo__minmax">${Math.round(snapshot.thermo.min)}°</span>
+          <div class="thermo__scale">
+            <span class="thermo__marker" style="left:${Math.max(0, Math.min(100, snapshot.thermo.level)).toFixed(0)}%; --marker-color:${snapshot.thermo.currentColor};"></span>
           </div>
-          <div class="conditions__grid">
-            <div class="stat"><span class="stat__icon">☀️</span><div class="stat__body"><p class="stat__label">Soleil</p><p class="stat__val">↑${escapeHtml(snapshot.sunrise)} <small>↓${escapeHtml(snapshot.sunset)}</small></p></div></div>
-            <div class="stat"><span class="stat__icon">🌙</span><div class="stat__body"><p class="stat__label">Lune · ${escapeHtml(snapshot.moon.phaseLabel)}</p><p class="stat__val">${Math.round(snapshot.moon.illumination)} <small>% éclairée</small></p></div></div>
-            <div class="stat"><span class="stat__icon">💨</span><div class="stat__body"><p class="stat__label">Vent</p><p class="stat__val">${Math.round(snapshot.windSpeed)} <small>km/h</small></p></div></div>
-            <div class="stat"><span class="stat__icon">💧</span><div class="stat__body"><p class="stat__label">Humidité</p><p class="stat__val">${Math.round(snapshot.humidity)} <small>%</small></p></div></div>
-          </div>
-          <div class="stargaze"><span class="stargaze__icon">🔭</span><p class="stargaze__text"><b>${escapeHtml(snapshot.stargazing.title)}</b> — ${escapeHtml(snapshot.stargazing.detail)}</p></div>
-        </article>
-        <aside class="thermo" role="img" aria-label="Jauge thermique du jour">
-          <p class="thermo__minmax">${Math.round(snapshot.thermo.max)}°</p>
-          <div class="thermo__scale"><span class="thermo__marker" style="bottom:${snapshot.thermo.level.toFixed(0)}%; --marker-color:${snapshot.thermo.currentColor};"></span></div>
-          <p class="thermo__minmax">${Math.round(snapshot.thermo.min)}°</p>
-          <p class="thermo__caption">${snapshot.currentTemp >= snapshot.thermo.max - 2 ? 'chaud' : 'modéré'}</p>
-        </aside>
+          <span class="thermo__minmax">${Math.round(snapshot.thermo.max)}°</span>
+        </div>
+        <p class="thermo__caption">${snapshot.currentTemp >= snapshot.thermo.max - 2 ? 'chaud' : 'modéré'}</p>
       </div>
       <div class="advice"><span class="advice__icon">${snapshot.advice.icon}</span><p class="advice__text">${escapeHtml(snapshot.advice.text)}</p></div>
       <section class="tide card">

@@ -250,7 +250,7 @@ function refreshCaptureTagPicker() {
   if (!rootContainer) return;
 
   const wrap = rootContainer.querySelector('[data-capture-tag-wrap]');
-  if (wrap) wrap.outerHTML = createCaptureTagTrigger(formTagId || '');
+  if (wrap) wrap.outerHTML = createCaptureTagTrigger(formTagId || '', useNativePopover);
 
   const popover = getTagPopoverElement();
   if (popover) popover.innerHTML = createCaptureTagPopoverItems(formTagId || '');
@@ -555,9 +555,11 @@ function bindEvents() {
 
     const tagToggle = origin.closest('[data-capture-tag-toggle]');
     if (tagToggle instanceof HTMLButtonElement) {
-      event.preventDefault();
-      if (isTagPopoverOpen()) closeTagPopover();
-      else openTagPopover();
+      if (!useNativePopover) {
+        event.preventDefault();
+        if (isTagPopoverOpen()) closeTagPopover();
+        else openTagPopover();
+      }
       return;
     }
 

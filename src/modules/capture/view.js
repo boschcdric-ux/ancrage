@@ -62,12 +62,15 @@ function createCaptureTagPopoverItems(formTagId = '') {
   return noneItem + tagItems;
 }
 
-function createCaptureTagTrigger(formTagId = '') {
+function createCaptureTagTrigger(formTagId = '', useNativePopover = true) {
   const tag = formTagId ? PREDEFINED_TAGS.find((t) => t.id === formTagId) : null;
   const btnClass = tag ? 'tagpick__btn has-tag' : 'tagpick__btn';
   const labelHtml = tag
     ? `<span class="tagpick__dot" aria-hidden="true">${tag.emoji}</span><span data-capture-tag-label>${escapeHtml(tag.label)}</span>`
     : `<span data-capture-tag-label>Tag</span>`;
+  const nativePopoverAttrs = useNativePopover
+    ? ` popovertarget="${CAPTURE_TAG_POPOVER_ID}" popovertargetaction="toggle"`
+    : '';
 
   return `
     <div class="tagpick" data-capture-tag-wrap>
@@ -79,6 +82,7 @@ function createCaptureTagTrigger(formTagId = '') {
         aria-expanded="false"
         aria-controls="${CAPTURE_TAG_POPOVER_ID}"
         aria-label="${tag ? `Tag sélectionné : ${escapeHtml(tag.label)}` : 'Choisir un tag'}"
+        ${nativePopoverAttrs}
       >
         ${labelHtml}
       </button>
@@ -128,7 +132,7 @@ function createCaptureFilterBar(activeFilter = 'all', allCaptures = []) {
   }).join('');
 
   return `
-    <div class="capture__filters" role="toolbar" aria-label="Filtrer les captures">
+    <div class="capture__filters" data-h-scroll role="toolbar" aria-label="Filtrer les captures">
       <button
         type="button"
         class="capture__chip ${activeFilter === 'all' ? 'is-active' : ''}"
@@ -285,7 +289,7 @@ function createCaptureView(
             aria-label="${escapeHtml(inputAriaLabel)}"
           ></textarea>
           <div class="cap__row">
-            ${createCaptureTagTrigger(formTagId)}
+            ${createCaptureTagTrigger(formTagId, useNativePopover)}
             <span class="cap__counter" data-capture-counter aria-live="polite"></span>
             <button type="submit" class="cap__submit" data-capture-submit>Capturer</button>
           </div>

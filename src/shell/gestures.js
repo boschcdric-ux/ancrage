@@ -8,6 +8,7 @@ import {
   setModulePanFromDx,
   springModulePanToZero,
   isEditableTouchTarget,
+  isInsideHorizontalScroller,
   getAdjacentNavModuleIds,
   MODULE_H_SWIPE_THRESHOLD_PX,
   MODULE_H_SWIPE_DIRECTION_MIN_DX_PX,
@@ -119,6 +120,7 @@ function initNativeTouchShell() {
       !moduleContainer?.contains(target) ||
       navContainer?.contains(target) ||
       isEditableTouchTarget(target) ||
+      isInsideHorizontalScroller(target) ||
       isInsideBlockingOverlay(target)
     ) {
       return;

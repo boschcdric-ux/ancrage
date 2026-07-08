@@ -43,6 +43,7 @@
 | M12g | Habitudes : audit profond drag invisible | ✅ faite et validée par Cédric | 2026-07-07 |
 | M12h | Habitudes : réorganisation hors modale (vue dédiée) | ✅ faite et validée par Cédric | 2026-07-07 |
 | M13 | Refonte Météo : le ciel se lit comme l'eau | ✅ faite et validée par Cédric (Mac + iPhone) | 2026-07-08 |
+| M14 | Refonte Journal : déposer le courant du jour | ⬜ à faire — prérequis : aucun | 2026-07-08 |
 
 Statuts : ⬜ à faire · 🔶 en cours · ✅ faite et validée par Cédric · 🛑 bloquée
 

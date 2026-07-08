@@ -98,7 +98,7 @@ function createTasksFilterBar(activeFilter = 'all', allTasks = []) {
   const prioCount = getFilterChipCount(allTasks, 'priority');
 
   return `
-    <div class="tasks__filters" role="toolbar" aria-label="Filtrer les tâches">
+    <div class="tasks__filters" data-h-scroll role="toolbar" aria-label="Filtrer les tâches">
       <button
         type="button"
         class="tasks__filter-chip ${activeFilter === 'all' ? 'is-active' : ''}"

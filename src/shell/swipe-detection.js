@@ -105,6 +105,11 @@ export function isEditableTouchTarget(target) {
   return false;
 }
 
+export function isInsideHorizontalScroller(target) {
+  if (!(target instanceof Element)) return false;
+  return Boolean(target.closest('[data-h-scroll]'));
+}
+
 export function getAdjacentNavModuleIds(activeId) {
   const ids = swipeRefs?.getNavModuleIdsOrdered?.() ?? [];
   const i = ids.indexOf(activeId);
