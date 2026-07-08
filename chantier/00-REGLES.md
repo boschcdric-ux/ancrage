@@ -132,6 +132,12 @@ la preuve, pas juste l'intuition la mieux formulée.
 
 ## 4. Rituel de contrôle (AVANT et APRÈS, les deux régimes)
 
+*Avant de lancer le rituel : vérifier qu'aucun `vite preview`/`esbuild`
+résiduel d'une session précédente ne tourne encore (`ps aux | grep -i
+"vite\|esbuild"`) — un process resté actif peut faire échouer `npm run
+build` (écriture concurrente du service worker Workbox). Cause confirmée
+une fois sur ce chantier (voir ETAT.md, M13).*
+
 Exécuter ces commandes et consigner les résultats :
 
 ```bash
