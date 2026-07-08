@@ -119,7 +119,7 @@ function createWeatherContent(snapshot) {
       <div class="place">
         <div class="place__main">
           <div class="place__row">
-            <h2 class="place__name">${escapeHtml(snapshot.cityLabel)}</h2>
+            <h2 class="place__name">${escapeHtml(snapshot.cityName || snapshot.cityLabel)}</h2>
             <span class="place__sky" aria-hidden="true">${snapshot.emoji}</span>
           </div>
           <p class="place__desc">${escapeHtml(snapshot.locationDescription)}</p>
