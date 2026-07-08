@@ -51,6 +51,14 @@ l'agent doit lire au démarrage et mettre à jour à la fin :
    pas : STOP, le signaler, ne rien faire.
 5. Exécuter le rituel de contrôle (§4) pour établir l'état AVANT.
 
+> **Un document de mission dans `chantier/` ne suffit pas à lui seul.**
+> Il doit aussi apparaître comme `⬜ à faire` dans le tableau de bord
+> d'`ETAT.md`, avec ses prérequis — sinon l'agent doit STOP (comme prévu
+> §7). Ajouter cette ligne fait partie de la livraison de la mission :
+> c'est la responsabilité de qui rédige le document (Claude, ou Cédric
+> s'il écrit une mission lui-même), à faire AVANT de demander à Cursor
+> de la lancer, pas une étape que l'agent doit deviner ou improviser.
+
 **Séquence obligatoire de démarrage (régime Ticket) :**
 1. Lire `chantier/00-REGLES.md`.
 2. Lire le tableau de bord d'`ETAT.md` (pas tout le fichier — juste la
