@@ -42,7 +42,7 @@
 | M12f | Habitudes : drag invisible (ancêtre transformé) | ✅ faite et validée par Cédric | 2026-07-07 |
 | M12g | Habitudes : audit profond drag invisible | ✅ faite et validée par Cédric | 2026-07-07 |
 | M12h | Habitudes : réorganisation hors modale (vue dédiée) | ✅ faite et validée par Cédric | 2026-07-07 |
-| M13 | Refonte Météo : le ciel se lit comme l'eau | 🔶 en cours — implémentée, validation Cédric en attente | 2026-07-08 |
+| M13 | Refonte Météo : le ciel se lit comme l'eau | ✅ faite et validée par Cédric (Mac + iPhone) | 2026-07-08 |
 
 Statuts : ⬜ à faire · 🔶 en cours · ✅ faite et validée par Cédric · 🛑 bloquée
 
