@@ -169,7 +169,23 @@ corrige par lecture de code. Un bug de rendu/compositing/plateforme ne se
 prouve que par observation empirique dans un navigateur réel — le lire
 dans le code ne suffit pas.)*
 
-### Avant tout correctif : établir OÙ le bug se reproduit
+### Avant tout correctif : OBSERVER dans un navigateur (nouvelle capacité)
+Cursor dispose désormais d'un **navigateur automatisé** (Playwright MCP /
+browser automation). Sur tout bug de rendu, c'est la PREMIÈRE étape,
+avant même de lire le code : ouvrir l'app dans le navigateur piloté,
+reproduire le bug, inspecter l'arbre d'accessibilité et les styles
+calculés en direct. C'est ce qui manquait pendant la saga M13 (5 tickets
+sur un placement CSS qu'un coup d'œil au navigateur aurait tranché).
+
+⚠️ **Émuler la taille iPhone, PAS le desktop par défaut.** Le navigateur
+piloté s'ouvre en résolution desktop (~1280px), où la plupart de nos
+bugs (débordement, empilement) NE se reproduisent PAS. Avant de tester un
+bug de rendu, régler le viewport sur un profil iPhone (ex. iPhone 15/13 :
+~390px de large, device pixel ratio et événements tactiles émulés). Un
+test qui passe en 1280px ne prouve RIEN sur ce que Cédric voit à ~390px.
+Tester au minimum : un petit écran (~375-390px) ET un grand (desktop).
+
+### Établir OÙ le bug se reproduit (si pas d'accès navigateur)
 1. **Se reproduit-il sur Safari desktop (Mac) ?** Si oui : itérer sur Mac,
    sans passer par un aller-retour iPhone à chaque essai. C'est plus
    rapide pour tout le monde, et la majorité des bugs WebKit se
@@ -179,7 +195,8 @@ dans le code ne suffit pas.)*
    Inspecteur web ; puis Safari Mac → menu Développer → [nom de
    l'iPhone]) pour observer directement (calques, styles calculés,
    console) plutôt que de deviner depuis le code source.
-3. Ne PAS écrire de correctif avant d'avoir établi au moins l'un des deux.
+3. Ne PAS écrire de correctif avant d'avoir observé le bug (navigateur
+   piloté de préférence, sinon un des deux moyens ci-dessus).
 
 ### Échelle d'escalade obligatoire
 - **1er correctif** sur une hypothèse claire : autorisé en Ticket.
