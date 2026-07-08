@@ -138,6 +138,15 @@ résiduel d'une session précédente ne tourne encore (`ps aux | grep -i
 build` (écriture concurrente du service worker Workbox). Cause confirmée
 une fois sur ce chantier (voir ETAT.md, M13).*
 
+> ⚠️ **Ne jamais tuer un process `vite preview --host` sans demander
+> d'abord à Cédric.** Le flag `--host` signale presque toujours SON
+> serveur de test actif (Mac + iPhone sur le même réseau, laissé tourner
+> en continu). Un process `vite`/`esbuild` SANS `--host` est plus
+> probablement un résidu de build sans risque à arrêter. En cas de doute
+> sur un process `--host` : STOP et demander confirmation avant de le
+> tuer — l'incident du 2026-07-08 (M13) a coupé le serveur de Cédric
+> pendant une session de dépannage, sans lui.
+
 Exécuter ces commandes et consigner les résultats :
 
 ```bash

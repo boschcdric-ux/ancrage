@@ -76,12 +76,12 @@ function parseEntryDate(entry) {
 
 function buildGalleryBuckets(entries, period, todayIso = getIsoDate()) {
   const byDate = new Map(entries.map((entry) => [entry.date, entry]));
+  const anchor = new Date(`${todayIso}T12:00:00`);
 
   if (period === 'week') {
     const days = [];
     for (let offset = 6; offset >= 0; offset -= 1) {
-      const date = new Date();
-      date.setHours(12, 0, 0, 0);
+      const date = new Date(anchor);
       date.setDate(date.getDate() - offset);
       const iso = getIsoDate(date);
       const entry = byDate.get(iso);
@@ -110,8 +110,7 @@ function buildGalleryBuckets(entries, period, todayIso = getIsoDate()) {
   const config = { month: { days: 30, buckets: 6 }, quarter: { days: 90, buckets: 12 }, year: { days: 365, buckets: 12 } }[
     period
   ];
-  const cutoff = new Date();
-  cutoff.setHours(12, 0, 0, 0);
+  const cutoff = new Date(anchor);
   cutoff.setDate(cutoff.getDate() - (config.days - 1));
   const cutoffIso = getIsoDate(cutoff);
 
